@@ -6,7 +6,6 @@
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
-#include <opencv2/opencv.hpp>
 
 namespace world_exe::data {
 struct ArmorGimbalControlSpacing {

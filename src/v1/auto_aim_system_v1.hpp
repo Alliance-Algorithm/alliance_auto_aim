@@ -4,9 +4,9 @@ namespace world_exe::v1 {
 class SystemV1 {
 public:
     static void Build();
+    class SystemV1Impl;
 
 private:
-    class SystemV1Impl;
     static SystemV1Impl* instance_;
 
     SystemV1()                = default;

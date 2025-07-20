@@ -3,8 +3,7 @@
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
 #include "time_stamped.hpp"
-#include <opencv2/core/mat.hpp>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
 #include <vector>
 
 namespace world_exe::interfaces {

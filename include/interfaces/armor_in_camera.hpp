@@ -4,7 +4,6 @@
 #include "enum/armor_id.hpp"
 #include "time_stamped.hpp"
 #include <opencv2/core/mat.hpp>
-#include <opencv2/opencv.hpp>
 
 namespace world_exe::interfaces {
 class IArmorInCamera {
