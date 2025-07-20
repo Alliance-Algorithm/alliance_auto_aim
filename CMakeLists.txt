@@ -11,8 +11,9 @@ include_directories(./include)
 
 ### Target lib ===
 add_library(${PROJECT_NAME} )
-file(GLOB sources_v1 CONFIGURE_DEPENDS 
+file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS 
 src/v1/*.cpp 
+src/v1/*.cc
 src/core/alliance.cpp)
 target_sources(
     ${PROJECT_NAME}  PUBLIC
