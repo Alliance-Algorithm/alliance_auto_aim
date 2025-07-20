@@ -10,9 +10,14 @@ project(alliance_auto_aim VERSION 0.0.1 LANGUAGES CXX)
 include_directories(./include)
 
 ### Target lib ===
-add_library(${PROJECT_NAME} 
-src/core/alliance.cpp
-)
+add_library(${PROJECT_NAME} )
+file(GLOB sources_v1 CONFIGURE_DEPENDS 
+src/v1/*.cpp 
+src/core/alliance.cpp)
+target_sources(
+    ${PROJECT_NAME}  PUBLIC
+    ${sources_v1}
+    )
 ### Target lib End ===
 
 ### OpenCV ===
