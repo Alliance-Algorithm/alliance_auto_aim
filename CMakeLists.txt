@@ -22,6 +22,10 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}  ${OpenCV_LIBS})
 ### OpenCV End ===
 
+### Eigen ===
+find_package(Eigen3 REQUIRED)
+INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
+### Eigen End ===
 
 target_include_directories(${PROJECT_NAME}  PUBLIC
     ./include
