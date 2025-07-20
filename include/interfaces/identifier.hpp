@@ -6,6 +6,7 @@
 
 namespace world_exe::interfaces {
 class IIdentifier {
+public:
     const IArmorInImage identify(const cv::Mat& input_image);
 };
 }

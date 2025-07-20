@@ -5,6 +5,7 @@
 
 namespace world_exe::interfaces {
 class IDrawable {
+public:
     virtual void Draw(cv::InputArray, cv::OutputArray);
     virtual void Draw(cv::InputOutputArray);
 };

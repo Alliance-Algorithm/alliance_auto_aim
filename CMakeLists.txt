@@ -14,7 +14,7 @@ add_library(${PROJECT_NAME} )
 file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS 
 src/v1/*.cpp 
 src/v1/*.cc
-src/core/alliance.cpp)
+src/core/*.cpp)
 target_sources(
     ${PROJECT_NAME}  PUBLIC
     ${sources_v1}

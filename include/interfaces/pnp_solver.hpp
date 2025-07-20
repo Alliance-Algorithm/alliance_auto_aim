@@ -5,6 +5,7 @@
 
 namespace world_exe::interfaces {
 class IPnpSolver {
+public:
     virtual const IArmorInCamera& SolvePnp(const IArmorInImage&);
 };
 }

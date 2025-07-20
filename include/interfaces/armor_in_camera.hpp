@@ -8,7 +8,7 @@
 
 namespace world_exe::interfaces {
 class IArmorInCamera {
-
+public:
     COMBINE_TIME_STAMPED;
 
     virtual const std::vector<data::ArmorCameraSpacing>& GetArmors(
