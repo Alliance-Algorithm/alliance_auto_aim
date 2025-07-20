@@ -4,7 +4,7 @@
 #include <cstdint>
 
 namespace world_exe::enumeration {
-enum class ArmorId : uint32_t {
+enum class ArmorIdFlag : uint32_t {
     Unknow      = std::bit_cast<uint32_t>(-1),
     Hero        = 0b00000001,
     Engineer    = 0b00000010,
@@ -15,4 +15,5 @@ enum class ArmorId : uint32_t {
     Base        = 0b01000000,
     Outpost     = 0b10000000,
 };
+
 }

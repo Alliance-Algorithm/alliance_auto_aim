@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE "Release")
 
 project(alliance_auto_aim VERSION 0.0.1 LANGUAGES CXX)
 
-include_directories(./include/interfaces)
+include_directories(./include)
 
 ### Target lib ===
 add_library(${PROJECT_NAME} 
