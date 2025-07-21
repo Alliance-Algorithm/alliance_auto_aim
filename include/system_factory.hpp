@@ -5,6 +5,7 @@
 namespace world_exe::core {
 
 class SystemFactory {
+public:
     static void Build(const enumeration::SystemVersion& version);
 };
 }

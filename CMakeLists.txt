@@ -10,7 +10,7 @@ project(alliance_auto_aim VERSION 0.0.1 LANGUAGES CXX)
 include_directories(./include)
 
 ### Target lib ===
-add_library(${PROJECT_NAME} )
+add_library(${PROJECT_NAME} SHARED)
 file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS 
 src/v1/*.cpp 
 src/v1/*.cc
@@ -33,9 +33,15 @@ find_package(Eigen3 REQUIRED)
 INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 ### Eigen End ===
 
-target_include_directories(${PROJECT_NAME}  PUBLIC
-    ./include
+# 安装库文件
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
-install(DIRECTORY include/ DESTINATION include)
-
+install(TARGETS ${PROJECT_NAME}
+EXPORT ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)

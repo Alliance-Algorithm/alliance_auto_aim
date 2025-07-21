@@ -20,7 +20,7 @@ public:
     const string IPreDictorUpdatePackage = "/alliance_auto_aim/armor_in_camera/pnp";
 
     SystemV1Impl() {
-        throw new std::runtime_error("No Implement");
+        throw std::runtime_error("No Implement");
 
         core::EventBus::Subscript<cv::Mat>(RawImageEvent,
 
