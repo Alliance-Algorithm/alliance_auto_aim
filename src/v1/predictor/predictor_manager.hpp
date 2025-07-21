@@ -14,6 +14,7 @@ public:
         const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) override;
 
     const interfaces::IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) const override;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
