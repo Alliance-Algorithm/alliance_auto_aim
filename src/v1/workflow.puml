@@ -65,10 +65,10 @@ Camera --> (CameraCaptureEndTimeStampEventName) : std::time_t
 (TrackerUpdateEventName) --> Tracker : interfaces::IPreDictorUpdatePackage
 Tracker --> (TrackerCurrentArmorsEventName) : interfaces::IArmorInGimbalControl
 (TrackerCurrentArmorsEventName) --> FireControl : interfaces::IArmorInGimbalControl
-FireControl --> (GetLastestPredictorEventName)  : enums::CarIDFlag
+(GetLastestPredictorEventName) <-- FireControl : enums::CarIDFlag
 (GetLastestPredictorEventName) --> Tracker : enums::CarIDFlag
 Tracker --> (GetLastestPredictorEventName) : interfaces::IPredictor
-(GetLastestPredictorEventName)  --> FireControl : interfaces::IPredictor
-FireControl --> (FireEventName) : data::FireControl
+FireControl <- (GetLastestPredictorEventName) : interfaces::IPredictor
+FireControl -> (FireEventName) : data::FireControl
  [RMCS] <--  (FireEventName) : data::FireControl
 @enduml
