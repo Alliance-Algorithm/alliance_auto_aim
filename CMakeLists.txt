@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE "Release")
 
 project(alliance_auto_aim VERSION 0.0.1 LANGUAGES CXX)
 
-include_directories(./include)
+include_directories(./include ./src)
 
 ### Target lib ===
 add_library(${PROJECT_NAME} SHARED)
@@ -40,6 +40,10 @@ include_directories(${TBB_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARIES})
 ### TBB End ===
 
+### OpenVINO ===
+find_package(OpenVINO REQUIRED)
+target_link_libraries(${PROJECT_NAME} openvino::runtime)
+### OpenVINO End ===
 
 # 安装库文件
 target_include_directories(${PROJECT_NAME} PUBLIC
