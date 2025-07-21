@@ -8,6 +8,6 @@ class ICarState {
 
 public:
     virtual const ICarState& Update(const enumeration::CarIDFlag& car_detected);
-    virtual const enumeration::CarIDFlag& GetAllowdToFires() const;
+    virtual const enumeration::CarIDFlag& GetAllowdToFires() const = 0;
 };
 }

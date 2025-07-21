@@ -6,6 +6,6 @@
 namespace world_exe::interfaces {
 class IFireControl {
 public:
-    virtual const data::FireControl& CalculateTarget(const std::time_t& current);
+    virtual const data::FireControl& CalculateTarget(const std::time_t& current) = 0;
 };
 }

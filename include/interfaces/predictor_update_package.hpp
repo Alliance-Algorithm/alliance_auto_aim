@@ -8,7 +8,7 @@ namespace world_exe::interfaces {
 class IPreDictorUpdatePackage {
 public:
     COMBINE_TIME_STAMPED
-    const IArmorInCamera& GetArmors() const;
-    const Eigen::Affine3d& GetTransform() const;
+    virtual const IArmorInCamera& GetArmors() const     = 0;
+    virtual const Eigen::Affine3d& GetTransform() const = 0;
 };
 }

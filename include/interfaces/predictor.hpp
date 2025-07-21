@@ -7,7 +7,7 @@
 namespace world_exe::interfaces {
 class IPredictor {
 public:
-    virtual const enumeration::ArmorIdFlag& GetId() const;
-    virtual const IArmorInGimbalControl& Predictor(const std::time_t& time_stamp);
+    virtual const enumeration::ArmorIdFlag& GetId() const                         = 0;
+    virtual const IArmorInGimbalControl& Predictor(const std::time_t& time_stamp) = 0;
 };
 }

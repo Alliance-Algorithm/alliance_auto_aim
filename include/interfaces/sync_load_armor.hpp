@@ -12,6 +12,6 @@ template <typename T>
 class ISyncLoadArmor {
 
 public:
-    void Load(const T& data);
+    void Load(const T& data) = 0;
 };
 }

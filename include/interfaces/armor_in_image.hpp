@@ -13,6 +13,6 @@ public:
     COMBINE_TIME_STAMPED;
 
     virtual const std::vector<data::ArmorImageSpacing>& GetArmors(
-        const enumeration::ArmorIdFlag& armor_id) const;
+        const enumeration::ArmorIdFlag& armor_id) const = 0;
 };
 }
