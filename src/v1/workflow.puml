@@ -1,0 +1,74 @@
+@startuml SystemV1事件总线流图
+skinparam roundCorner 10
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam component {
+    BackgroundColor #F0F8FF
+    BorderColor #4682B4
+    ArrowColor #4169E1
+}
+
+title SystemV1事件总线流图
+
+
+package "Outers"{
+    [OuterComponent::Camera] as Camera
+    [RMCS]
+}
+package "alliance auto aim system v1"{
+[interfaces::IIdentifier] as Identifier
+[interfaces::IFireControl] as FireControl
+[interfaces::IStateMachine] as StateMachine
+[interfaces::IPnpSolver] as PnpSolver
+[interfaces::ITracker] as Tracker
+[SyncComponent]
+(RawImageEventName)
+(CarIdIdentifyEventName)
+(ArmorsInImageIdentifyEventName)
+(ArmorsInCameraPnpEventName)
+(CameraCaptureEndTimeStampEventName) 
+(CameraCaptureBeginTimeStampEventName)
+(CameraToGimbalControlSpacingEventName)
+(GimbalControlToMuzzleEventName)
+(TrackerUpdateEventName)
+(CarTracingEventName) 
+(TrackerCurrentArmorsEventName)
+(GetLastestPredictorEventName)
+(FireEventName) 
+}
+
+Camera --> (RawImageEventName) : cv::Mat
+(RawImageEventName) --> Identifier : cv::Mat
+
+Identifier --> (CarIdIdentifyEventName) : enums::CarIDFlag
+(CarIdIdentifyEventName) -->StateMachine : enums::CarIDFlag
+
+StateMachine --> (CarTracingEventName) : enums::CarIDFlag 
+(CarTracingEventName) --> Tracker : enums::CarIDFlag 
+
+Identifier --> (ArmorsInImageIdentifyEventName) : interfaces::IArmorInImage
+(ArmorsInImageIdentifyEventName) --> PnpSolver : interfaces::IArmorInImage
+
+PnpSolver --> (ArmorsInCameraPnpEventName) : interfaces::IArmorInCamera
+(ArmorsInCameraPnpEventName)->[SyncComponent] : interfaces::IArmorInCamera
+
+Camera --> (CameraCaptureEndTimeStampEventName) : std::time_t
+(CameraCaptureEndTimeStampEventName) --> [SyncComponent] : std::time_t
+[RMCS] --> (CameraCaptureBeginTimeStampEventName) : std::time_t
+[RMCS] --> (CameraToGimbalControlSpacingEventName) : eigen::Affine3d
+[RMCS] --> (GimbalControlToMuzzleEventName) : eigen::Affine3d
+(CameraCaptureBeginTimeStampEventName) --> [SyncComponent]  : std::time_t
+(CameraToGimbalControlSpacingEventName) --> [SyncComponent]  : eigen::Affine3d
+(GimbalControlToMuzzleEventName) --> [SyncComponent]  : eigen::Affine3d
+
+[SyncComponent] --> (TrackerUpdateEventName) : interfaces::IPreDictorUpdatePackage
+(TrackerUpdateEventName) --> Tracker : interfaces::IPreDictorUpdatePackage
+Tracker --> (TrackerCurrentArmorsEventName) : interfaces::IArmorInGimbalControl
+(TrackerCurrentArmorsEventName) --> FireControl : interfaces::IArmorInGimbalControl
+FireControl --> (GetLastestPredictorEventName)  : enums::CarIDFlag
+(GetLastestPredictorEventName) --> Tracker : enums::CarIDFlag
+Tracker --> (GetLastestPredictorEventName) : interfaces::IPredictor
+(GetLastestPredictorEventName)  --> FireControl : interfaces::IPredictor
+FireControl --> (FireEventName) : data::FireControl
+ [RMCS] <--  (FireEventName) : data::FireControl
+@enduml
