@@ -1,8 +1,7 @@
 #pragma once
 
-#include "./armor_in_camera.hpp"
-#include "./armor_in_image.hpp"
-
+#include "interfaces/armor_in_camera.hpp"
+#include "interfaces/armor_in_image.hpp"
 namespace world_exe::interfaces {
 class IPnpSolver {
 public:
