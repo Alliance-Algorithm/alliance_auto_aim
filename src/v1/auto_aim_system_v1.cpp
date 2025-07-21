@@ -1,5 +1,6 @@
 #include "./auto_aim_system_v1.hpp"
 #include "event_bus.hpp"
+#include "interfaces/armor_in_camera.hpp"
 #include "interfaces/armor_in_image.hpp"
 #include "interfaces/car_state.hpp"
 #include "interfaces/identifier.hpp"
@@ -61,13 +62,17 @@ public:
                     car_id_identify_event, flag);
             });
 
-        core::EventBus::Subscript<cv::Mat>(raw_image_event, //
+        core::EventBus::Subscript<interfaces::IArmorInImage>(armors_in_image_identify_event, //
             [this](const auto& data) {
-                const auto& [armors, flag] = identifier_->identify(data);
-                core::EventBus::Publish<interfaces::IArmorInImage>( //
-                    armors_in_image_identify_event, armors);
+                core::EventBus::Publish<interfaces::IArmorInCamera>( //
+                    armors_in_image_identify_event, pnp_solver_->SolvePnp(data));
+            });
+
+        core::EventBus::Subscript<enumeration::CarIDFlag>(car_id_identify_event, //
+            [this](const auto& data) {
+                car_state_->Update(data);
                 core::EventBus::Publish<enumeration::CarIDFlag>( //
-                    car_id_identify_event, flag);
+                    armors_in_image_identify_event, car_state_->GetAllowdToFires());
             });
     }
 
