@@ -13,48 +13,62 @@
 /// 这玩意全生命周期活跃，直接分配然后丢一边，反正有回调
 class world_exe::v1::SystemV1::SystemV1Impl {
 public:
-    const std::string raw_image_event         = "/alliance_auto_aim/cv_mat/raw";
-    const std::string ArmorIdentifyEvent      = "/alliance_auto_aim/armor_in_image/identified";
-    const std::string CarIDIdentifyEvent      = "/alliance_auto_aim/car_id_flag/identified";
-    const std::string IPreDictorUpdatePackage = "/alliance_auto_aim/armor_in_camera/pnp";
+    const std::string raw_image_event //
+        = "/alliance_auto_aim/cv_mat/raw";
+
+    const std::string armors_in_image_identify_event //
+        = "/alliance_auto_aim/armor_in_image/identified";
+
+    const std::string car_id_identify_event //
+        = "/alliance_auto_aim/car_id_flag/identified";
+
+    const std::string camera_to_gimbal_control_spacing_event //
+        = "/alliance_auto_aim/transfrom/camera_to_gimbal_control";
+
+    const std::string gimbal_control_to_muzzle_event //
+        = "/alliance_auto_aim/transfrom/gimbal_control_to_muzzle";
+
+    const std::string carmera_capture_end_time_stamp_event //
+        = "/alliance_auto_aim/camera/cpature/end";
+
+    const std::string carmera_capture_begin_time_stamp_event //
+        = "/alliance_auto_aim/camera/cpature/begin";
+
+    const std::string armors_in_camera_pnp_event //
+        = "/alliance_auto_aim/armor_in_camera/pnp";
+
+    const std::string car_tracing_event //
+        = "/alliance_auto_aim/state/car_tracing";
+
+    const std::string tracker_update_event //
+        = "/alliance_auto_aim/tracker/update_package";
+
+    const std::string get_lastest_predictor_ //
+        = "/alliance_auto_aim/tracker/lastest_predictor";
+
+    const std::string tracker_current_armors_event //
+        = "/alliance_auto_aim/tracker/armors_detected_current";
 
     SystemV1Impl() {
         throw std::runtime_error("No Implement");
 
-        core::EventBus::Subscript<cv::Mat>(raw_image_event,
-
-            [this](const cv::Mat& mat) {
-                const auto& [armors, ids] = identifier_->identify(mat);
-                core::EventBus::Publish(ArmorIdentifyEvent, armors);
-                core::EventBus::Publish<enumeration::CarIDFlag>(CarIDIdentifyEvent, ids);
+        core::EventBus::Subscript<cv::Mat>(raw_image_event, //
+            [this](const auto& data) {
+                const auto& [armors, flag] = identifier_->identify(data);
+                core::EventBus::Publish<interfaces::IArmorInImage>( //
+                    armors_in_image_identify_event, armors);
+                core::EventBus::Publish<enumeration::CarIDFlag>( //
+                    car_id_identify_event, flag);
             });
-        //
 
-        core::EventBus::Subscript<interfaces::IArmorInImage>(ArmorIdentifyEvent,
-
-            [this](const interfaces::IArmorInImage& armor2d) {
-                core::EventBus::Publish<interfaces::IArmorInCamera>(
-                    ArmorIdentifyEvent, pnp_solver_->SolvePnp(armor2d));
+        core::EventBus::Subscript<cv::Mat>(raw_image_event, //
+            [this](const auto& data) {
+                const auto& [armors, flag] = identifier_->identify(data);
+                core::EventBus::Publish<interfaces::IArmorInImage>( //
+                    armors_in_image_identify_event, armors);
+                core::EventBus::Publish<enumeration::CarIDFlag>( //
+                    car_id_identify_event, flag);
             });
-        //
-
-        core::EventBus::Subscript<enumeration::CarIDFlag>(CarIDIdentifyEvent,
-
-            [this](const enumeration::CarIDFlag& id_detected) {
-                car_state_->Update(id_detected);
-
-                core::EventBus::Publish<enumeration::CarIDFlag>(
-                    ArmorIdentifyEvent, car_state_->GetAllowdToFires());
-            });
-        //
-
-        core::EventBus::Subscript<interfaces::IArmorInCamera>(
-            ArmorIdentifyEvent, [this](const interfaces::IArmorInCamera& armor2d) {
-                const auto& [data, flag] = sync_->await(0.5);
-                if (flag)
-                    core::EventBus::Publish<interfaces::ITargetPredictor>(ArmorIdentifyEvent, data);
-            });
-        //
     }
 
 private:

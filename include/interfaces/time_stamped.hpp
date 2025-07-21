@@ -2,7 +2,7 @@
 
 #include <ctime>
 
-#define COMBINE_TIME_STAMPED virtual const ITimeStamped& GetTimeStamped() const;
+#define COMBINE_TIME_STAMPED virtual const ITimeStamped& GetTimeStamped() const = 0;
 
 namespace world_exe::interfaces {
 class ITimeStamped {

@@ -45,6 +45,7 @@ Identifier --> (CarIdIdentifyEventName) : enums::CarIDFlag
 
 StateMachine --> (CarTracingEventName) : enums::CarIDFlag 
 (CarTracingEventName) --> Tracker : enums::CarIDFlag 
+(CarTracingEventName) --> FireControl : enums::CarIDFlag 
 
 Identifier --> (ArmorsInImageIdentifyEventName) : interfaces::IArmorInImage
 (ArmorsInImageIdentifyEventName) --> PnpSolver : interfaces::IArmorInImage

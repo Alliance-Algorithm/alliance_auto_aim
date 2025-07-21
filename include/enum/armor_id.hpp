@@ -6,6 +6,7 @@
 namespace world_exe::enumeration {
 enum class ArmorIdFlag : uint32_t {
     Unknow      = std::bit_cast<uint32_t>(-1),
+    None        = 0b00000000,
     Hero        = 0b00000001,
     Engineer    = 0b00000010,
     InfantryIII = 0b00000100,
