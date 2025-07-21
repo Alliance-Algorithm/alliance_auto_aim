@@ -1,13 +1,11 @@
 #include "predictor_manager.hpp"
-#include "Eigen/src/Geometry/Quaternion.h"
-#include "Eigen/src/Geometry/Transform.h"
 #include "car/car_predictor.hpp"
 #include "car/car_predictor_ekf.hpp"
+#include "enum/enum_tools.hpp"
+#include "interfaces/car_state.hpp"
 #include "predict_armor_in_gimbal_control.hpp"
 #include "predict_time_stamp.hpp"
 #include "util/index.hpp"
-#include "util/math.hpp"
-#include <ctime>
 
 namespace world_exe::predictor {
 
@@ -22,7 +20,7 @@ public:
 
         for (int i = 0; i < 8; i++) {
             const auto& armors =
-                data.GetArmors().GetArmors(static_cast<enumeration::ArmorIdFlag>(4 * i));
+                data.GetArmors().GetArmors(static_cast<enumeration::ArmorIdFlag>(0b00000001 << i));
             if (armors.empty()) continue;
             CarPredictEkf::ZVec input;
             if (armors.size() == 1) {
@@ -38,7 +36,7 @@ public:
                 const auto armor1_yaw = util::math::get_yaw_from_quaternion(armors[1].orientation);
 
                 const auto tmp_armor0 = data::ArmorGimbalControlSpacing { armors[0].id,
-                    transform * armors[0].position, rotation_transform * armors[0].orientation };    
+                    transform * armors[0].position, rotation_transform * armors[0].orientation };
                 const auto tmp_armor1 = data::ArmorGimbalControlSpacing { armors[1].id,
                     transform * armors[1].position, rotation_transform * armors[1].orientation };
 
@@ -77,9 +75,16 @@ public:
         const world_exe::enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) {
         const auto dt = (time_stamp - last_update_time_stamp_.GetTimeStamp()) / 1.e9;
 
-        predictted_armors_.set(
-            predictors_[util::enumeration::GetIndex(id)].get_predict_output_armor(id, dt),
-            { time_stamp });
+        uint32_t id_index = static_cast<uint32_t>(enumeration::ArmorIdFlag::Hero);
+        std::array<std::vector<data::ArmorGimbalControlSpacing>, 8> armors;
+        for (int i = 0; i < 8; i++)
+            if (enumeration::IsFlagContains(
+                    id, static_cast<enumeration::ArmorIdFlag>(0b00000001 << i)))
+                armors[i] = predictors_[i].get_predict_output_armor(
+                    static_cast<enumeration::CarIDFlag>(0b00000001 << i), dt);
+
+        predictted_armors_.Set(armors, { time_stamp });
+
         return predictted_armors_;
     };
 
@@ -89,6 +94,7 @@ public:
         predictor.SetTimeStamp(last_update_time_stamp_);
         return predictor;
     }
+
 private:
     PredictTimeStamp last_update_time_stamp_ { 0 };
     std::array<CarPredictEkf, 8> predictors_;

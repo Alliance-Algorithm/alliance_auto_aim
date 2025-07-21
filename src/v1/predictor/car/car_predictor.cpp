@@ -18,8 +18,8 @@ public:
     const enumeration::ArmorIdFlag& GetId() const { return id_; }
 
     const interfaces::IArmorInGimbalControl& Predictor(const std::time_t& time_stamp) {
-        target_armors_.set(
-            ekf_.get_predict_output_armor(id_, (time_stamp - create_time_stamp_.GetTimeStamp()) / 1.e9),
+        target_armors_.SetWithSingleId(ekf_.get_predict_output_armor(id_,
+                                           (time_stamp - create_time_stamp_.GetTimeStamp()) / 1.e9),
             time_stamp);
         return target_armors_;
     }
