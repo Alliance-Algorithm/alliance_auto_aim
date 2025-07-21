@@ -10,19 +10,18 @@
 #include <stdexcept>
 #include <string>
 
-using namespace std;
 /// 这玩意全生命周期活跃，直接分配然后丢一边，反正有回调
 class world_exe::v1::SystemV1::SystemV1Impl {
 public:
-    const string RawImageEvent           = "/alliance_auto_aim/cv_mat/raw";
-    const string ArmorIdentifyEvent      = "/alliance_auto_aim/armor_in_image/identified";
-    const string CarIDIdentifyEvent      = "/alliance_auto_aim/car_id_flag/identified";
-    const string IPreDictorUpdatePackage = "/alliance_auto_aim/armor_in_camera/pnp";
+    const std::string raw_image_event         = "/alliance_auto_aim/cv_mat/raw";
+    const std::string ArmorIdentifyEvent      = "/alliance_auto_aim/armor_in_image/identified";
+    const std::string CarIDIdentifyEvent      = "/alliance_auto_aim/car_id_flag/identified";
+    const std::string IPreDictorUpdatePackage = "/alliance_auto_aim/armor_in_camera/pnp";
 
     SystemV1Impl() {
         throw std::runtime_error("No Implement");
 
-        core::EventBus::Subscript<cv::Mat>(RawImageEvent,
+        core::EventBus::Subscript<cv::Mat>(raw_image_event,
 
             [this](const cv::Mat& mat) {
                 const auto& [armors, ids] = identifier_->identify(mat);

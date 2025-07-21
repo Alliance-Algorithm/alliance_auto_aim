@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE "Release")
 
+
 project(alliance_auto_aim VERSION 0.0.1 LANGUAGES CXX)
 
 include_directories(./include)
@@ -32,6 +33,13 @@ target_link_libraries(${PROJECT_NAME}  ${OpenCV_LIBS})
 find_package(Eigen3 REQUIRED)
 INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
 ### Eigen End ===
+
+### TBB ===
+find_package(TBB REQUIRED)
+include_directories(${TBB_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARIES})
+### TBB End ===
+
 
 # 安装库文件
 target_include_directories(${PROJECT_NAME} PUBLIC

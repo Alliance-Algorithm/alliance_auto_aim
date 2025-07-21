@@ -8,7 +8,7 @@ namespace world_exe::interfaces {
 class IIdentifier {
 public:
     /// return : all armors , all armors id
-    virtual const std::tuple<IArmorInImage, enumeration::CarIDFlag> identify(
+    virtual const std::tuple<const IArmorInImage&, enumeration::CarIDFlag> identify(
         const cv::Mat& input_image) = 0;
 };
 }
