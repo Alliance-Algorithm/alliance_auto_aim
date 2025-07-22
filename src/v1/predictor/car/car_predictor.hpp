@@ -4,7 +4,7 @@
 #include "interfaces/car_state.hpp"
 #include "interfaces/predictor.hpp"
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 class CarPredictor : public interfaces::IPredictor {
 public:
     CarPredictor();
@@ -18,6 +18,7 @@ public:
 
     const enumeration::ArmorIdFlag& GetId() const override;
     const interfaces::IArmorInGimbalControl& Predictor(const std::time_t& time_stamp) override;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

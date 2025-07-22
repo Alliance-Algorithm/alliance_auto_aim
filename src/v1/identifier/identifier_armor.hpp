@@ -4,10 +4,10 @@
 #include "interfaces/time_stamped.hpp"
 #include "util/index.hpp"
 
-namespace world_exe::identifier {
+namespace world_exe::v1::identifier {
 class IdentifierArmor : public interfaces::IArmorInImage, public interfaces::ITimeStamped {
 public:
-    IdentifierArmor()=default;
+    IdentifierArmor() = default;
     IdentifierArmor(const std::vector<data::ArmorImageSpacing>& armors) {
         for (const auto armor : armors)
             armors_[util::enumeration::GetIndex(armor.id)].emplace_back(armor);

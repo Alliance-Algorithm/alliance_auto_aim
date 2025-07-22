@@ -5,7 +5,7 @@
 #include "v1/predictor/predict_time_stamp.hpp"
 #include <memory>
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 class CarPredictor::Impl {
 public:
     Impl(const enumeration::CarIDFlag& id, const CarPredictEkf& ekf,

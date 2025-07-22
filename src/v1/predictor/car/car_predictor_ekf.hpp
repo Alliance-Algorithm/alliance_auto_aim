@@ -6,7 +6,7 @@
 #include "util/math.hpp"
 #include <vector>
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 
 class CarPredictEkf : public world_exe::util::Ekf<11, 4, CarPredictEkf> {
 public:

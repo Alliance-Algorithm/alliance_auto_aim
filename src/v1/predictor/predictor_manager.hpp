@@ -2,7 +2,7 @@
 
 #include "interfaces/target_predictor.hpp"
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 class PredictorManager : public world_exe::interfaces::ITargetPredictor {
 public:
     PredictorManager();

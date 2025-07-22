@@ -7,7 +7,7 @@
 #include "predict_time_stamp.hpp"
 #include "util/index.hpp"
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 
 class PredictorManager::Impl {
 public:

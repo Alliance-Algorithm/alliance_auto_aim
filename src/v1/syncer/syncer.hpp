@@ -5,7 +5,7 @@
 #include "interfaces/predictor_update_package.hpp"
 #include "interfaces/sync_block.hpp"
 
-namespace world_exe::sync {
+namespace world_exe::v1::sync {
 class Syncer : public interfaces::ISyncBlock<interfaces::IPreDictorUpdatePackage> {
 public:
     Syncer();

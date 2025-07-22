@@ -6,7 +6,7 @@
 #include <ctime>
 #include <tuple>
 
-namespace world_exe::fire_control::trajectory_solver {
+namespace world_exe::v1::fire_control::trajectory_solver {
 /// returns:
 ///      fly time in nano second
 ///      dir(normalized) in control spacing

@@ -6,7 +6,7 @@
 #include "interfaces/fire_controller.hpp"
 #include "interfaces/predictor.hpp"
 #include <memory>
-namespace world_exe::fire_control {
+namespace world_exe::v1::fire_control {
 class TracingFireControl final : public interfaces::IFireControl {
 public:
     const data::FireControl CalculateTarget(const std::time_t& time_duration) const override;

@@ -2,7 +2,7 @@
 
 #include "interfaces/time_stamped.hpp"
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 class PredictTimeStamp : public interfaces::ITimeStamped {
 public:
     PredictTimeStamp() = default;

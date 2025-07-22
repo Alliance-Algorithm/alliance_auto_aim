@@ -61,16 +61,16 @@ public:
         : pnp_solver_(pnp_solver) {
         using namespace world_exe;
 
-        predictor::PredictorManager* predictor = new predictor::PredictorManager();
-        tracker_                               = *predictor;
-        identifier::Identifier* identifier     = new identifier::Identifier(model_path, "AUTO");
+        v1::predictor::PredictorManager* predictor = new v1::predictor::PredictorManager();
+        tracker_                                   = *predictor;
+        v1::identifier::Identifier* identifier = new v1::identifier::Identifier(model_path, "AUTO");
         identifier_                            = *identifier;
-        fire_control::TracingFireControl* fire_control =
-            new fire_control::TracingFireControl(0.05, 26);
-        fire_control_          = *fire_control;
-        sync::Syncer* sync     = new world_exe::sync::Syncer();
-        sync_                  = *sync;
-        sync::SyncLoad* loader = new sync::SyncLoad();
+        v1::fire_control::TracingFireControl* fire_control =
+            new v1::fire_control::TracingFireControl(0.05, 26);
+        fire_control_              = *fire_control;
+        v1::sync::Syncer* sync     = new world_exe::v1::sync::Syncer();
+        sync_                      = *sync;
+        v1::sync::SyncLoad* loader = new v1::sync::SyncLoad();
         loader->BindBlock(*sync);
 
         core::EventBus::Subscript<cv::Mat>(raw_image_event, //

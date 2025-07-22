@@ -2,7 +2,7 @@
 #include "enum/enum_tools.hpp"
 #include "util/index.hpp"
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 class PredictArmorInGimbalControl::Impl {
 public:
     Impl() = default;

@@ -3,7 +3,7 @@
 #include "update_package.hpp"
 #include <chrono>
 
-namespace world_exe::sync {
+namespace world_exe::v1::sync {
 class Syncer::Impl {
 public:
     Impl() { sync_data_buffer_.reserve(50); }

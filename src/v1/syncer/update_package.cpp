@@ -1,6 +1,6 @@
 #include "update_package.hpp"
 
-namespace world_exe::sync {
+namespace world_exe::v1::sync {
 class PredictorUpdatePackage::Impl : public interfaces::IArmorInCamera, interfaces::ITimeStamped {
 public:
     Impl()

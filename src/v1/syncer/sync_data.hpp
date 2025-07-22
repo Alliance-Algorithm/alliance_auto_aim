@@ -3,7 +3,7 @@
 #include "data/sync_data.hpp"
 #include "interfaces/sync_load.hpp"
 #include "syncer.hpp"
-namespace world_exe::sync {
+namespace world_exe::v1::sync {
 class SyncLoad : public world_exe::interfaces::ISyncLoad<data::CameraGimbalMuzzleSyncData> {
 public:
     void Load(const data::CameraGimbalMuzzleSyncData& data) override {

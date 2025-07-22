@@ -8,7 +8,7 @@
 #include "openvino/core/preprocess/pre_post_process.hpp"
 #include "openvino/runtime/core.hpp"
 
-namespace world_exe::identifier {
+namespace world_exe::v1::identifier {
 class Identifier::Impl {
 public:
     explicit Impl(const std::string& model_path, const std::string& device) {

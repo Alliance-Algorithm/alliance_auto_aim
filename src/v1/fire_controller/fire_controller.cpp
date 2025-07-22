@@ -10,7 +10,7 @@
 #include <memory>
 #include <stdexcept>
 
-class world_exe::fire_control::TracingFireControl::TracingFireSelectImpl {
+class world_exe::v1::fire_control::TracingFireControl::TracingFireSelectImpl {
 public:
     TracingFireSelectImpl(const interfaces::IArmorInCamera& armors)
         : armors_(armors) { }
@@ -39,10 +39,10 @@ private:
     world_exe::enumeration::CarIDFlag tracing_ = enumeration::CarIDFlag::None;
     const interfaces::IArmorInCamera& armors_;
 };
-class world_exe::fire_control::TracingFireControl::TracingFireCalculateImpl {
+class world_exe::v1::fire_control::TracingFireControl::TracingFireCalculateImpl {
 
 public:
-    TracingFireCalculateImpl( interfaces::IPredictor& predictor)
+    TracingFireCalculateImpl(interfaces::IPredictor& predictor)
         : predictor_(predictor) { }
     const world_exe::data::FireControl CalculateTarget(const std::time_t& time_duration,
         const time_t& time_predict_point, const time_t& control_delay_, double velocity_begin,
@@ -83,7 +83,7 @@ private:
 };
 
 const world_exe::data::FireControl //
-world_exe::fire_control::TracingFireControl::CalculateTarget(
+world_exe::v1::fire_control::TracingFireControl::CalculateTarget(
     const std::time_t& time_duration) const {
     if (p_calc_impl_ != nullptr) [[unlikely]]
         return no_allow_;
@@ -92,34 +92,34 @@ world_exe::fire_control::TracingFireControl::CalculateTarget(
 }
 
 const world_exe::enumeration::CarIDFlag
-world_exe::fire_control::TracingFireControl::GetAttackCarId() const {
+world_exe::v1::fire_control::TracingFireControl::GetAttackCarId() const {
     if (p_select_impl_ != nullptr) [[unlikely]]
         return p_select_impl_->GetAttackCarId();
     return world_exe::enumeration::CarIDFlag::None;
 }
-world_exe::fire_control::TracingFireControl::TracingFireControl(
+world_exe::v1::fire_control::TracingFireControl::TracingFireControl(
     double t, double velocity_begin, double gravity)
     : velocity_begin_(velocity_begin)
     , gravity_(gravity) {
     control_delay_ = static_cast<time_t>(t * 1E9);
 }
 
-void world_exe::fire_control::TracingFireControl::SetArmorsInGimbalControl(
+void world_exe::v1::fire_control::TracingFireControl::SetArmorsInGimbalControl(
     const interfaces::IArmorInCamera& armors) {
     p_select_impl_ = std::make_unique<TracingFireSelectImpl>(armors);
 }
 
-void world_exe::fire_control::TracingFireControl::SetPredictor(
-     interfaces::IPredictor& predictor) {
+void world_exe::v1::fire_control::TracingFireControl::SetPredictor(
+    interfaces::IPredictor& predictor) {
     p_calc_impl_ = std::make_unique<TracingFireCalculateImpl>(predictor);
 }
 
-void world_exe::fire_control::TracingFireControl::SetTargetCarID(
+void world_exe::v1::fire_control::TracingFireControl::SetTargetCarID(
     const world_exe::enumeration::CarIDFlag& tracing_id) {
     if (p_select_impl_ != nullptr) [[unlikely]]
         p_select_impl_->SetTargetCarID(tracing_id);
 }
 
-void world_exe::fire_control::TracingFireControl::SetTimeStamp(const time_t& time) {
+void world_exe::v1::fire_control::TracingFireControl::SetTimeStamp(const time_t& time) {
     time_stamp_ = time;
 }

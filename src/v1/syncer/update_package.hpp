@@ -3,7 +3,7 @@
 #include "interfaces/armor_in_camera.hpp"
 #include "interfaces/predictor_update_package.hpp"
 
-namespace world_exe::sync {
+namespace world_exe::v1::sync {
 class PredictorUpdatePackage : public interfaces::IPreDictorUpdatePackage {
 public:
     PredictorUpdatePackage();

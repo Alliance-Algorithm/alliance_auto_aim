@@ -3,7 +3,7 @@
 #include "interfaces/armor_in_gimbal_control.hpp"
 #include "predict_time_stamp.hpp"
 
-namespace world_exe::predictor {
+namespace world_exe::v1::predictor {
 class PredictArmorInGimbalControl : public world_exe::interfaces::IArmorInGimbalControl {
 public:
     PredictArmorInGimbalControl();

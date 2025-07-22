@@ -2,7 +2,7 @@
 
 #include "interfaces/identifier.hpp"
 
-namespace world_exe::identifier {
+namespace world_exe::v1::identifier {
 class Identifier : public interfaces::IIdentifier {
 public:
     Identifier(const std::string& model_path, const std::string& device);
