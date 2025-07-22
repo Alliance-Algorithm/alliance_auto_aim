@@ -5,21 +5,21 @@
 
 namespace world_exe::pnpsolver {
 
-class ArmorPnPSolver final:public interfaces::IPnpSolver, public  interfaces::IArmorInCamera ,public interfaces::ITimeStamped{
+class ArmorIPPEPnPSolver final : public interfaces::IPnpSolver,
+                                 public interfaces::IArmorInCamera,
+                                 public interfaces::ITimeStamped {
 public:
     void set_time_point(const std::time_t& time_point);
 
-    const  interfaces::IArmorInCamera& SolvePnp(const interfaces::IArmorInImage& armor) override;
-    const ITimeStamped& GetTimeStamped() const override ;
+    const interfaces::IArmorInCamera& SolvePnp(const interfaces::IArmorInImage& armor) override;
+    const ITimeStamped& GetTimeStamped() const override;
     const std::time_t& GetTimeStamp() const override;
     const std::vector<data::ArmorCameraSpacing>& GetArmors(
         const enumeration::ArmorIdFlag& armor_id) const override;
 
-
 private:
-    class StaticImpl  ;
-    std::unique_ptr<StaticImpl> pimpl_;
     std::time_t time_point_;
-    std::vector<data::ArmorCameraSpacing> armors_[static_cast<int>(enumeration::ArmorIdFlag::Count)];
+    std::vector<data::ArmorCameraSpacing>
+        armors_[static_cast<int>(enumeration::ArmorIdFlag::Count)];
 };
 }

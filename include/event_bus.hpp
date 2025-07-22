@@ -15,7 +15,7 @@ public:
     enum class BusStatus : int { OK, Block = -1, NoSubscriptor = 1 };
 
     template <class TData>
-    static const world_exe::core::EventBus::BusStatus Publish(
+    static world_exe::core::EventBus::BusStatus Publish(
         const std::string event_name, const TData& data) {
         return EventBusImpl<TData>::GetInstance().Publish(event_name, data);
     }
@@ -37,7 +37,7 @@ private:
             delegates = {};
 
     public:
-        const world_exe::core::EventBus::BusStatus Publish(
+        world_exe::core::EventBus::BusStatus Publish(
             const std::string& event_name, const TData& data) {
             if (!delegates.contains(event_name)) [[unlikely]] {
                 return EventBus::BusStatus::NoSubscriptor;
