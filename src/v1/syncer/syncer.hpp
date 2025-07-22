@@ -1,6 +1,6 @@
 #pragma once
 
-#include "data/rmcs_sync_data.hpp"
+#include "data/sync_data.hpp"
 #include "interfaces/armor_in_camera.hpp"
 #include "interfaces/predictor_update_package.hpp"
 #include "interfaces/sync_block.hpp"
@@ -18,7 +18,7 @@ public:
 
     void SetMainData(const interfaces::IArmorInCamera& armor_in_camera);
 
-    void LoadCallback(const data::SyncData& data) const;
+    void LoadCallback(const data::CameraGimbalMuzzleSyncData& data) const;
 
 private:
     class Impl;

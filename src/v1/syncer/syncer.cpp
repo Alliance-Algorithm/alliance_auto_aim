@@ -1,6 +1,5 @@
 
 #include "syncer.hpp"
-#include "data/rmcs_sync_data.hpp"
 #include "update_package.hpp"
 #include <chrono>
 
@@ -40,7 +39,7 @@ public:
         predict_update_package_.SetArmor(armor_in_camera);
     }
 
-    void LoadCallback(const data::SyncData& data) {
+    void LoadCallback(const data::CameraGimbalMuzzleSyncData& data) {
         std::lock_guard<std::mutex> lock(mutex_);
         sync_data_buffer_.emplace_back(data);
     }
@@ -53,7 +52,7 @@ private:
     static constexpr std::time_t threshold = 1e6;
 
     std::mutex mutex_;
-    std::vector<data::SyncData> sync_data_buffer_;
+    std::vector<data::CameraGimbalMuzzleSyncData> sync_data_buffer_;
 };
 
 Syncer::Syncer()
@@ -71,7 +70,9 @@ void Syncer::SetMainData(const interfaces::IArmorInCamera& armor_in_camera) {
     return pimpl_->SetMainData(armor_in_camera);
 }
 
-void Syncer::LoadCallback(const data::SyncData& data) const { return pimpl_->LoadCallback(data); }
+void Syncer::LoadCallback(const data::CameraGimbalMuzzleSyncData& data) const {
+    return pimpl_->LoadCallback(data);
+}
 
 Syncer::~Syncer() = default;
 }

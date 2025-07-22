@@ -1,12 +1,12 @@
 #pragma once
 
-#include "data/rmcs_sync_data.hpp"
+#include "data/sync_data.hpp"
 #include "interfaces/sync_load.hpp"
 #include "syncer.hpp"
 namespace world_exe::sync {
-class SyncLoad : public world_exe::interfaces::ISyncLoad<data::SyncData> {
+class SyncLoad : public world_exe::interfaces::ISyncLoad<data::CameraGimbalMuzzleSyncData> {
 public:
-    void Load(const data::SyncData& data) override {
+    void Load(const data::CameraGimbalMuzzleSyncData& data) override {
         sync_data_ = data;
         load_callback_();
     };
@@ -17,6 +17,6 @@ public:
 
 private:
     std::function<void()> load_callback_;
-    data::SyncData sync_data_;
+    data::CameraGimbalMuzzleSyncData sync_data_;
 };
 }
