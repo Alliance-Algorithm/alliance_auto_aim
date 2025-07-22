@@ -1,4 +1,4 @@
-@startuml SystemV1事件总线流图
+@startuml SystemV1 workflow
 skinparam roundCorner 10
 skinparam shadowing false
 skinparam defaultFontName Arial
@@ -8,7 +8,7 @@ skinparam component {
     ArrowColor #4169E1
 }
 
-title SystemV1事件总线流图
+title SystemV1 workflow
 
 
 package "Outers"{

@@ -48,8 +48,12 @@ const Eigen::Affine3d& PredictorUpdatePackage::GetTransform() const {
 void PredictorUpdatePackage::SetArmor(const interfaces::IArmorInCamera& armor_in_camera) {
     return pimpl_->SetArmor(armor_in_camera);
 }
-void SetTransform(const Eigen::Affine3d& transform);
-void SetTimeStamp(const std::time_t& time_stamp);
+void PredictorUpdatePackage::SetTransform(const Eigen::Affine3d& transform) {
+    pimpl_->SetTransform(transform);
+}
+void PredictorUpdatePackage::SetTimeStamp(const std::time_t& time_stamp) {
+    pimpl_->SetTimeStamp(time_stamp);
+}
 
 PredictorUpdatePackage::~PredictorUpdatePackage() { };
 }

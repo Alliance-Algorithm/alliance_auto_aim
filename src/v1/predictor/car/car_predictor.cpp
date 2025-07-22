@@ -56,11 +56,11 @@ const interfaces::IArmorInGimbalControl& CarPredictor::Predictor(const std::time
     return pimpl_->Predictor(time_stamp);
 }
 
-inline void CarPredictor::SetId(const enumeration::CarIDFlag& id) { return pimpl_->SetId(id); }
+void CarPredictor::SetId(const enumeration::CarIDFlag& id) { return pimpl_->SetId(id); }
 
-inline void CarPredictor::SetEkf(const CarPredictEkf& ekf) { return pimpl_->SetEkf(ekf); }
+void CarPredictor::SetEkf(const CarPredictEkf& ekf) { return pimpl_->SetEkf(ekf); }
 
-inline void CarPredictor::SetTimeStamp(const interfaces::ITimeStamped& time_stamp) {
+void CarPredictor::SetTimeStamp(const interfaces::ITimeStamped& time_stamp) {
     return pimpl_->SetTimeStamp(time_stamp);
 };
 }
