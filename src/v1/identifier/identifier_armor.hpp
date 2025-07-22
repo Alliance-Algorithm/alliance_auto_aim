@@ -1,11 +1,11 @@
 #pragma once
 
 #include "interfaces/armor_in_image.hpp"
-#include "identifier_time_stamp.hpp"
+#include "interfaces/time_stamped.hpp"
 #include "util/index.hpp"
 
 namespace world_exe::identifier {
-class IdentifierArmor : public interfaces::IArmorInImage {
+class IdentifierArmor : public interfaces::IArmorInImage, public interfaces::ITimeStamped {
 public:
     IdentifierArmor()=default;
     IdentifierArmor(const std::vector<data::ArmorImageSpacing>& armors) {
@@ -13,7 +13,9 @@ public:
             armors_[util::enumeration::GetIndex(armor.id)].emplace_back(armor);
     }
 
-    const interfaces::ITimeStamped& GetTimeStamped() const override { return time_stamp_; }
+    const interfaces::ITimeStamped& GetTimeStamped() const override { return *this; }
+
+    const std::time_t& GetTimeStamp() const override { return time_stamp_; };
 
     void SetArmors(const std::vector<data::ArmorImageSpacing>& armors) {
         for (auto& armors : armors_)
@@ -28,7 +30,7 @@ public:
     }
 
 private:
-    IdentifierTimeStamp time_stamp_;
+    std::time_t time_stamp_ { 0 };
     std::array<std::vector<data::ArmorImageSpacing>, 8> armors_;
 };
 }

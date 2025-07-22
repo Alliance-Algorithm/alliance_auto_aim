@@ -1,4 +1,5 @@
 #include "./auto_aim_system_v1.hpp"
+#include "eigen3/Eigen/Dense"
 #include "concepts/pnp_solver.hpp"
 #include "data/fire_control.hpp"
 #include "event_bus.hpp"
@@ -131,7 +132,7 @@ public:
                                          "here");
             });
 
-        core::EventBus::Subscript<Eigen::Affine3d>(camera_to_gimbal_control_spacing_event, //
+        core::EventBus::Subscript<Eigen::Affine3d>(gimbal_control_to_muzzle_event, //
             [this](const auto& data) {
                 throw std::runtime_error("you should set sync component camera_capture_end "
                                          "here");
