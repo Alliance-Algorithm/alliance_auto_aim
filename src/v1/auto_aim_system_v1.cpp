@@ -16,61 +16,34 @@
 #include "interfaces/predictor_update_package.hpp"
 #include "interfaces/sync_block.hpp"
 #include "interfaces/target_predictor.hpp"
+#include "parameters.hpp"
 #include "predictor/predictor_manager.hpp"
 #include "v1/syncer/sync_data.hpp"
 #include "v1/syncer/syncer.hpp"
 #include <chrono>
 #include <opencv2/core/mat.hpp>
-
 class world_exe::v1::SystemV1::SystemV1ImplBase { };
 
 /// 这玩意全生命周期活跃，直接分配然后丢一边，反正有回调
 template <world_exe::concepts::concept_pnp_solver TPnpSolver>
 class SystemV1Impl : public world_exe::v1::SystemV1::SystemV1ImplBase {
 public:
-    const std::string raw_image_event //
-        = "/alliance_auto_aim/cv_mat/raw";
-
-    const std::string armors_in_image_identify_event //
-        = "/alliance_auto_aim/armor_in_image/identified";
-
-    const std::string car_id_identify_event //
-        = "/alliance_auto_aim/car_id_flag/identified";
-
-    const std::string camera_capture_transforms //
-        = "/alliance_auto_aim/sync/cpature/begin";
-
-    const std::string armors_in_camera_pnp_event //
-        = "/alliance_auto_aim/armor_in_camera/pnp";
-
-    const std::string car_tracing_event //
-        = "/alliance_auto_aim/state/car_tracing";
-
-    const std::string tracker_update_event //
-        = "/alliance_auto_aim/tracker/update_package";
-
-    const std::string get_lastest_predictor_event //
-        = "/alliance_auto_aim/tracker/lastest_predictor";
-
-    const std::string tracker_current_armors_event //
-        = "/alliance_auto_aim/tracker/armors_detected_current";
-
-    const std::string model_path = "/alliance_auto_aim/tracker/armors_detected_current";
-
     SystemV1Impl(TPnpSolver& pnp_solver)
         : pnp_solver_(pnp_solver) {
         using namespace world_exe;
+        using namespace v1;
+        using namespace v1::parameters;
 
-        v1::predictor::PredictorManager* predictor = new v1::predictor::PredictorManager();
-        tracker_                                   = *predictor;
-        v1::identifier::Identifier* identifier = new v1::identifier::Identifier(model_path, "AUTO");
+        predictor::PredictorManager* predictor = new predictor::PredictorManager();
+        tracker_                               = *predictor;
+        identifier::Identifier* identifier     = new identifier::Identifier(model_path, device);
         identifier_                            = *identifier;
-        v1::fire_control::TracingFireControl* fire_control =
-            new v1::fire_control::TracingFireControl(0.05, 26);
-        fire_control_              = *fire_control;
-        v1::sync::Syncer* sync     = new world_exe::v1::sync::Syncer();
-        sync_                      = *sync;
-        v1::sync::SyncLoad* loader = new v1::sync::SyncLoad();
+        fire_control::TracingFireControl* fire_control =
+            new fire_control::TracingFireControl(control_delay_in_second, velocity_begin, gravity);
+        fire_control_          = *fire_control;
+        sync::Syncer* sync     = new sync::Syncer();
+        sync_                  = *sync;
+        sync::SyncLoad* loader = new sync::SyncLoad();
         loader->BindBlock(*sync);
 
         core::EventBus::Subscript<cv::Mat>(raw_image_event, //
