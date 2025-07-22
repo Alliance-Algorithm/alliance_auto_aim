@@ -1,8 +1,6 @@
-#include "./auto_aim_system_v1.hpp"
-#include "concepts/pnp_solver.hpp"
+
 #include "data/fire_control.hpp"
 #include "data/sync_data.hpp"
-#include "eigen3/Eigen/Dense"
 #include "event_bus.hpp"
 #include "fire_controller/fire_controller.hpp"
 #include "identifier/identifier.hpp"
@@ -18,12 +16,20 @@
 #include "interfaces/target_predictor.hpp"
 #include "parameters.hpp"
 #include "predictor/predictor_manager.hpp"
-#include "v1/state_machine/state_machine.hpp"
-#include "v1/syncer/sync_data.hpp"
-#include "v1/syncer/syncer.hpp"
+
+#include "./auto_aim_system_v1.hpp"
+#include "./state_machine/state_machine.hpp"
+#include "./syncer/sync_data.hpp"
+#include "./syncer/syncer.hpp"
+
+
+#include <opencv2/core/mat.hpp>
+
+
+#include "eigen3/Eigen/Dense"
+
 #include <cassert>
 #include <chrono>
-#include <opencv2/core/mat.hpp>
 #include <stdexcept>
 
 /// 这玩意全生命周期活跃，直接分配然后丢一边，反正有回调
