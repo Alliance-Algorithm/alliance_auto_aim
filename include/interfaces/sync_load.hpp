@@ -8,6 +8,6 @@ namespace world_exe::interfaces {
 template <class T> class ISyncLoad {
 
 public:
-    void Load(const T& data) = 0;
+    virtual void Load(const T& data) = 0;
 };
 }

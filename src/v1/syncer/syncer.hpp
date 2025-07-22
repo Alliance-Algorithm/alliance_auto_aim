@@ -1,15 +1,11 @@
 #pragma once
 
+#include "data/rmcs_sync_data.hpp"
 #include "interfaces/armor_in_camera.hpp"
 #include "interfaces/predictor_update_package.hpp"
 #include "interfaces/sync_block.hpp"
 
 namespace world_exe::sync {
-struct SyncData {
-    std::time_t camera_capture_begin_time_stamp;
-    Eigen::Affine3d camera_to_gimbal;
-    Eigen::Affine3d gimbal_to_muzzle;
-};
 class Syncer : public interfaces::ISyncBlock<interfaces::IPreDictorUpdatePackage> {
 public:
     Syncer();
@@ -22,7 +18,7 @@ public:
 
     void SetMainData(const interfaces::IArmorInCamera& armor_in_camera);
 
-    void LoadCallback(const SyncData& data) const;
+    void LoadCallback(const data::SyncData& data) const;
 
 private:
     class Impl;

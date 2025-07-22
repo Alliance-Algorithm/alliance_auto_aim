@@ -1,22 +1,22 @@
 #pragma once
 
+#include "data/rmcs_sync_data.hpp"
 #include "interfaces/sync_load.hpp"
 #include "syncer.hpp"
-
-namespace world_exe::interfaces {
-template <> class ISyncLoad<sync::SyncData> {
+namespace world_exe::sync {
+class SyncLoad : public world_exe::interfaces::ISyncLoad<data::SyncData> {
 public:
-    void Load(const sync::SyncData& data) {
+    void Load(const data::SyncData& data) override {
         sync_data_ = data;
         load_callback_();
     };
 
-    void BindBlock(const sync::Syncer& syncer) {
+    void BindBlock(const Syncer& syncer) {
         load_callback_ = [&]() { syncer.LoadCallback(sync_data_); };
     }
 
 private:
     std::function<void()> load_callback_;
-    sync::SyncData sync_data_;
+    data::SyncData sync_data_;
 };
 }
