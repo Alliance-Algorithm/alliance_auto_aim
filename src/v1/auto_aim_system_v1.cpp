@@ -1,6 +1,7 @@
 #include "./auto_aim_system_v1.hpp"
 #include "concepts/pnp_solver.hpp"
 #include "data/fire_control.hpp"
+#include "data/sync_data.hpp"
 #include "eigen3/Eigen/Dense"
 #include "event_bus.hpp"
 #include "fire_controller/fire_controller.hpp"
@@ -16,9 +17,10 @@
 #include "interfaces/sync_block.hpp"
 #include "interfaces/target_predictor.hpp"
 #include "predictor/predictor_manager.hpp"
+#include "v1/syncer/sync_data.hpp"
+#include "v1/syncer/syncer.hpp"
 #include <chrono>
 #include <opencv2/core/mat.hpp>
-#include <stdexcept>
 
 class world_exe::v1::SystemV1::SystemV1ImplBase { };
 
@@ -35,17 +37,8 @@ public:
     const std::string car_id_identify_event //
         = "/alliance_auto_aim/car_id_flag/identified";
 
-    const std::string camera_to_gimbal_control_spacing_event //
-        = "/alliance_auto_aim/transfrom/camera_to_gimbal_control";
-
-    const std::string gimbal_control_to_muzzle_event //
-        = "/alliance_auto_aim/transfrom/gimbal_control_to_muzzle";
-
-    const std::string camera_capture_end_time_stamp_event //
-        = "/alliance_auto_aim/camera/cpature/end";
-
-    const std::string camera_capture_begin_time_stamp_event //
-        = "/alliance_auto_aim/camera/cpature/begin";
+    const std::string camera_capture_transforms //
+        = "/alliance_auto_aim/sync/cpature/begin";
 
     const std::string armors_in_camera_pnp_event //
         = "/alliance_auto_aim/armor_in_camera/pnp";
@@ -66,7 +59,6 @@ public:
 
     SystemV1Impl(TPnpSolver& pnp_solver)
         : pnp_solver_(pnp_solver) {
-        throw std::runtime_error("No Implement");
         using namespace world_exe;
 
         predictor::PredictorManager* predictor = new predictor::PredictorManager();
@@ -75,7 +67,11 @@ public:
         identifier_                            = *identifier;
         fire_control::TracingFireControl* fire_control =
             new fire_control::TracingFireControl(0.05, 26);
-        fire_control_ = *fire_control;
+        fire_control_          = *fire_control;
+        sync::Syncer* sync     = new world_exe::sync::Syncer();
+        sync_                  = *sync;
+        sync::SyncLoad* loader = new sync::SyncLoad();
+        loader->BindBlock(*sync);
 
         core::EventBus::Subscript<cv::Mat>(raw_image_event, //
             [this](const auto& data) {
@@ -108,34 +104,16 @@ public:
 
         core::EventBus::Subscript<interfaces::IArmorInCamera>(armors_in_camera_pnp_event, //
             [this](const auto& data) {
-                throw std::runtime_error("you should set sync component armor_in_camera here");
                 const auto& [predictor, flag] = sync_.await();
                 if (flag)
                     core::EventBus::Publish<interfaces::IPreDictorUpdatePackage>( //
                         tracker_update_event, predictor);
             });
 
-        core::EventBus::Subscript<std::time_t>(camera_capture_begin_time_stamp_event, //
-            [this](const auto& data) {
-                throw std::runtime_error("you should set sync component camera_capture_begin here");
+        core::EventBus::Subscript<data::CameraGimbalMuzzleSyncData>(camera_capture_transforms, //
+            [this, &loader](const auto& data) {
                 time_point_ = std::chrono::steady_clock::now();
-            });
-
-        core::EventBus::Subscript<Eigen::Affine3d>(camera_to_gimbal_control_spacing_event, //
-            [this](const auto& data) {
-                throw std::runtime_error("you should set sync component camera_to_gimbal here");
-            });
-
-        core::EventBus::Subscript<std::time_t>(camera_capture_end_time_stamp_event, //
-            [this](const auto& data) {
-                throw std::runtime_error("you should set sync component camera_capture_end "
-                                         "here");
-            });
-
-        core::EventBus::Subscript<Eigen::Affine3d>(gimbal_control_to_muzzle_event, //
-            [this](const auto& data) {
-                throw std::runtime_error("you should set sync component camera_capture_end "
-                                         "here");
+                loader->Load(data);
             });
 
         core::EventBus::Subscript<interfaces::IPreDictorUpdatePackage>(tracker_update_event, //
