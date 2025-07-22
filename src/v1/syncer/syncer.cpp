@@ -63,7 +63,9 @@ std::tuple<const interfaces::IPreDictorUpdatePackage&, bool> Syncer::await(doubl
     return pimpl_->await(t_second);
 }
 
-void Syncer::setTimeStamp(const std::time_t& time) { return pimpl_->setTimeStamp(time); }
+void Syncer::SetCameraCaptureEndTimeStamp(const std::time_t& time) {
+    return pimpl_->setTimeStamp(time);
+}
 
 void Syncer::SetMainData(const interfaces::IArmorInCamera& armor_in_camera) {
     return pimpl_->SetMainData(armor_in_camera);

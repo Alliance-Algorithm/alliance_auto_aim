@@ -14,7 +14,7 @@ public:
     std::tuple<const interfaces::IPreDictorUpdatePackage&, bool> await(
         double t_second = 2) override;
 
-    void setTimeStamp(const std::time_t& time);
+    void SetCameraCaptureEndTimeStamp(const std::time_t& time);
 
     void SetMainData(const interfaces::IArmorInCamera& armor_in_camera);
 
