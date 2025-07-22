@@ -52,7 +52,8 @@ CarPredictor::~CarPredictor() = default;
 
 const enumeration::ArmorIdFlag& CarPredictor::GetId() const { return pimpl_->GetId(); }
 
-const interfaces::IArmorInGimbalControl& CarPredictor::Predictor(const std::time_t& time_stamp) {
+const interfaces::IArmorInGimbalControl& CarPredictor::Predictor(
+    const std::time_t& time_stamp) const {
     return pimpl_->Predictor(time_stamp);
 }
 

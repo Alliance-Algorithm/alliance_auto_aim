@@ -4,6 +4,7 @@
 #include "enum/armor_id.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/armor_in_camera.hpp"
+#include "interfaces/armor_in_gimbal_control.hpp"
 #include "interfaces/car_state.hpp"
 #include "interfaces/predictor.hpp"
 #include "trajectory.hpp"
@@ -12,7 +13,7 @@
 
 class world_exe::v1::fire_control::TracingFireControl::TracingFireSelectImpl {
 public:
-    TracingFireSelectImpl(const interfaces::IArmorInCamera& armors)
+    TracingFireSelectImpl(const interfaces::IArmorInGimbalControl& armors)
         : armors_(armors) { }
     const enumeration::CarIDFlag GetAttackCarId() const {
         double max_dot = -2;
@@ -37,12 +38,12 @@ public:
 
 private:
     world_exe::enumeration::CarIDFlag tracing_ = enumeration::CarIDFlag::None;
-    const interfaces::IArmorInCamera& armors_;
+    const interfaces::IArmorInGimbalControl& armors_;
 };
 class world_exe::v1::fire_control::TracingFireControl::TracingFireCalculateImpl {
 
 public:
-    TracingFireCalculateImpl(interfaces::IPredictor& predictor)
+    TracingFireCalculateImpl(const interfaces::IPredictor& predictor)
         : predictor_(predictor) { }
     const world_exe::data::FireControl CalculateTarget(const std::time_t& time_duration,
         const time_t& time_predict_point, const time_t& control_delay_, double velocity_begin,
@@ -79,7 +80,7 @@ public:
     }
 
 private:
-    interfaces::IPredictor& predictor_;
+    const interfaces::IPredictor& predictor_;
 };
 
 const world_exe::data::FireControl //
@@ -105,12 +106,12 @@ world_exe::v1::fire_control::TracingFireControl::TracingFireControl(
 }
 
 void world_exe::v1::fire_control::TracingFireControl::SetArmorsInGimbalControl(
-    const interfaces::IArmorInCamera& armors) {
+    const interfaces::IArmorInGimbalControl& armors) {
     p_select_impl_ = std::make_unique<TracingFireSelectImpl>(armors);
 }
 
 void world_exe::v1::fire_control::TracingFireControl::SetPredictor(
-    interfaces::IPredictor& predictor) {
+    const interfaces::IPredictor& predictor) {
     p_calc_impl_ = std::make_unique<TracingFireCalculateImpl>(predictor);
 }
 

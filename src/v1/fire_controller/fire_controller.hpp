@@ -1,7 +1,6 @@
 #pragma once
 
 #include "data/fire_control.hpp"
-#include "interfaces/armor_in_camera.hpp"
 #include "interfaces/car_state.hpp"
 #include "interfaces/fire_controller.hpp"
 #include "interfaces/predictor.hpp"
@@ -11,8 +10,8 @@ class TracingFireControl final : public interfaces::IFireControl {
 public:
     const data::FireControl CalculateTarget(const std::time_t& time_duration) const override;
     const enumeration::CarIDFlag GetAttackCarId() const override;
-    void SetArmorsInGimbalControl(const interfaces::IArmorInCamera& armors);
-    void SetPredictor(interfaces::IPredictor& predictor);
+    void SetArmorsInGimbalControl(const interfaces::IArmorInGimbalControl& armors);
+    void SetPredictor(const interfaces::IPredictor& predictor);
     void SetTargetCarID(const enumeration::CarIDFlag& tracing_id);
     void SetTimeStamp(const time_t& time);
     TracingFireControl(

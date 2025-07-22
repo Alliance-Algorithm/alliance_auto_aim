@@ -7,7 +7,7 @@ namespace world_exe::interfaces {
 class ICarState {
 
 public:
-    virtual const ICarState& Update(const enumeration::CarIDFlag& car_detected);
-    virtual const enumeration::CarIDFlag& GetAllowdToFires() const = 0;
+    virtual const ICarState& Update(const enumeration::CarIDFlag& car_detected) = 0;
+    virtual const enumeration::CarIDFlag& GetAllowdToFires() const              = 0;
 };
 }

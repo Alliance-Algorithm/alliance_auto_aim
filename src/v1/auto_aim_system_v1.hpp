@@ -5,10 +5,10 @@ class SystemV1 {
 public:
     static void Build();
 
-    class SystemV1ImplBase;
+    class SystemV1Impl;
 
 private:
-    static SystemV1ImplBase* instance_;
+    static SystemV1Impl* instance_;
 
     SystemV1()                = default;
     SystemV1(const SystemV1&) = delete;
