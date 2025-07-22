@@ -2,6 +2,7 @@
 #include "concepts/pnp_solver.hpp"
 #include "data/fire_control.hpp"
 #include "event_bus.hpp"
+#include "fire_controller/fire_controller.hpp"
 #include "identifier/identifier.hpp"
 #include "interfaces/armor_in_camera.hpp"
 #include "interfaces/armor_in_gimbal_control.hpp"
@@ -71,6 +72,9 @@ public:
         tracker_                               = *predictor;
         identifier::Identifier* identifier     = new identifier::Identifier(model_path, "AUTO");
         identifier_                            = *identifier;
+        fire_control::TracingFireControl* fire_control =
+            new fire_control::TracingFireControl(0.05, 26);
+        fire_control_ = *fire_control;
 
         core::EventBus::Subscript<cv::Mat>(raw_image_event, //
             [this](const auto& data) {
@@ -95,8 +99,8 @@ public:
             });
 
         core::EventBus::Subscript<enumeration::CarIDFlag>(car_tracing_event, //
-            [this](const auto& data) {
-                throw std::runtime_error("you should set fire_controller target here");
+            [this, &fire_control](const auto& data) {
+                fire_control->SetTargetCarID(data);
                 core::EventBus::Subscript<interfaces::IArmorInGimbalControl>(
                     tracker_current_armors_event, tracker_.Predict(data, 0));
             });
@@ -113,7 +117,6 @@ public:
         core::EventBus::Subscript<std::time_t>(camera_capture_begin_time_stamp_event, //
             [this](const auto& data) {
                 throw std::runtime_error("you should set sync component camera_capture_begin here");
-                throw std::runtime_error("you should reset fire control time here here");
                 time_point_ = std::chrono::steady_clock::now();
             });
 
@@ -135,12 +138,15 @@ public:
             });
 
         core::EventBus::Subscript<interfaces::IPreDictorUpdatePackage>(tracker_update_event, //
-            [this](const auto& data) { tracker_.Update(data); });
+            [this, &fire_control](const auto& data) {
+                fire_control->SetTimeStamp(data.GetTimeStamp());
+                tracker_.Update(data);
+            });
 
         core::EventBus::Subscript<interfaces::IArmorInGimbalControl>(
             tracker_current_armors_event, //
-            [this](const auto& data) {
-                throw std::runtime_error("fire control calculate target here");
+            [this, &fire_control](const auto& data) {
+                fire_control->SetArmorsInGimbalControl(data);
                 core::EventBus::Publish<enumeration::CarIDFlag>(
                     get_lastest_predictor_event, fire_control_.GetAttackCarId());
             });
@@ -151,8 +157,8 @@ public:
                     get_lastest_predictor_event, tracker_.GetPredictor(data));
             });
         core::EventBus::Subscript<interfaces::IPredictor>(get_lastest_predictor_event, //
-            [this](const auto& data) {
-                throw std::runtime_error("fire control set predictor here");
+            [this, &fire_control](const auto& data) {
+                fire_control->SetPredictor(data);
                 core::EventBus::Publish<data::FireControl>(get_lastest_predictor_event,
                     fire_control_.CalculateTarget(
                         (std::chrono::steady_clock::now() - time_point_).count()));

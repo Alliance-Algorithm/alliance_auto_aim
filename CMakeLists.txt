@@ -45,6 +45,13 @@ find_package(OpenVINO REQUIRED)
 target_link_libraries(${PROJECT_NAME} openvino::runtime)
 ### OpenVINO End ===
 
+### ceres ===
+find_package(Ceres REQUIRED)
+include_directories(${CERES_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
+### ceres End ===
+
+
 # 安装库文件
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

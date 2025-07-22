@@ -7,7 +7,7 @@
 namespace world_exe::interfaces {
 class IFireControl {
 public:
-    virtual const data::FireControl& CalculateTarget(const std::time_t& current) const = 0;
-    virtual const enumeration::CarIDFlag GetAttackCarId() const                        = 0;
+    virtual const data::FireControl CalculateTarget(const std::time_t& time_duration) const = 0;
+    virtual const enumeration::CarIDFlag GetAttackCarId() const                             = 0;
 };
 }
