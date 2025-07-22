@@ -11,7 +11,12 @@
 namespace world_exe::v1::identifier {
 class Identifier::Impl {
 public:
-    explicit Impl(const std::string& model_path, const std::string& device) {
+    explicit Impl(const std::string& model_path, const std::string& device,
+        const int& image_width = 1440, const int& image_height = 1080)
+        : image_width_(image_width)
+        , image_height_(image_height)
+        , width_ratio_(static_cast<double>(image_width_) / model_image_width_)
+        , height_ratio_(static_cast<double>(image_height_) / model_image_height_) {
         ov::Core core_;
         const auto adevice = core_.get_available_devices();
         auto model_        = core_.read_model(model_path);
@@ -44,6 +49,10 @@ public:
         const cv::Mat& input_image) {
         const auto armor_infos = model_infer(input_image);
         return matchPlate(input_image, armor_infos);
+    }
+
+    inline void set_match_magnification_ratio(const double& ratio) {
+        match_magnification_ratio_ = ratio;
     }
 
 private:
@@ -283,22 +292,22 @@ private:
 
     static constexpr int model_image_height_ = 640;
     static constexpr int model_image_width_  = 640;
-    static constexpr int image_height_       = 1080;
-    static constexpr int image_width_        = 1440;
-    static constexpr double width_ratio_ = static_cast<double>(image_width_) / model_image_width_;
-    static constexpr double height_ratio_ =
-        static_cast<double>(image_height_) / model_image_height_;
+    int image_height_                        = 1080;
+    int image_width_                         = 1440;
+    double width_ratio_  = static_cast<double>(image_width_) / model_image_width_;
+    double height_ratio_ = static_cast<double>(image_height_) / model_image_height_;
     static constexpr double conf_threshold_ = 0.65;
     static constexpr double nms_threshold_  = 0.45;
 
-    static constexpr double match_magnification_ratio_ = 1.5;
+    double match_magnification_ratio_ = 1.5;
 
     bool target_color_ { false };
     ov::CompiledModel compiled_model_;
 };
 
-Identifier::Identifier(const std::string& model_path, const std::string& device)
-    : pimpl_(std::make_unique<Impl>(model_path, device)) { }
+Identifier::Identifier(const std::string& model_path, const std::string& device,
+    const int& image_width, const int& image_height)
+    : pimpl_(std::make_unique<Impl>(model_path, device, image_width, image_height)) { }
 
 void Identifier::SetTargetColor(bool target_color) { return pimpl_->SetTargetColor(target_color); }
 
@@ -306,6 +315,10 @@ const std::tuple<const interfaces::IArmorInImage&, enumeration::CarIDFlag> Ident
     const cv::Mat& input_image) {
     return pimpl_->Identify(input_image);
 };
+
+void Identifier::set_match_magnification_ratio(const double& ratio) {
+    return pimpl_->set_match_magnification_ratio(ratio);
+}
 
 Identifier::~Identifier() = default;
 }
