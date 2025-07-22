@@ -18,7 +18,6 @@ public:
 
     const enumeration::ArmorIdFlag& GetId() const override;
     const interfaces::IArmorInGimbalControl& Predictor(const std::time_t& time_stamp) override;
-
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

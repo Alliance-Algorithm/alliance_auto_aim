@@ -42,7 +42,7 @@ private:
 class world_exe::fire_control::TracingFireControl::TracingFireCalculateImpl {
 
 public:
-    TracingFireCalculateImpl(const interfaces::IPredictor& predictor)
+    TracingFireCalculateImpl( interfaces::IPredictor& predictor)
         : predictor_(predictor) { }
     const world_exe::data::FireControl CalculateTarget(const std::time_t& time_duration,
         const time_t& time_predict_point, const time_t& control_delay_, double velocity_begin,
@@ -79,7 +79,7 @@ public:
     }
 
 private:
-    const interfaces::IPredictor& predictor_;
+    interfaces::IPredictor& predictor_;
 };
 
 const world_exe::data::FireControl //
@@ -110,7 +110,7 @@ void world_exe::fire_control::TracingFireControl::SetArmorsInGimbalControl(
 }
 
 void world_exe::fire_control::TracingFireControl::SetPredictor(
-    const interfaces::IPredictor& predictor) {
+     interfaces::IPredictor& predictor) {
     p_calc_impl_ = std::make_unique<TracingFireCalculateImpl>(predictor);
 }
 

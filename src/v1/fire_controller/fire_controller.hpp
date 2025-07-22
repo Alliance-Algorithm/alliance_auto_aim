@@ -9,10 +9,10 @@
 namespace world_exe::fire_control {
 class TracingFireControl final : public interfaces::IFireControl {
 public:
-    const data::FireControl CalculateTarget(const std::time_t& time_duration) const;
-    const enumeration::CarIDFlag GetAttackCarId() const;
+    const data::FireControl CalculateTarget(const std::time_t& time_duration) const override;
+    const enumeration::CarIDFlag GetAttackCarId() const override;
     void SetArmorsInGimbalControl(const interfaces::IArmorInCamera& armors);
-    void SetPredictor(const interfaces::IPredictor& predictor);
+    void SetPredictor(interfaces::IPredictor& predictor);
     void SetTargetCarID(const enumeration::CarIDFlag& tracing_id);
     void SetTimeStamp(const time_t& time);
     TracingFireControl(
@@ -21,12 +21,12 @@ public:
 private:
     friend class TracingFireCalculateImpl;
     class TracingFireSelectImpl;
-    std::unique_ptr<TracingFireSelectImpl> p_select_impl_ = nullptr;
+    std::unique_ptr<TracingFireSelectImpl> p_select_impl_;
     class TracingFireCalculateImpl;
-    std::unique_ptr<TracingFireCalculateImpl> p_calc_impl_ = nullptr;
-    time_t time_stamp_                                     = 0;
-    time_t control_delay_                                  = 0;
-    enumeration::CarIDFlag target_                         = enumeration::CarIDFlag::None;
+    std::unique_ptr<TracingFireCalculateImpl> p_calc_impl_;
+    time_t time_stamp_             = 0;
+    time_t control_delay_          = 0;
+    enumeration::CarIDFlag target_ = enumeration::CarIDFlag::None;
     const double velocity_begin_;
     const double gravity_;
     static inline const data::FireControl no_allow_ { .fire_allowance = false };
