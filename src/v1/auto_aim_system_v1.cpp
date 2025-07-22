@@ -1,4 +1,4 @@
-
+#include "./auto_aim_system_v1.hpp"
 #include "data/fire_control.hpp"
 #include "data/sync_data.hpp"
 #include "event_bus.hpp"
@@ -22,9 +22,7 @@
 #include "./syncer/sync_data.hpp"
 #include "./syncer/syncer.hpp"
 
-
 #include <opencv2/core/mat.hpp>
-
 
 #include "eigen3/Eigen/Dense"
 
@@ -140,7 +138,6 @@ private:
 
 void world_exe::v1::SystemV1::Build() {
     if (SystemV1::instance_ != nullptr) return;
-    throw std::runtime_error("No implent system v1");
     instance_ = new SystemV1Impl();
 }
 world_exe::v1::SystemV1::SystemV1Impl* world_exe::v1::SystemV1::instance_ = nullptr;

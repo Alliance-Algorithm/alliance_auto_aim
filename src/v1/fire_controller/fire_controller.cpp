@@ -3,7 +3,6 @@
 #include "Eigen/src/Geometry/Quaternion.h"
 #include "enum/armor_id.hpp"
 #include "enum/enum_tools.hpp"
-#include "interfaces/armor_in_camera.hpp"
 #include "interfaces/armor_in_gimbal_control.hpp"
 #include "interfaces/car_state.hpp"
 #include "interfaces/predictor.hpp"
