@@ -6,21 +6,22 @@
 #include "predict_armor_in_gimbal_control.hpp"
 #include "predict_time_stamp.hpp"
 #include "util/index.hpp"
+#include <memory>
 
 namespace world_exe::v1::predictor {
 
 class PredictorManager::Impl {
 public:
-    inline void Update(const interfaces::IPreDictorUpdatePackage& data) {
-        const auto time_stamp = data.GetTimeStamped().GetTimeStamp();
+    inline void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
+        const auto time_stamp = data->GetTimeStamped().GetTimeStamp();
         const auto dt         = (time_stamp - last_update_time_stamp_.GetTimeStamp()) / 1.e9;
 
-        const auto transform          = data.GetTransform();
+        const auto transform          = data->GetTransform();
         const auto rotation_transform = Eigen::Quaterniond { transform.linear() };
 
         for (int i = 0; i < 8; i++) {
             const auto& armors =
-                data.GetArmors().GetArmors(static_cast<enumeration::ArmorIdFlag>(0b00000001 << i));
+                data->GetArmors().GetArmors(static_cast<enumeration::ArmorIdFlag>(0b00000001 << i));
             if (armors.empty()) continue;
             CarPredictEkf::ZVec input;
             if (armors.size() == 1) {
@@ -114,7 +115,7 @@ const world_exe::interfaces::IArmorInGimbalControl& PredictorManager::Predict(
     return pimpl_->Predict(id, time_stamp);
 };
 
-void PredictorManager::Update(const interfaces::IPreDictorUpdatePackage& data) {
+void PredictorManager::Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
     return pimpl_->Update(data);
 };
 

@@ -1,4 +1,5 @@
 #include "update_package.hpp"
+#include <memory>
 
 namespace world_exe::v1::sync {
 class PredictorUpdatePackage::Impl : public interfaces::IArmorInCamera, interfaces::ITimeStamped {
@@ -38,6 +39,10 @@ PredictorUpdatePackage::PredictorUpdatePackage()
 const interfaces::ITimeStamped& PredictorUpdatePackage::GetTimeStamped() const {
     return pimpl_->GetTimeStamped();
 }
+PredictorUpdatePackage::PredictorUpdatePackage(const PredictorUpdatePackage& in)
+    : pimpl_(std::make_unique<Impl>(*(in.pimpl_))) {
+
+    };
 
 const interfaces::IArmorInCamera& PredictorUpdatePackage::GetArmors() const { return *pimpl_; }
 

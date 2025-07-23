@@ -1,15 +1,17 @@
 
 #include "syncer.hpp"
 #include "update_package.hpp"
+#include <memory>
 
 namespace world_exe::v1::sync {
 class Syncer::Impl {
 public:
     Impl() {
         // sync_data_buffer_.reserve(50);
-        }
+    }
 
-    std::tuple<const interfaces::IPreDictorUpdatePackage&, bool> await(double t_second = 2) {
+    std::tuple<std::shared_ptr<interfaces::IPreDictorUpdatePackage>, bool> await(
+        double t_second = 2) {
         // bool ready { false };
         // const auto end_time_point =
         //     std::chrono::steady_clock::now() + std::chrono::duration<double>(t_second);
@@ -33,7 +35,7 @@ public:
 
         predict_update_package_.SetTimeStamp(sync_data_.camera_capture_begin_time_stamp);
         predict_update_package_.SetTransform(sync_data_.camera_to_gimbal);
-        return { predict_update_package_, true };
+        return { std::make_shared<PredictorUpdatePackage>(predict_update_package_), true };
     }
 
     void setTimeStamp(const std::time_t& time) { camera_capture_end_time_stamp_ = time; }
@@ -45,7 +47,7 @@ public:
     void LoadCallback(const data::CameraGimbalMuzzleSyncData& data) {
         std::lock_guard<std::mutex> lock(mutex_);
         // sync_data_buffer_.emplace_back(data);
-        sync_data_= data;
+        sync_data_ = data;
     }
 
 private:
@@ -63,7 +65,8 @@ private:
 Syncer::Syncer()
     : pimpl_(std::make_unique<Impl>()) { };
 
-std::tuple<const interfaces::IPreDictorUpdatePackage&, bool> Syncer::await(double t_second) {
+std::tuple<std::shared_ptr<interfaces::IPreDictorUpdatePackage>, bool> Syncer::await(
+    double t_second) {
     return pimpl_->await(t_second);
 }
 

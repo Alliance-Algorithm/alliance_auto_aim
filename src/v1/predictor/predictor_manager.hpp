@@ -8,7 +8,7 @@ public:
     PredictorManager();
     ~PredictorManager();
 
-    void Update(const interfaces::IPreDictorUpdatePackage& data) override;
+    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) override;
 
     virtual const interfaces::IArmorInGimbalControl& Predict(
         const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) override;

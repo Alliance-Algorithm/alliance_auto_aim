@@ -117,7 +117,8 @@ public:
                 sync->SetMainData(data);
                 const auto& [predictor, flag] = sync_->await();
                 if (flag)
-                    core::EventBus::Publish<interfaces::IPreDictorUpdatePackage>( //
+                    core::EventBus::Publish<
+                        std::shared_ptr<interfaces::IPreDictorUpdatePackage>>( //
                         ParamsForSystemV1::tracker_update_event, predictor);
                 FLOW_OUT(ParamsForSystemV1::armors_in_camera_pnp_event, interfaces::IArmorInCamera)
             });
@@ -131,12 +132,12 @@ public:
                 FLOW_OUT(
                     ParamsForSystemV1::camera_capture_transforms, data::CameraGimbalMuzzleSyncData)
             });
-        core::EventBus::Subscript<interfaces::IPreDictorUpdatePackage>(
+        core::EventBus::Subscript<std::shared_ptr<interfaces::IPreDictorUpdatePackage>>(
             ParamsForSystemV1::tracker_update_event, //
-            [this](const interfaces::IPreDictorUpdatePackage& data) {
+            [this](const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data) {
                 FLOW_IN(
                     ParamsForSystemV1::tracker_update_event, interfaces::IPreDictorUpdatePackage)
-                fire_control->SetTimeStamp(data.GetTimeStamped().GetTimeStamp());
+                fire_control->SetTimeStamp(data->GetTimeStamped().GetTimeStamp());
                 tracker_->Update(data);
                 FLOW_OUT(
                     ParamsForSystemV1::tracker_update_event, interfaces::IPreDictorUpdatePackage)
