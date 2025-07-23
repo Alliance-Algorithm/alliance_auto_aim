@@ -4,6 +4,7 @@ namespace world_exe::v1 {
 class SystemV1 {
 public:
     static void Build();
+    static void Build_1();
 
     class SystemV1Impl;
 

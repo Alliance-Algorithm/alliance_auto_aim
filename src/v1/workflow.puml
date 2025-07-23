@@ -22,54 +22,40 @@ package "alliance auto aim system v1"{
 [interfaces::IPnpSolver] as PnpSolver
 [interfaces::ITracker] as Tracker
 [SyncComponent]
-(RawImageEventName)
-(CarIdIdentifyEventName)
-(ArmorsInImageIdentifyEventName)
-(ArmorsInCameraPnpEventName)
-(CameraCaptureEndTimeStampEventName) 
-(CameraCaptureBeginTimeStampEventName)
-(CameraToGimbalControlSpacingEventName)
-(GimbalControlToMuzzleEventName)
-(TrackerUpdateEventName)
-(CarTracingEventName) 
-(TrackerCurrentArmorsEventName)
-(GetLastestPredictorEventName)
-(FireEventName) 
+(raw_image_event)
+(armors_in_image_identify_event)
+(car_id_identify_event)
+(armors_in_camera_pnp_event)
+(car_tracing_event) 
+(tracker_current_armors_event)
+(tracker_update_event)
+(camera_capture_transforms)
+(get_lastest_predictor_event) 
+(fire_control_event)
 }
 
-Camera --> (RawImageEventName) : cv::Mat
-(RawImageEventName) --> Identifier : cv::Mat
-
-Identifier --> (CarIdIdentifyEventName) : enums::CarIDFlag
-(CarIdIdentifyEventName) -->StateMachine : enums::CarIDFlag
-
-StateMachine --> (CarTracingEventName) : enums::CarIDFlag 
-(CarTracingEventName) --> Tracker : enums::CarIDFlag 
-(CarTracingEventName) --> FireControl : enums::CarIDFlag 
-
-Identifier --> (ArmorsInImageIdentifyEventName) : interfaces::IArmorInImage
-(ArmorsInImageIdentifyEventName) --> PnpSolver : interfaces::IArmorInImage
-
-PnpSolver --> (ArmorsInCameraPnpEventName) : interfaces::IArmorInCamera
-(ArmorsInCameraPnpEventName)->[SyncComponent] : interfaces::IArmorInCamera
-
-Camera --> (CameraCaptureEndTimeStampEventName) : std::time_t
-(CameraCaptureEndTimeStampEventName) --> [SyncComponent] : std::time_t
-[RMCS] --> (CameraCaptureBeginTimeStampEventName) : std::time_t
-[RMCS] --> (CameraToGimbalControlSpacingEventName) : eigen::Affine3d
-[RMCS] --> (GimbalControlToMuzzleEventName) : eigen::Affine3d
-(CameraCaptureBeginTimeStampEventName) --> [SyncComponent]  : std::time_t
-(CameraToGimbalControlSpacingEventName) --> [SyncComponent]  : eigen::Affine3d
-(GimbalControlToMuzzleEventName) --> [SyncComponent]  : eigen::Affine3d
-
-[SyncComponent] --> (TrackerUpdateEventName) : interfaces::IPreDictorUpdatePackage
-(TrackerUpdateEventName) --> Tracker : interfaces::IPreDictorUpdatePackage
-Tracker --> (TrackerCurrentArmorsEventName) : interfaces::IArmorInGimbalControl
-(TrackerCurrentArmorsEventName) --> FireControl : interfaces::IArmorInGimbalControl
-(GetLastestPredictorEventName) <-- FireControl : enums::CarIDFlag
-(GetLastestPredictorEventName) --> Tracker : enums::CarIDFlag
-Tracker --> (GetLastestPredictorEventName) : interfaces::IPredictor
-FireControl <- (GetLastestPredictorEventName) : interfaces::IPredictor
-FireControl -> (FireEventName) : data::FireControl
- [RMCS] <--  (FireEventName) : data::FireControl
+Camera --> raw_image_event : cv::Mat
+raw_image_event --> Identifier : cv::Mat
+Identifier --> armors_in_image_identify_event : interfaces::IArmorInImage
+Identifier --> car_id_identify_event : enumeration::CarIDFlag
+armors_in_image_identify_event --> PnpSolver : interfaces::IArmorInImage
+PnpSolver --> armors_in_camera_pnp_event : interfaces::IArmorInCamera
+car_id_identify_event --> StateMachine : enumeration::CarIDFlag
+StateMachine --> car_tracing_event : enumeration::CarIDFlag
+car_tracing_event --> FireControl : enumeration::CarIDFlag
+car_tracing_event --> Tracker : enumeration::CarIDFlag
+Tracker --> tracker_current_armors_event : interfaces::IArmorInGimbalControl
+armors_in_camera_pnp_event --> SyncComponent : interfaces::IArmorInCamera
+SyncComponent --> tracker_update_event : interfaces::IPreDictorUpdatePackage
+camera_capture_transforms -->  SyncComponent : data::CameraGimbalMuzzleSyncData
+tracker_update_event --> FireControl : interfaces::IPreDictorUpdatePackage
+tracker_update_event --> Tracker : interfaces::IPreDictorUpdatePackage
+tracker_current_armors_event --> FireControl :  interfaces::IArmorInGimbalControl
+FireControl --> get_lastest_predictor_event : enumeration::CarIDFlag
+get_lastest_predictor_event --> Tracker : enumeration::CarIDFlag
+Tracker --> get_lastest_predictor_event : interfaces::IPredictor
+get_lastest_predictor_event --> FireControl : interfaces::IPredictor
+FireControl --> fire_control_event : data::FireControl
+fire_control_event --> RMCS  : data::FireControl
+RMCS --> camera_capture_transforms : data::FireControl
 @enduml

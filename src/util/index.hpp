@@ -12,7 +12,7 @@ static inline int GetIndex(const world_exe::enumeration::ArmorIdFlag& flag) {
     else {
 
         auto st = backward::StackTrace();
-        st.load_here();
+        st.load_here(4);
         backward::Printer ptr;
         ptr.object     = false;
         ptr.color_mode = backward::ColorMode::always;

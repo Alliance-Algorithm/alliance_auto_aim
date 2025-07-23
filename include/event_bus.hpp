@@ -48,6 +48,8 @@ private:
             if (!flag.compare_exchange_weak(flag_val, true)) return EventBus::BusStatus::Block;
             std::for_each(std::execution::par_unseq, vec.begin(), vec.end(),
                 [&data](const auto& func) { func(data); });
+            // for (const auto& a : vec)
+            //     a(data);
             flag.store(false);
             return EventBus::BusStatus::OK;
         }

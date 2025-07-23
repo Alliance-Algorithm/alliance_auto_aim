@@ -51,10 +51,6 @@ include_directories(${CERES_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
 ### ceres End ===
 
-### barckward_cpp ===
-add_subdirectory(thirdparty/backward-cpp)
-### ceres End ===
-
 
 # 安装库文件
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -68,3 +64,4 @@ EXPORT ${PROJECT_NAME}
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
+

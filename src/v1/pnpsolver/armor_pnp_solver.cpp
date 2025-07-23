@@ -5,7 +5,7 @@
 #include "../src/util/profile/profile.hpp"
 #include "armor_pnp_solver.hpp"
 
-using namespace world_exe::pnpsolver;
+using namespace world_exe::v1::pnpsolver;
 
 class StaticImpl {
 public:

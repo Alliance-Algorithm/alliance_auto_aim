@@ -9,6 +9,9 @@ void world_exe::core::SystemFactory::Build(const enumeration::SystemVersion& ver
     case enumeration::SystemVersion::V1:
         world_exe::v1::SystemV1::Build();
         break;
+    case enumeration::SystemVersion::V1_TraceFlow:
+        world_exe::v1::SystemV1::Build_1();
+        break;
     default:
 #if __cplusplus >= 202002L
         throw std::runtime_error(std::format("Target version 0x{:x} is not impleme \n Factory "

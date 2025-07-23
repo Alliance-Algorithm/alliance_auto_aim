@@ -1,19 +1,19 @@
 
 #include "./fire_controller.hpp"
-#include "Eigen/src/Geometry/Quaternion.h"
-#include "enum/armor_id.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/armor_in_gimbal_control.hpp"
 #include "interfaces/car_state.hpp"
 #include "interfaces/predictor.hpp"
 #include "trajectory.hpp"
+#include <ctime>
 #include <memory>
-#include <stdexcept>
 
-class world_exe::v1::fire_control::TracingFireControl::TracingFireSelectImpl {
+class world_exe::v1::fire_control::TracingFireControl::Impl {
 public:
-    TracingFireSelectImpl(const interfaces::IArmorInGimbalControl& armors)
-        : armors_(armors) { }
+    explicit Impl(double control_delay_in_second, double velocity_begin, double gravity = 9.81)
+        : control_delay_((static_cast<time_t>(control_delay_in_second * 1e9)))
+        , velocity_begin_(velocity_begin)
+        , gravity_(gravity) { }
     const enumeration::CarIDFlag GetAttackCarId() const {
         double max_dot = -2;
 
@@ -21,7 +21,7 @@ public:
         for (auto i = enumeration::ArmorIdFlag::Hero; i < enumeration::ArmorIdFlag::Count;
             i       = static_cast<decltype(i)>((int)i << 1)) {
             if (world_exe::enumeration::IsFlagContains(tracing_, i)) {
-                const auto& armors_vector = armors_.GetArmors(i);
+                const auto& armors_vector = armors_->GetArmors(i);
                 for (const auto& a : armors_vector) {
                     auto dot = a.position.normalized().dot(Eigen::Vector3d::UnitX());
                     if (dot > max_dot) {
@@ -35,23 +35,20 @@ public:
     }
     void SetTargetCarID(const world_exe::enumeration::CarIDFlag& id) { tracing_ = id; }
 
-private:
-    world_exe::enumeration::CarIDFlag tracing_ = enumeration::CarIDFlag::None;
-    const interfaces::IArmorInGimbalControl& armors_;
-};
-class world_exe::v1::fire_control::TracingFireControl::TracingFireCalculateImpl {
+    void SetTimeStamp(const time_t& time) { time_predict_point_ = time; }
 
-public:
-    TracingFireCalculateImpl(const interfaces::IPredictor& predictor)
-        : predictor_(predictor) { }
-    const world_exe::data::FireControl CalculateTarget(const std::time_t& time_duration,
-        const time_t& time_predict_point, const time_t& control_delay_, double velocity_begin,
-        double gravity) {
-        throw std::runtime_error("Wait for rewirte here at FireController.cpp");
+    void SetArmorsInGimbalControl(
+        const std::shared_ptr<interfaces::IArmorInGimbalControl>& armors) {
+        armors_ = armors;
+    };
+    void SetPredictor(const std::shared_ptr<interfaces::IPredictor>& predictor) {
+        predictor_ = predictor;
+    };
 
+    const world_exe::data::FireControl CalculateTarget(const std::time_t& time_duration) {
         time_t fly_time        = 0;
-        const auto& pre1       = predictor_.Predictor(fly_time + time_duration + control_delay_);
-        const auto& pre2       = pre1.GetArmors(predictor_.GetId());
+        const auto& pre1       = predictor_->Predictor(fly_time + time_duration + control_delay_);
+        const auto& pre2       = pre1.GetArmors(predictor_->GetId());
         double min_angular_dis = 1e9;
         int index = -1, index_ = 0;
         for (const auto vec : pre2) {
@@ -69,57 +66,57 @@ public:
 
         for (int i = 5; i-- > 0;) {
             const auto& armors_in_gimbal_control =
-                predictor_.Predictor(fly_time + time_duration + control_delay_);
-            const auto& armors = armors_in_gimbal_control.GetArmors(predictor_.GetId());
+                predictor_->Predictor(fly_time + time_duration + control_delay_);
+            const auto& armors = armors_in_gimbal_control.GetArmors(predictor_->GetId());
             const auto& [fly_time, dir] =
-                trajectory_solver::gravity_only(armors[index].position, velocity_begin, gravity);
+                trajectory_solver::gravity_only(armors[index].position, velocity_begin_, gravity_);
         }
 
         return { .time_stamp = fly_time + time_duration + control_delay_, .fire_allowance = true };
     }
 
 private:
-    const interfaces::IPredictor& predictor_;
+    world_exe::enumeration::CarIDFlag tracing_ = enumeration::CarIDFlag::None;
+    time_t time_predict_point_;
+    const time_t control_delay_;
+    const double velocity_begin_;
+    const double gravity_;
+    const world_exe::data::FireControl no_allow_ { .fire_allowance = false };
+    std::shared_ptr<interfaces::IArmorInGimbalControl> armors_;
+    std::shared_ptr<interfaces::IPredictor> predictor_;
 };
 
 const world_exe::data::FireControl //
 world_exe::v1::fire_control::TracingFireControl::CalculateTarget(
     const std::time_t& time_duration) const {
-    if (p_calc_impl_ != nullptr) [[unlikely]]
-        return no_allow_;
-    return p_calc_impl_->CalculateTarget(
-        time_duration, time_stamp_, control_delay_, velocity_begin_, gravity_);
+    return pimpl_->CalculateTarget(time_duration);
 }
 
 const world_exe::enumeration::CarIDFlag
 world_exe::v1::fire_control::TracingFireControl::GetAttackCarId() const {
-    if (p_select_impl_ != nullptr) [[unlikely]]
-        return p_select_impl_->GetAttackCarId();
-    return world_exe::enumeration::CarIDFlag::None;
+    return pimpl_->GetAttackCarId();
 }
 world_exe::v1::fire_control::TracingFireControl::TracingFireControl(
     double t, double velocity_begin, double gravity)
-    : velocity_begin_(velocity_begin)
-    , gravity_(gravity) {
-    control_delay_ = static_cast<time_t>(t * 1E9);
-}
+    : pimpl_(std::make_unique<Impl>(t, velocity_begin, gravity)) { }
 
 void world_exe::v1::fire_control::TracingFireControl::SetArmorsInGimbalControl(
-    const interfaces::IArmorInGimbalControl& armors) {
-    p_select_impl_ = std::make_unique<TracingFireSelectImpl>(armors);
+    const std::shared_ptr<interfaces::IArmorInGimbalControl>& armors) {
+    pimpl_->SetArmorsInGimbalControl(armors);
 }
 
 void world_exe::v1::fire_control::TracingFireControl::SetPredictor(
-    const interfaces::IPredictor& predictor) {
-    p_calc_impl_ = std::make_unique<TracingFireCalculateImpl>(predictor);
+    const std::shared_ptr<interfaces::IPredictor>& predictor) {
+    pimpl_->SetPredictor(predictor);
 }
 
 void world_exe::v1::fire_control::TracingFireControl::SetTargetCarID(
     const world_exe::enumeration::CarIDFlag& tracing_id) {
-    if (p_select_impl_ != nullptr) [[unlikely]]
-        p_select_impl_->SetTargetCarID(tracing_id);
+    pimpl_->SetTargetCarID(tracing_id);
 }
 
 void world_exe::v1::fire_control::TracingFireControl::SetTimeStamp(const time_t& time) {
-    time_stamp_ = time;
+    pimpl_->SetTimeStamp(time);
 }
+
+world_exe::v1::fire_control::TracingFireControl::~TracingFireControl() = default;

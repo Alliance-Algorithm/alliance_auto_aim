@@ -3,7 +3,7 @@
 
 #include "interfaces/pnp_solver.hpp"
 
-namespace world_exe::pnpsolver {
+namespace world_exe::v1::pnpsolver {
 
 class ArmorIPPEPnPSolver final : public interfaces::IPnpSolver,
                                  public interfaces::IArmorInCamera,

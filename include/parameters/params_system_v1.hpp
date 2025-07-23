@@ -35,6 +35,8 @@ public:
 
     inline static const std::string tracker_current_armors_event //
         = "/alliance_auto_aim/tracker/armors_detected_current";
+    inline static const std::string fire_control_event //
+        = "/alliance_auto_aim/fire";
 
     static void set_szu_model_path(std::string model_path); // = "path/to/szu_identify_model.onnx";
     static void set_device(std::string device);             //= "AUTO";
