@@ -1,9 +1,10 @@
+#include <memory>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "../src/util/profile/profile.hpp"
 #include "armor_pnp_solver.hpp"
+#include "parameters/profile.hpp"
 
 using namespace world_exe::v1::pnpsolver;
 
@@ -14,10 +15,12 @@ public:
 
         cv::Mat rvec, tvec;
         auto& objectPoints = armors.isLargeArmor ? LargeArmorObjectPoints : NormalArmorObjectPoints;
-        if (cv::solvePnP(objectPoints, armors.image_points,
-                world_exe::util::Profile::get_intrinsic_parameters(),
-                world_exe::util::Profile::get_distortion_parameters(), rvec, tvec, false,
-                cv::SOLVEPNP_IPPE)) {
+#pragma warning "Better set matrix by initializer"
+        if (armors.image_points.size() == 4
+            && cv::solvePnP(objectPoints, armors.image_points,
+                world_exe::parameters::HikCameraProfile::get_intrinsic_parameters(),
+                world_exe::parameters::HikCameraProfile::get_distortion_parameters(), rvec, tvec,
+                false, cv::SOLVEPNP_IPPE)) {
 
             Eigen::Vector3d position = { tvec.at<double>(2), -tvec.at<double>(0),
                 -tvec.at<double>(1) };
@@ -42,21 +45,25 @@ private:
     inline constexpr static const double NormalArmorWidth = 134, NormalArmorHeight = 56,
                                          LargerArmorWidth = 230, LargerArmorHeight = 56;
     inline static const std::vector<cv::Point3d> LargeArmorObjectPoints = {
-        cv::Point3d(-0.5 * LargerArmorWidth, 0.5 * LargerArmorHeight, 0.0f),
-        cv::Point3d(-0.5 * LargerArmorWidth, -0.5 * NormalArmorHeight, 0.0f)
+        cv::Point3d(0.5 * LargerArmorWidth, 0.5 * LargerArmorHeight, 0.0f),
+        cv::Point3d(-0.5 * LargerArmorWidth, 0.5 * NormalArmorHeight, 0.0f),
+        cv::Point3d(-0.5 * LargerArmorWidth, -0.5 * LargerArmorHeight, 0.0f),
+        cv::Point3d(0.5 * LargerArmorWidth, -0.5 * NormalArmorHeight, 0.0f)
     };
 
     inline static const std::vector<cv::Point3d> NormalArmorObjectPoints = {
-        cv::Point3d(0.5 * NormalArmorWidth, -0.5 * NormalArmorHeight, 0.0f),
-        cv::Point3d(0.5 * NormalArmorWidth, 0.5 * NormalArmorHeight, 0.0f)
+        cv::Point3d(0.5 * NormalArmorWidth, 0.5 * NormalArmorHeight, 0.0f),
+        cv::Point3d(-0.5 * NormalArmorWidth, 0.5 * NormalArmorHeight, 0.0f),
+        cv::Point3d(-0.5 * NormalArmorWidth, -0.5 * NormalArmorHeight, 0.0f),
+        cv::Point3d(0.5 * NormalArmorWidth, -0.5 * NormalArmorHeight, 0.0f)
     };
 };
 
 const world_exe::interfaces::IArmorInCamera& ArmorIPPEPnPSolver::SolvePnp(
-    const world_exe::interfaces::IArmorInImage& armors) {
+    std::shared_ptr<world_exe::interfaces::IArmorInImage> armors) {
     for (int i = 0; i < static_cast<int>(world_exe::enumeration::ArmorIdFlag::Count); i++) {
         armors_[i].clear();
-        for (const auto& armor : armors.GetArmors(static_cast<enumeration::ArmorIdFlag>(i))) {
+        for (const auto& armor : armors->GetArmors(static_cast<enumeration::ArmorIdFlag>(1 << i))) {
             const auto& armor_in_camera = StaticImpl::Solve(armor);
             if (armor_in_camera.has_value())
                 armors_[i].emplace_back(std::move(armor_in_camera.value()));

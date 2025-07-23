@@ -16,6 +16,7 @@
 #include "interfaces/sync_block.hpp"
 #include "interfaces/target_predictor.hpp"
 #include "parameters/params_system_v1.hpp"
+#include "parameters/profile.hpp"
 #include "predictor/predictor_manager.hpp"
 
 #include "./auto_aim_system_v1.hpp"
@@ -75,15 +76,15 @@ public:
                 const auto& [armors, flag] = identifier_->identify(data);
                 FLOW_IN(ParamsForSystemV1::raw_image_event, cv::Mat)
                 if (flag != enumeration::ArmorIdFlag::None)
-                    core::EventBus::Publish<interfaces::IArmorInImage>( //
+                    core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInImage>>( //
                         ParamsForSystemV1::armors_in_image_identify_event, armors);
                 core::EventBus::Publish<enumeration::CarIDFlag>( //
                     ParamsForSystemV1::car_id_identify_event, flag);
                 FLOW_OUT(ParamsForSystemV1::raw_image_event, cv::Mat)
             });
-        core::EventBus::Subscript<interfaces::IArmorInImage>(
+        core::EventBus::Subscript<std::shared_ptr<interfaces::IArmorInImage>>(
             ParamsForSystemV1::armors_in_image_identify_event, //
-            [this](const auto& data) {
+            [this](const std::shared_ptr<interfaces::IArmorInImage>& data) {
                 FLOW_IN(
                     ParamsForSystemV1::armors_in_image_identify_event, interfaces::IArmorInImage)
                 core::EventBus::Publish<interfaces::IArmorInCamera>( //
@@ -190,7 +191,9 @@ private:
     std::shared_ptr<world_exe::v1::identifier::Identifier> identifier =
         std::make_shared<world_exe::v1::identifier::Identifier>(
             world_exe::parameters::ParamsForSystemV1::szu_model_path(),
-            world_exe::parameters::ParamsForSystemV1::device());
+            world_exe::parameters::ParamsForSystemV1::device(),
+            world_exe::parameters::HikCameraProfile::get_width(),
+            world_exe::parameters::HikCameraProfile::get_height());
     std::shared_ptr<world_exe::v1::fire_control::TracingFireControl> fire_control =
         std::make_shared<world_exe::v1::fire_control::TracingFireControl>(
             world_exe::parameters::ParamsForSystemV1::control_delay_in_second(),

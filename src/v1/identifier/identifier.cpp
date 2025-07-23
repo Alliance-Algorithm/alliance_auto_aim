@@ -7,6 +7,7 @@
 
 #include "openvino/core/preprocess/pre_post_process.hpp"
 #include "openvino/runtime/core.hpp"
+#include <memory>
 
 namespace world_exe::v1::identifier {
 class Identifier::Impl {
@@ -45,8 +46,8 @@ public:
 
     inline void SetTargetColor(bool target_color) { target_color_ = target_color; }
 
-    const std::tuple<const interfaces::IArmorInImage&, enumeration::CarIDFlag> Identify(
-        const cv::Mat& input_image) {
+    const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
+    Identify(const cv::Mat& input_image) {
         const auto armor_infos = model_infer(input_image);
         return matchPlate(input_image, armor_infos);
     }
@@ -167,8 +168,8 @@ private:
             , angle_(angle) { }
     };
 
-    const std::tuple<const interfaces::IArmorInImage&, enumeration::CarIDFlag> matchPlate(
-        const cv::Mat& img, const std::vector<ArmorInfo>& armor_infos) {
+    const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
+    matchPlate(const cv::Mat& img, const std::vector<ArmorInfo>& armor_infos) {
         cv::Mat gray_img;
         cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
         cv::threshold(gray_img, gray_img, 30, 255, cv::THRESH_BINARY);
@@ -252,7 +253,7 @@ private:
             }
         }
 
-        return { IdentifierArmor { armor_plates },
+        return { std::make_shared<IdentifierArmor>(armor_plates),
             static_cast<enumeration::CarIDFlag>(all_car_id) };
     }
 
@@ -311,8 +312,8 @@ Identifier::Identifier(const std::string& model_path, const std::string& device,
 
 void Identifier::SetTargetColor(bool target_color) { return pimpl_->SetTargetColor(target_color); }
 
-const std::tuple<const interfaces::IArmorInImage&, enumeration::CarIDFlag> Identifier::identify(
-    const cv::Mat& input_image) {
+const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
+Identifier::identify(const cv::Mat& input_image) {
     return pimpl_->Identify(input_image);
 };
 

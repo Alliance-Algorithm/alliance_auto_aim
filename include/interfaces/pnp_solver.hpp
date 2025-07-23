@@ -5,6 +5,6 @@
 namespace world_exe::interfaces {
 class IPnpSolver {
 public:
-    virtual const IArmorInCamera& SolvePnp(const IArmorInImage&) = 0;
+    virtual const IArmorInCamera& SolvePnp(std::shared_ptr<interfaces::IArmorInImage>) = 0;
 };
 }
