@@ -17,6 +17,7 @@
 #include "interfaces/target_predictor.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
+#include "parameters/rm_parameters.hpp"
 #include "predictor/predictor_manager.hpp"
 
 #include "./auto_aim_system_v1.hpp"
@@ -83,7 +84,7 @@ public:
             [this](const std::shared_ptr<interfaces::IArmorInImage>& data) {
                 FLOW_IN(
                     ParamsForSystemV1::armors_in_image_identify_event, interfaces::IArmorInImage)
-                core::EventBus::Publish<interfaces::IArmorInCamera>( //
+                core::EventBus::Publish<std::shared_ptr<world_exe::interfaces::IArmorInCamera>>( //
                     ParamsForSystemV1::armors_in_camera_pnp_event, pnp_solver_->SolvePnp(data));
                 FLOW_OUT(
                     ParamsForSystemV1::armors_in_image_identify_event, interfaces::IArmorInImage)
@@ -203,7 +204,9 @@ private:
     std::shared_ptr<world_exe::v1::state_machine::StateMachine> state_machine =
         std::make_shared<world_exe::v1::state_machine::StateMachine>();
     std::shared_ptr<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver> armor_pnp =
-        std::make_shared<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver>();
+        std::make_shared<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver>(
+            world_exe::parameters::Robomaster::LargeArmorObjectPointsOpencv,
+            world_exe::parameters::Robomaster::NormalArmorObjectPointsOpencv);
     SystemV1ImplTemp(const SystemV1ImplTemp&) = delete;
     ~SystemV1ImplTemp()                       = delete;
 };

@@ -7,7 +7,7 @@
 namespace world_exe::interfaces {
 class IPreDictorUpdatePackage {
 public:
-    COMBINE_TIME_STAMPED
+    COMBINE_TIME_STAMPED;
     virtual const IArmorInCamera& GetArmors() const = 0;
 
     ///

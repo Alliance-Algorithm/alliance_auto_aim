@@ -7,22 +7,20 @@
 
 namespace world_exe::v1::pnpsolver {
 
-class ArmorIPPEPnPSolver final : public interfaces::IPnpSolver,
-                                 public interfaces::IArmorInCamera,
-                                 public interfaces::ITimeStamped {
+class ArmorIPPEPnPSolver final : public interfaces::IPnpSolver, public interfaces::ITimeStamped {
 public:
+    ArmorIPPEPnPSolver(const std::vector<cv::Point3d>& LargeArmorObjectPointsOpencv,
+        const std::vector<cv::Point3d>& NormalArmorObjectPointsOpencv);
+    ~ArmorIPPEPnPSolver();
     void set_time_point(const std::time_t& time_point);
 
-    const interfaces::IArmorInCamera& SolvePnp(
+    std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(
         std::shared_ptr<interfaces::IArmorInImage> armor) override;
-    const ITimeStamped& GetTimeStamped() const override;
     const std::time_t& GetTimeStamp() const override;
-    const std::vector<data::ArmorCameraSpacing>& GetArmors(
-        const enumeration::ArmorIdFlag& armor_id) const override;
 
 private:
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
     std::time_t time_point_;
-    std::vector<data::ArmorCameraSpacing>
-        armors_[static_cast<int>(enumeration::ArmorIdFlag::Count)];
 };
 }

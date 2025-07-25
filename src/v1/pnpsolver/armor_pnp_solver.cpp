@@ -4,17 +4,26 @@
 #include <opencv2/opencv.hpp>
 
 #include "armor_pnp_solver.hpp"
+#include "interfaces/armor_in_camera.hpp"
+#include "interfaces/time_stamped.hpp"
 #include "parameters/profile.hpp"
+#include "util/index.hpp"
 
 using namespace world_exe::v1::pnpsolver;
 
-class StaticImpl {
+class ArmorIPPEPnPSolver::Impl {
 public:
-    static std::optional<const world_exe::data::ArmorCameraSpacing> Solve(
+    Impl(const std::vector<cv::Point3d>& LargeArmorObjectPoints,
+
+        const std::vector<cv::Point3d>& NormalArmorObjectPoints)
+        : LargeArmorObjectPoints_(LargeArmorObjectPoints)
+        , NormalArmorObjectPoints_(NormalArmorObjectPoints) { }
+    std::optional<const world_exe::data::ArmorCameraSpacing> Solve(
         const world_exe::data::ArmorImageSpacing& armors) {
 
         cv::Mat rvec, tvec;
-        auto& objectPoints = armors.isLargeArmor ? LargeArmorObjectPoints : NormalArmorObjectPoints;
+        auto& objectPoints =
+            armors.isLargeArmor ? LargeArmorObjectPoints_ : NormalArmorObjectPoints_;
 #pragma warning "Better set matrix by initializer"
         if (armors.image_points.size() == 4
             && cv::solvePnP(objectPoints, armors.image_points,
@@ -24,7 +33,7 @@ public:
 
             Eigen::Vector3d position = { tvec.at<double>(2), -tvec.at<double>(0),
                 -tvec.at<double>(1) };
-            position                 = position / 1000.0;
+            position                 = position;
             if (position.norm() > MaxArmorDistance) {
                 return {};
             }
@@ -42,43 +51,45 @@ public:
 private:
     inline constexpr static const double MaxArmorDistance = 15.0;
 
-    inline constexpr static const double NormalArmorWidth = 134, NormalArmorHeight = 56,
-                                         LargerArmorWidth = 230, LargerArmorHeight = 56;
-    inline static const std::vector<cv::Point3d> LargeArmorObjectPoints = {
-        cv::Point3d(0.5 * LargerArmorWidth, 0.5 * LargerArmorHeight, 0.0f),
-        cv::Point3d(-0.5 * LargerArmorWidth, 0.5 * NormalArmorHeight, 0.0f),
-        cv::Point3d(-0.5 * LargerArmorWidth, -0.5 * LargerArmorHeight, 0.0f),
-        cv::Point3d(0.5 * LargerArmorWidth, -0.5 * NormalArmorHeight, 0.0f)
-    };
+    const std::vector<cv::Point3d>& LargeArmorObjectPoints_;
 
-    inline static const std::vector<cv::Point3d> NormalArmorObjectPoints = {
-        cv::Point3d(0.5 * NormalArmorWidth, 0.5 * NormalArmorHeight, 0.0f),
-        cv::Point3d(-0.5 * NormalArmorWidth, 0.5 * NormalArmorHeight, 0.0f),
-        cv::Point3d(-0.5 * NormalArmorWidth, -0.5 * NormalArmorHeight, 0.0f),
-        cv::Point3d(0.5 * NormalArmorWidth, -0.5 * NormalArmorHeight, 0.0f)
-    };
+    const std::vector<cv::Point3d>& NormalArmorObjectPoints_;
+};
+class ArmorInCamera final : public world_exe::interfaces::IArmorInCamera,
+                            world_exe::interfaces::ITimeStamped {
+public:
+    const world_exe::interfaces::ITimeStamped& GetTimeStamped() const override { return *this; }
+    const std::vector<world_exe::data::ArmorCameraSpacing>& GetArmors(
+        const world_exe::enumeration::ArmorIdFlag& armor_id) const override {
+        return armors[world_exe::util::enumeration::GetIndex(armor_id)];
+    }
+    const std::time_t& GetTimeStamp() const override { return time_stampe; }
+
+    std::time_t time_stampe = 0;
+    std::vector<world_exe::data::ArmorCameraSpacing>
+        armors[static_cast<int>(world_exe::enumeration::ArmorIdFlag::Count)];
+
+    ~ArmorInCamera() = default;
 };
 
-const world_exe::interfaces::IArmorInCamera& ArmorIPPEPnPSolver::SolvePnp(
+std::shared_ptr<world_exe::interfaces::IArmorInCamera> ArmorIPPEPnPSolver::SolvePnp(
     std::shared_ptr<world_exe::interfaces::IArmorInImage> armors) {
+    std::shared_ptr<ArmorInCamera> armors_ = std::make_shared<ArmorInCamera>();
     for (int i = 0; i < static_cast<int>(world_exe::enumeration::ArmorIdFlag::Count); i++) {
-        armors_[i].clear();
+        armors_->armors[i].clear();
         for (const auto& armor : armors->GetArmors(static_cast<enumeration::ArmorIdFlag>(1 << i))) {
-            const auto& armor_in_camera = StaticImpl::Solve(armor);
+            const auto& armor_in_camera = pimpl_->Solve(armor);
             if (armor_in_camera.has_value())
-                armors_[i].emplace_back(std::move(armor_in_camera.value()));
+                armors_->armors[i].emplace_back(std::move(armor_in_camera.value()));
         }
     }
-    return *this;
-}
-
-const world_exe::interfaces::ITimeStamped& ArmorIPPEPnPSolver::GetTimeStamped() const {
-    return *this;
+    return armors_;
 }
 
 const std::time_t& ArmorIPPEPnPSolver::GetTimeStamp() const { return time_point_; }
 
-const std::vector<world_exe::data::ArmorCameraSpacing>& ArmorIPPEPnPSolver::GetArmors(
-    const world_exe::enumeration::ArmorIdFlag& armor_id) const {
-    return armors_[static_cast<int>(armor_id)];
-}
+ArmorIPPEPnPSolver::ArmorIPPEPnPSolver(const std::vector<cv::Point3d>& LargeArmorObjectPoints,
+    const std::vector<cv::Point3d>& NormalArmorObjectPoints)
+    : pimpl_(std::make_unique<Impl>(LargeArmorObjectPoints, NormalArmorObjectPoints)) { }
+
+ArmorIPPEPnPSolver::~ArmorIPPEPnPSolver() = default;

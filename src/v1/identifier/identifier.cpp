@@ -243,7 +243,7 @@ private:
                     if ((first.top_.x + first.bottom_.x) / 2.
                         < (second.bottom_.x + second.top_.x) / 2.) {
                         armor_plates.emplace_back(data::ArmorImageSpacing { armor.id_,
-                            { first.top_, second.top_, first.bottom_, second.bottom_ } });
+                            { first.top_, second.top_, second.bottom_, first.bottom_ } });
                     } else {
                         armor_plates.emplace_back(data::ArmorImageSpacing { armor.id_,
                             { second.top_, first.top_, first.bottom_, second.bottom_ } });

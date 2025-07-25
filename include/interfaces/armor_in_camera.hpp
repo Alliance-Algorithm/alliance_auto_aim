@@ -2,7 +2,7 @@
 
 #include "data/armor_camera_spacing.hpp"
 #include "enum/armor_id.hpp"
-#include "time_stamped.hpp"
+#include "interfaces/time_stamped.hpp"
 #include <opencv2/core/mat.hpp>
 
 namespace world_exe::interfaces {
