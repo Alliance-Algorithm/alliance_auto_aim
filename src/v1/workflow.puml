@@ -36,9 +36,9 @@ package "alliance auto aim system v1"{
 
 Camera --> raw_image_event : cv::Mat
 raw_image_event --> Identifier : cv::Mat
-Identifier --> armors_in_image_identify_event : interfaces::IArmorInImage
+Identifier --> armors_in_image_identify_event : std::shared_ptr<interfaces::IArmorInImage>
 Identifier --> car_id_identify_event : enumeration::CarIDFlag
-armors_in_image_identify_event --> PnpSolver : interfaces::IArmorInImage
+armors_in_image_identify_event --> PnpSolver : std::shared_ptr<interfaces::IArmorInImage>
 PnpSolver --> armors_in_camera_pnp_event : interfaces::IArmorInCamera
 car_id_identify_event --> StateMachine : enumeration::CarIDFlag
 StateMachine --> car_tracing_event : enumeration::CarIDFlag
@@ -46,10 +46,10 @@ car_tracing_event --> FireControl : enumeration::CarIDFlag
 car_tracing_event --> Tracker : enumeration::CarIDFlag
 Tracker --> tracker_current_armors_event : interfaces::IArmorInGimbalControl
 armors_in_camera_pnp_event --> SyncComponent : interfaces::IArmorInCamera
-SyncComponent --> tracker_update_event : interfaces::IPreDictorUpdatePackage
+SyncComponent --> tracker_update_event : std::shared_ptr<interfaces::IPreDictorUpdatePackage>
 camera_capture_transforms -->  SyncComponent : data::CameraGimbalMuzzleSyncData
-tracker_update_event --> FireControl : interfaces::IPreDictorUpdatePackage
-tracker_update_event --> Tracker : interfaces::IPreDictorUpdatePackage
+tracker_update_event --> FireControl : std::shared_ptr<interfaces::IPreDictorUpdatePackage>
+tracker_update_event --> Tracker : std::shared_ptr<interfaces::IPreDictorUpdatePackage>
 tracker_current_armors_event --> FireControl :  interfaces::IArmorInGimbalControl
 FireControl --> get_lastest_predictor_event : enumeration::CarIDFlag
 get_lastest_predictor_event --> Tracker : enumeration::CarIDFlag
