@@ -41,19 +41,15 @@ public:
         using namespace v1;
         using namespace parameters;
 
-#define FLOW_IN (x, y)
-#define FLOW_OUT (x, y)
-        if constexpr (i == 1) {
-#ifdef FLOW_IN
-#undef FLOW_IN
-#endif
-#ifdef FLOW_OUT
-#undef FLOW_OUT
-#endif
+#define FLOW_IN(x, y)                                                                              \
+    if constexpr (i == 1) {                                                                        \
+        std::cerr << #x << " flow in " << #y << std::endl;                                         \
+    }
+#define FLOW_OUT(x, y)                                                                             \
+    if constexpr (i == 1) {                                                                        \
+        std::cerr << #x << " flow out " << #y << std::endl;                                        \
+    }
 
-#define FLOW_IN(x, y) std::cerr << #x << " flow in " << #y << std::endl;
-#define FLOW_OUT(x, y) std::cerr << #x << " flow out " << #y << std::endl;
-        }
         tracker_    = predictor;
         identifier_ = identifier;
         fire_control->SetTargetCarID(enumeration::CarIDFlag::Base);
