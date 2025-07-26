@@ -10,7 +10,7 @@ public:
 
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) override;
 
-    virtual const interfaces::IArmorInGimbalControl& Predict(
+    virtual std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) override;
 
     const interfaces::IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) const override;

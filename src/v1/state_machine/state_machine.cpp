@@ -11,10 +11,10 @@ world_exe::v1::state_machine::StateMachine::GetAllowdToFires() const {
 const world_exe::interfaces::ICarState& world_exe::v1::state_machine::StateMachine::Update(
     const world_exe::enumeration::CarIDFlag& car_detecte) {
     for (int i = 0; i < static_cast<int>(enumeration::CarIDFlag::Count); i++) {
-        state_[i] = static_cast<uint8_t>(std::clamp(state_[i] + (static_cast<int>(car_detecte) >> i)
-                    & 0x01 - (static_cast<int>(car_detecte) >> i)
-                ^ 0x01,
-            0, static_cast<int>(switch_frame_count_)));
+        state_[i] = static_cast<uint8_t>(
+            std::clamp(state_[i] + ((static_cast<int>(car_detecte) >> i) & 0x01)
+                    - (((static_cast<int>(car_detecte) >> i) ^ 0x01) & 0x01),
+                0, static_cast<int>(switch_frame_count_)));
         if (state_[i] == 0)
             tracing_state_ =
                 static_cast<enumeration::CarIDFlag>(static_cast<int>(tracing_state_) & ~(1 << i));

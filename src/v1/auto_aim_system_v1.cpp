@@ -60,6 +60,7 @@ public:
         car_state_  = state_machine;
         pnp_solver_ = armor_pnp;
         loader->BindBlock(*sync);
+        identifier->SetTargetColor(false);
 
         assert(identifier_ != nullptr);
         assert(pnp_solver_ != nullptr);
@@ -70,13 +71,14 @@ public:
 
         core::EventBus::Subscript<cv::Mat>(ParamsForSystemV1::raw_image_event, //
             [this](const auto& data) {
-                const auto& [armors, flag] = identifier_->identify(data);
                 FLOW_IN(ParamsForSystemV1::raw_image_event, cv::Mat)
+                const auto& [armors, flag] = identifier_->identify(data);
                 if (flag != enumeration::ArmorIdFlag::None)
                     core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInImage>>( //
                         ParamsForSystemV1::armors_in_image_identify_event, armors);
                 core::EventBus::Publish<enumeration::CarIDFlag>( //
                     ParamsForSystemV1::car_id_identify_event, flag);
+                // std::cerr << static_cast<int>(flag);
                 FLOW_OUT(ParamsForSystemV1::raw_image_event, cv::Mat)
             });
         core::EventBus::Subscript<std::shared_ptr<interfaces::IArmorInImage>>(
@@ -102,16 +104,16 @@ public:
             [this](const auto& data) {
                 FLOW_IN(ParamsForSystemV1::car_tracing_event, enumeration::CarIDFlag)
                 fire_control->SetTargetCarID(data);
-                core::EventBus::Publish<interfaces::IArmorInGimbalControl>(
-                    ParamsForSystemV1::tracker_current_armors_event, tracker_->Predict(data, 0));
+                core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
+                    ParamsForSystemV1::tracker_current_armors_event,
+                    tracker_->Predict(data, time_point_.time_since_epoch().count()));
 
                 FLOW_OUT(ParamsForSystemV1::car_tracing_event, enumeration::CarIDFlag)
             });
-        core::EventBus::Subscript<interfaces::IArmorInCamera>(
+        core::EventBus::Subscript<std::shared_ptr<interfaces::IArmorInCamera>>(
             ParamsForSystemV1::armors_in_camera_pnp_event, //
             [this](const auto& data) {
                 FLOW_IN(ParamsForSystemV1::armors_in_camera_pnp_event, interfaces::IArmorInCamera)
-                sync->SetMainData(data);
                 const auto& [predictor, flag] = sync_->await();
                 if (flag)
                     core::EventBus::Publish<

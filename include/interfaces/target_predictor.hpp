@@ -10,7 +10,7 @@
 namespace world_exe::interfaces {
 class ITargetPredictor {
 public:
-    virtual const IArmorInGimbalControl& Predict(
+    virtual std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp)           = 0;
     virtual void Update(std::shared_ptr<IPreDictorUpdatePackage> data)               = 0;
     virtual const IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) const = 0;

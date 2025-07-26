@@ -1,13 +1,17 @@
 #include "predict_armor_in_gimbal_control.hpp"
+
 #include "enum/enum_tools.hpp"
 #include "util/index.hpp"
+#include <utility>
 
 namespace world_exe::v1::predictor {
 class PredictArmorInGimbalControl::Impl {
 public:
     Impl() = default;
     Impl(const std::array<std::vector<data::ArmorGimbalControlSpacing>, 8>& armors,
-        const predictor::PredictTimeStamp& predict_time_stamp) { }
+        predictor::PredictTimeStamp predict_time_stamp)
+        : armors_(armors)
+        , predict_time_stamp_(std::move(predict_time_stamp)) { }
 
     void Set(const std::array<std::vector<data::ArmorGimbalControlSpacing>, 8>& armors,
         const predictor::PredictTimeStamp& predict_time_stamp) {

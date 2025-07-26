@@ -36,53 +36,53 @@ public:
         double model_yaw   = model_output(9) + model_output(10) * sec;
 
         // TODO: 把 pitch 与 z 关联起来
-        const double pitch1 = -15. / 180. * std::numbers::pi;
-        const double pitch2 = -15. / 180. * std::numbers::pi;
+        const double pitch1 = 15. / 180. * std::numbers::pi;
+        const double pitch2 = 15. / 180. * std::numbers::pi;
 
         if (side_flag_) {
             const auto armor1 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r1 * std::cos(model_yaw), car_y + r1 * std::sin(model_yaw), z1 },
+                { car_x - r1 * std::cos(model_yaw), car_y - r1 * std::sin(model_yaw), z1 },
                 util::math::euler_to_quaternion(model_yaw, pitch1, 0.0) };
             target_armors.emplace_back(armor1);
 
             model_yaw += std::numbers::pi / 2.;
             const auto armor2 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r2 * std::cos(model_yaw), car_y + r2 * std::sin(model_yaw), z2 },
+                { car_x - r2 * std::cos(model_yaw), car_y - r2 * std::sin(model_yaw), z2 },
                 util::math::euler_to_quaternion(model_yaw, pitch2, 0.0) };
             target_armors.emplace_back(armor2);
 
             model_yaw += std::numbers::pi / 2.;
             const auto armor3 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r1 * std::cos(model_yaw), car_y + r1 * std::sin(model_yaw), z1 },
+                { car_x - r1 * std::cos(model_yaw), car_y - r1 * std::sin(model_yaw), z1 },
                 util::math::euler_to_quaternion(model_yaw, pitch1, 0.0) };
             target_armors.emplace_back(armor3);
 
             model_yaw += std::numbers::pi / 2.;
             const auto armor4 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r2 * std::cos(model_yaw), car_y + r2 * std::sin(model_yaw), z2 },
+                { car_x - r2 * std::cos(model_yaw), car_y - r2 * std::sin(model_yaw), z2 },
                 util::math::euler_to_quaternion(model_yaw, pitch2, 0.0) };
             target_armors.emplace_back(armor4);
         } else {
             const auto armor1 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r2 * std::cos(model_yaw), car_y + r2 * std::sin(model_yaw), z2 },
+                { car_x - r2 * std::cos(model_yaw), car_y - r2 * std::sin(model_yaw), z2 },
                 util::math::euler_to_quaternion(model_yaw, pitch2, 0.0) };
             target_armors.emplace_back(armor1);
 
             model_yaw += std::numbers::pi / 2.;
             const auto armor2 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r1 * std::cos(model_yaw), car_y + r1 * std::sin(model_yaw), z1 },
+                { car_x - r1 * std::cos(model_yaw), car_y - r1 * std::sin(model_yaw), z1 },
                 util::math::euler_to_quaternion(model_yaw, pitch1, 0.0) };
             target_armors.emplace_back(armor2);
 
             model_yaw += std::numbers::pi / 2.;
             const auto armor3 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r2 * std::cos(model_yaw), car_y + r2 * std::sin(model_yaw), z2 },
+                { car_x - r2 * std::cos(model_yaw), car_y - r2 * std::sin(model_yaw), z2 },
                 util::math::euler_to_quaternion(model_yaw, pitch2, 0.0) };
             target_armors.emplace_back(armor3);
 
             model_yaw += std::numbers::pi / 2.;
             const auto armor4 = data::ArmorGimbalControlSpacing { id,
-                { car_x + r1 * std::cos(model_yaw), car_y + r1 * std::sin(model_yaw), z1 },
+                { car_x - r1 * std::cos(model_yaw), car_y - r1 * std::sin(model_yaw), z1 },
                 util::math::euler_to_quaternion(model_yaw, pitch1, 0.0) };
             target_armors.emplace_back(armor4);
         }

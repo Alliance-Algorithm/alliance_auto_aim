@@ -45,12 +45,13 @@ private:
             auto& [flag, vec] = delegates[event_name];
             auto flag_val     = false;
 
-            if (!flag.compare_exchange_weak(flag_val, true)) return EventBus::BusStatus::Block;
-            std::for_each(std::execution::par_unseq, vec.begin(), vec.end(),
-                [&data](const auto& func) { func(data); });
-            // for (const auto& a : vec)
-            //     a(data);
-            flag.store(false);
+            // if (!flag.compare_exchange_weak(flag_val, true))
+            //     return EventBus::BusStatus::Block;
+            // std::for_each(std::execution::par_unseq, vec.begin(), vec.end(),
+            //     [&data](const auto& func) { func(data); });
+            for (const auto& a : vec)
+                a(data);
+            // flag.store(false);
             return EventBus::BusStatus::OK;
         }
         void Subscript(const std::string event_name, std::function<void(const TData&)>&& func) {
@@ -65,4 +66,4 @@ private:
         }
     };
 };
-}
+} // namespace world_exe::core

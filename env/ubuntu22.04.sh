@@ -1,4 +1,7 @@
 #!/usr/bin/bash
+
+curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/ros2-latest-archive-keyring.gpg > /dev/null
+
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get install gnupg
 wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB

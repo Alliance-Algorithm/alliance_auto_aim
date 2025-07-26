@@ -46,8 +46,8 @@ public:
 
     inline void SetTargetColor(bool target_color) { target_color_ = target_color; }
 
-    const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
-    Identify(const cv::Mat& input_image) {
+    std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag> Identify(
+        const cv::Mat& input_image) {
         const auto armor_infos = model_infer(input_image);
         return matchPlate(input_image, armor_infos);
     }
@@ -63,10 +63,9 @@ private:
     };
 
     std::vector<ArmorInfo> model_infer(const cv::Mat& img) {
-        cv::Mat resized_img;
-        cv::resize(img, resized_img, cv::Size(model_image_width_, model_image_height_));
+        cv::resize(img, resized_img_, cv::Size(model_image_width_, model_image_height_));
         const auto input_tensor        = ov::Tensor { compiled_model_.input().get_element_type(),
-            compiled_model_.input().get_shape(), resized_img.data };
+            compiled_model_.input().get_shape(), resized_img_.data };
         ov::InferRequest infer_request = compiled_model_.create_infer_request();
         infer_request.set_input_tensor(input_tensor);
         infer_request.infer();
@@ -168,11 +167,10 @@ private:
             , angle_(angle) { }
     };
 
-    const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
-    matchPlate(const cv::Mat& img, const std::vector<ArmorInfo>& armor_infos) {
-        cv::Mat gray_img;
-        cv::cvtColor(img, gray_img, cv::COLOR_BGR2GRAY);
-        cv::threshold(gray_img, gray_img, 30, 255, cv::THRESH_BINARY);
+    std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag> matchPlate(
+        const cv::Mat& img, const std::vector<ArmorInfo>& armor_infos) {
+        cv::cvtColor(img, gray_img_, cv::COLOR_BGR2GRAY);
+        cv::threshold(gray_img_, gray_img_, 30, 255, cv::THRESH_BINARY);
 
         uint32_t all_car_id = static_cast<uint32_t>(enumeration::ArmorIdFlag::None);
         std::vector<data::ArmorImageSpacing> armor_plates;
@@ -192,7 +190,7 @@ private:
                 std::clamp(static_cast<int>(armor.rect_.height * match_magnification_ratio_), 0,
                     image_height_ - offset.y) };
 
-            const auto armor_roi = gray_img(cv::Rect { offset, rect_size });
+            const auto armor_roi = gray_img_(cv::Rect { offset, rect_size });
 
             std::vector<std::vector<cv::Point>> contours;
             cv::findContours(armor_roi, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
@@ -302,6 +300,8 @@ private:
 
     double match_magnification_ratio_ = 1.5;
 
+    cv::Mat resized_img_;
+    cv::Mat gray_img_;
     bool target_color_ { false };
     ov::CompiledModel compiled_model_;
 };

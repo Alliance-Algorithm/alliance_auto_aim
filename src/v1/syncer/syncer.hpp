@@ -13,7 +13,7 @@ public:
     ~Syncer();
 
     std::tuple<std::shared_ptr<interfaces::IPreDictorUpdatePackage>, bool> await(
-        double t_second = 2) override;
+        double t_second) override;
 
     void SetCameraCaptureEndTimeStamp(const std::time_t& time);
 

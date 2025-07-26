@@ -2,7 +2,6 @@
 #include "car/car_predictor.hpp"
 #include "car/car_predictor_ekf.hpp"
 #include "enum/enum_tools.hpp"
-#include "interfaces/car_state.hpp"
 #include "predict_armor_in_gimbal_control.hpp"
 #include "predict_time_stamp.hpp"
 #include "util/index.hpp"
@@ -72,7 +71,7 @@ public:
         last_update_time_stamp_.SetTimeStamp(time_stamp);
     }
 
-    inline const world_exe::interfaces::IArmorInGimbalControl& Predict(
+    inline std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const world_exe::enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) {
         const auto dt = (time_stamp - last_update_time_stamp_.GetTimeStamp()) / 1.e9;
 
@@ -84,9 +83,7 @@ public:
                 armors[i] = predictors_[i].get_predict_output_armor(
                     static_cast<enumeration::CarIDFlag>(0b00000001 << i), dt);
 
-        predictted_armors_.Set(armors, { time_stamp });
-
-        return predictted_armors_;
+        return std::make_shared<PredictArmorInGimbalControl>(armors, last_update_time_stamp_);
     };
 
     const interfaces::IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) {
@@ -110,7 +107,7 @@ PredictorManager::PredictorManager()
 
 PredictorManager::~PredictorManager() = default;
 
-const world_exe::interfaces::IArmorInGimbalControl& PredictorManager::Predict(
+std::shared_ptr<interfaces::IArmorInGimbalControl> PredictorManager::Predict(
     const world_exe::enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) {
     return pimpl_->Predict(id, time_stamp);
 };
