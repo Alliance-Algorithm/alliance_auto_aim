@@ -19,8 +19,8 @@ public:
         const auto rotation_transform = Eigen::Quaterniond { transform.linear() };
 
         for (int i = 0; i < 8; i++) {
-            const auto& armors =
-                data->GetArmors().GetArmors(static_cast<enumeration::ArmorIdFlag>(0b00000001 << i));
+            const auto& armors = data->GetArmors()->GetArmors(
+                static_cast<enumeration::ArmorIdFlag>(0b00000001 << i));
             if (armors.empty()) continue;
             CarPredictEkf::ZVec input;
             if (armors.size() == 1) {

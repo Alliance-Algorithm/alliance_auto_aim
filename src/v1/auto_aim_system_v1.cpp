@@ -22,14 +22,13 @@
 
 #include "./auto_aim_system_v1.hpp"
 #include "./state_machine/state_machine.hpp"
-#include "./syncer/sync_data.hpp"
-#include "./syncer/syncer.hpp"
 
 #include <memory>
 #include <opencv2/core/mat.hpp>
 
 #include "eigen3/Eigen/Dense"
 #include "v1/pnpsolver/armor_pnp_solver.hpp"
+#include "v1/sync/syncer.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -51,16 +50,16 @@ public:
         std::cerr << #x << " flow out " << #y << std::endl;                                        \
     }
 
-        tracker_    = predictor;
-        identifier_ = identifier;
         fire_control->SetTargetCarID(enumeration::CarIDFlag::Base);
-        fire_control_ = fire_control;
-        sync_         = sync;
-        state_machine->SetSwitchFrameCount(4);
-        car_state_  = state_machine;
-        pnp_solver_ = armor_pnp;
-        loader->BindBlock(*sync);
         identifier->SetTargetColor(false);
+        state_machine->SetSwitchFrameCount(4);
+
+        car_state_    = state_machine;
+        pnp_solver_   = armor_pnp;
+        fire_control_ = fire_control;
+        tracker_      = predictor;
+        identifier_   = identifier;
+        sync_         = sync;
 
         assert(identifier_ != nullptr);
         assert(pnp_solver_ != nullptr);
@@ -72,13 +71,12 @@ public:
         core::EventBus::Subscript<cv::Mat>(ParamsForSystemV1::raw_image_event, //
             [this](const auto& data) {
                 FLOW_IN(ParamsForSystemV1::raw_image_event, cv::Mat)
-                const auto& [armors, flag] = identifier_->identify(data);
+                const auto& [armors, flag] = identifier->identify(data);
                 if (flag != enumeration::ArmorIdFlag::None)
                     core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInImage>>( //
                         ParamsForSystemV1::armors_in_image_identify_event, armors);
                 core::EventBus::Publish<enumeration::CarIDFlag>( //
                     ParamsForSystemV1::car_id_identify_event, flag);
-                // std::cerr << static_cast<int>(flag);
                 FLOW_OUT(ParamsForSystemV1::raw_image_event, cv::Mat)
             });
         core::EventBus::Subscript<std::shared_ptr<interfaces::IArmorInImage>>(
@@ -114,7 +112,8 @@ public:
             ParamsForSystemV1::armors_in_camera_pnp_event, //
             [this](const auto& data) {
                 FLOW_IN(ParamsForSystemV1::armors_in_camera_pnp_event, interfaces::IArmorInCamera)
-                const auto& [predictor, flag] = sync_->await();
+                sync->set_armor_pnp(data);
+                const auto& [predictor, flag] = sync->await(0.1);
                 if (flag)
                     core::EventBus::Publish<
                         std::shared_ptr<interfaces::IPreDictorUpdatePackage>>( //
@@ -123,11 +122,11 @@ public:
             });
         core::EventBus::Subscript<data::CameraGimbalMuzzleSyncData>(
             ParamsForSystemV1::camera_capture_transforms, //
-            [this](const auto& data) {
+            [this](const data::CameraGimbalMuzzleSyncData& data) {
                 FLOW_IN(
                     ParamsForSystemV1::camera_capture_transforms, data::CameraGimbalMuzzleSyncData)
                 time_point_ = std::chrono::steady_clock::now();
-                loader->Load(data);
+                sync->set_camera_sync_data(data);
                 FLOW_OUT(
                     ParamsForSystemV1::camera_capture_transforms, data::CameraGimbalMuzzleSyncData)
             });
@@ -185,6 +184,9 @@ public:
         world_exe::interfaces::ISyncBlock<world_exe::interfaces::IPreDictorUpdatePackage>>
         sync_;
 
+    SystemV1ImplTemp(const SystemV1ImplTemp&) = delete;
+    ~SystemV1ImplTemp()                       = delete;
+
 private:
     std::shared_ptr<world_exe::v1::predictor::PredictorManager> predictor =
         std::make_shared<world_exe::v1::predictor::PredictorManager>();
@@ -199,18 +201,13 @@ private:
             world_exe::parameters::ParamsForSystemV1::control_delay_in_second(),
             world_exe::parameters::ParamsForSystemV1::velocity_begin(),
             world_exe::parameters::ParamsForSystemV1::gravity());
-    std::shared_ptr<world_exe::v1::sync::Syncer> sync =
-        std::make_shared<world_exe::v1::sync::Syncer>();
-    std::shared_ptr<world_exe::v1::sync::SyncLoad> loader =
-        std::make_shared<world_exe::v1::sync::SyncLoad>();
     std::shared_ptr<world_exe::v1::state_machine::StateMachine> state_machine =
         std::make_shared<world_exe::v1::state_machine::StateMachine>();
     std::shared_ptr<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver> armor_pnp =
         std::make_shared<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver>(
             world_exe::parameters::Robomaster::LargeArmorObjectPointsOpencv,
             world_exe::parameters::Robomaster::NormalArmorObjectPointsOpencv);
-    SystemV1ImplTemp(const SystemV1ImplTemp&) = delete;
-    ~SystemV1ImplTemp()                       = delete;
+    std::shared_ptr<world_exe::v1::Syncer> sync = std::make_shared<world_exe::v1::Syncer>();
 };
 
 void world_exe::v1::SystemV1::Build() {
