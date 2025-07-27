@@ -9,7 +9,7 @@ public:
     explicit FpsCounter(
         std::chrono::steady_clock::duration measurement_window = std::chrono::seconds(1))
         : measurement_window_(measurement_window)
-        , start_(std::chrono::steady_clock::now()) { }
+        , start_(std::chrono::steady_clock::now()) {}
 
     bool count() {
         ++count_;

@@ -18,7 +18,7 @@ void draw_armor_2d(const world_exe::data::ArmorImageSpacing& armor, cv::Mat& in_
     cv::line(in_out_mat, armor.image_points[3], armor.image_points[0], cv::Scalar(0, 255, 0), 5);
 }
 
-const std::string get_enum_name(int i) {
+std::string get_enum_name(int i) {
     std::string txt = "Unknow";
     using namespace world_exe::enumeration;
     switch (static_cast<world_exe::enumeration::ArmorIdFlag>(1 << i)) {
