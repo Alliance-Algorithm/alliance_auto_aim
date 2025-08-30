@@ -53,11 +53,6 @@ include_directories(${CERES_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
 ### ceres End ===
 
-### yaml-cpp ===
-find_package(yaml-cpp REQUIRED)
-target_link_libraries(${PROJECT_NAME} yaml-cpp)
-### yaml-cpp End ===
-
 # 安装库文件
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
