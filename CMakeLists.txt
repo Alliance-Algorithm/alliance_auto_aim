@@ -12,8 +12,10 @@ include_directories(./include ./src)
 ### Target lib ===
 add_library(${PROJECT_NAME} SHARED)
 file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS 
-src/v1/*.cpp 
-src/v1/*.cc
+# src/v1/*.cpp 
+# src/v1/*.cc
+src/tongji/*.cpp 
+src/tongji/*.cc
 src/core/*.cpp
 src/util/*.cpp)
 target_sources(
@@ -50,7 +52,6 @@ find_package(Ceres REQUIRED)
 include_directories(${CERES_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
 ### ceres End ===
-
 
 # 安装库文件
 target_include_directories(${PROJECT_NAME} PUBLIC
