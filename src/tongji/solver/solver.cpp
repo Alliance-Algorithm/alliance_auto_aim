@@ -16,9 +16,9 @@
 #include "interfaces/time_stamped.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
+#include "util/coordinate.hpp"
 #include "util/index.hpp"
 #include "util/math.hpp"
-#include "util/transform.hpp"
 namespace world_exe::tongji::solver {
 
 class ArmorInCameraImpl final : public interfaces::IArmorInCamera, public interfaces::ITimeStamped {
@@ -66,7 +66,7 @@ public:
         result->SetTimeStamp(armors_in_image->GetTimeStamped().GetTimeStamp());
 
         for (int i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); ++i) {
-            const auto armor_id = static_cast<enumeration::ArmorIdFlag>(1 << i);
+            const auto armor_id      = static_cast<enumeration::ArmorIdFlag>(1 << i);
             const auto& image_armors = armors_in_image->GetArmors(armor_id);
 
             for (const auto& armor_image : image_armors) {
@@ -103,10 +103,10 @@ public:
         Eigen::Quaterniond orientation_in_camera(R_armor2camera);
 
         world_exe::data::ArmorCameraSpacing armor_in_camera;
-        auto orientation_ros = util::transform::opencv2ros_orientation(orientation_in_camera);
+        auto orientation_ros = util::coordinate::opencv2ros_orientation(orientation_in_camera);
         orientation_ros.normalize();
         armor_in_camera.id          = armor_in_image.id;
-        armor_in_camera.position    = util::transform::opencv2ros_position(xyz_in_camera);
+        armor_in_camera.position    = util::coordinate::opencv2ros_position(xyz_in_camera);
         armor_in_camera.orientation = orientation_ros;
 
         if (armor_in_camera.position.norm() > MaxArmorDistance) {
@@ -120,13 +120,13 @@ public:
         const world_exe::data::ArmorCameraSpacing& armor_in_camera) const {
 
         Eigen::Vector3d armor_in_camera_ocv =
-            util::transform::ros2opencv_position(armor_in_camera.position);
+            util::coordinate::ros2opencv_position(armor_in_camera.position);
         Eigen::Vector3d armor_xyz_in_gimbal =
             R_camera2gimbal_ * armor_in_camera_ocv + t_camera2gimbal_;
         Eigen::Vector3d armor_xyz_in_world = R_gimbal2world_ * armor_xyz_in_gimbal; // why no t?
 
         Eigen::Quaterniond armor_orientation_in_camera_ocv =
-            util::transform::ros2opencv_orientation(armor_in_camera.orientation);
+            util::coordinate::ros2opencv_orientation(armor_in_camera.orientation);
         Eigen::Matrix3d R_armor2camera_ocv    = armor_orientation_in_camera_ocv.toRotationMatrix();
         Eigen::Matrix3d R_armor2gimbal        = R_camera2gimbal_ * R_armor2camera_ocv;
         Eigen::Matrix3d R_armor2world_initial = R_gimbal2world_ * R_armor2gimbal;
@@ -216,8 +216,8 @@ private:
         const Eigen::Vector3d& armor_xyz_in_world, const double& yaw,
         const double& inclined) const {
 
-        auto image_points = ReprojectArmor(
-            armor_xyz_in_world, yaw, armor_in_image.isLargeArmor, armor_in_image.id);
+        auto image_points =
+            ReprojectArmor(armor_xyz_in_world, yaw, armor_in_image.isLargeArmor, armor_in_image.id);
         auto error = 0.0;
         for (int i = 0; i < 4; i++)
             error += cv::norm(armor_in_image.image_points[i] - image_points[i]);
