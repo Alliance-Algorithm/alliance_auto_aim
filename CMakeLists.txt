@@ -53,6 +53,18 @@ include_directories(${CERES_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
 ### ceres End ===
 
+### libspdlog-dev ===
+find_package(spdlog REQUIRED)
+target_include_directories(${fmt_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}  ${fmt_LIBRARIES})
+### libspdlog-dev End ===
+
+### libfmt-dev ===
+find_package(fmt REQUIRED)
+target_include_directories(${fmt_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}  ${fmt_LIBRARIES})
+### libfmt-dev End ===
+
 # 安装库文件
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
