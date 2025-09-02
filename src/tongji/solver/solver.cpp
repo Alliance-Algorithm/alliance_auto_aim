@@ -12,7 +12,6 @@
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/armor_in_camera.hpp"
-#include "interfaces/armor_in_gimbal_control.hpp"
 #include "interfaces/time_stamped.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
