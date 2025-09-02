@@ -11,7 +11,6 @@ public:
         if (contour.empty()) return {};
 
         std::vector<cv::Point2l> points;
-
         points.reserve(contour.size());
         for (const auto& point : contour)
             points.emplace_back(point);
@@ -163,11 +162,9 @@ private:
     }
 
     static inline std::vector<PolyEdge> collect_poly_edges(const std::vector<cv::Point2l>& points) {
-        int delta              = ((1 << 0) >> 1);
         const auto points_size = points.size();
         cv::Point2l pt0        = points[points_size - 1], pt1;
         pt0.x                  = (pt0.x) << XY_SHIFT;
-        pt0.y                  = pt0.y + delta;
 
         std::vector<PolyEdge> edges;
         edges.reserve(edges.size() + points_size);
@@ -175,7 +172,6 @@ private:
             cv::Point2l t0, t1;
             pt1   = points[i];
             pt1.x = (pt1.x) << XY_SHIFT;
-            pt1.y = pt1.y + delta;
 
             t0.x = pt0.x;
             t1.x = pt1.x;

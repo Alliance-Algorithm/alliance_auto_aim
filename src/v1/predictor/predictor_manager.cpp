@@ -11,9 +11,9 @@ namespace world_exe::v1::predictor {
 
 class PredictorManager::Impl {
 public:
-    inline void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
+    inline void Update(const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data) {
         const auto time_stamp = data->GetTimeStamped().GetTimeStamp();
-        const auto dt         = (time_stamp - last_update_time_stamp_.GetTimeStamp()) / 1.e9;
+        const auto dt         = (time_stamp - last_update_time_stamp_.GetTimeStamp());
 
         const auto transform          = data->GetTransform();
         const auto rotation_transform = Eigen::Quaterniond { transform.linear() };
@@ -46,6 +46,7 @@ public:
                         -std::atan(tmp_armor0.position.z() / tmp_armor0.position.x()),
                         tmp_armor0.position.norm();
                     predictors_[i].Update(input, {}, dt);
+                    // 同时识别到一辆车的两块装甲板时要调这个函数
                     predictors_[i].set_second_armor();
                     input << util::math::get_yaw_from_quaternion(tmp_armor1.orientation),
                         std::atan(tmp_armor1.position.y() / tmp_armor1.position.x()),
@@ -58,6 +59,7 @@ public:
                         -std::atan(tmp_armor1.position.z() / tmp_armor1.position.x()),
                         tmp_armor1.position.norm();
                     predictors_[i].Update(input, {}, dt);
+                    // 同时识别到一辆车的两块装甲板时要调这个函数
                     predictors_[i].set_second_armor();
                     input << util::math::get_yaw_from_quaternion(tmp_armor0.orientation),
                         std::atan(tmp_armor0.position.y() / tmp_armor0.position.x()),
