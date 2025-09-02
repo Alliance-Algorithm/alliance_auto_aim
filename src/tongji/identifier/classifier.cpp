@@ -81,7 +81,6 @@ public:
     }
 
     enumeration::ArmorIdFlag ovclassify(const cv::Mat& armor_pattern) {
-
         if (armor_pattern.empty()) {
             return enumeration::ArmorIdFlag::Unknow;
         }
@@ -157,4 +156,15 @@ private:
     const int model_image_height_ = 640;
     const int model_image_width_  = 640;
 };
+
+Classifier::Classifier(const std::string& model_path, int model_image_width, int model_image_height)
+    : pimpl_(std::make_unique<Impl>(model_path, model_image_width, model_image_height)) { }
+Classifier::~Classifier() = default;
+
+enumeration::ArmorIdFlag Classifier::classify(const cv::Mat& armor_pattern) {
+    return pimpl_->classify(armor_pattern);
+}
+enumeration::ArmorIdFlag Classifier::ovclassify(const cv::Mat& armor_pattern){
+    return pimpl_->ovclassify(armor_pattern);
+}
 }
