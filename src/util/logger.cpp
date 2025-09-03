@@ -1,11 +1,11 @@
-#pragma once
+#include "logger.hpp"
+
+#include <chrono>
 
 #include <fmt/chrono.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-
-#include <chrono>
 
 namespace world_exe::util::logger {
 std::shared_ptr<spdlog::logger> logger_ = nullptr;
