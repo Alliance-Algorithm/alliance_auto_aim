@@ -55,13 +55,11 @@ target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
 
 ### libspdlog-dev ===
 find_package(spdlog REQUIRED)
-target_include_directories(${fmt_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}  ${fmt_LIBRARIES})
 ### libspdlog-dev End ===
 
 ### libfmt-dev ===
 find_package(fmt REQUIRED)
-target_include_directories(${fmt_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}  ${fmt_LIBRARIES})
 ### libfmt-dev End ===
 
