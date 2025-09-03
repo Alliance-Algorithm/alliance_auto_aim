@@ -8,25 +8,25 @@ namespace world_exe::util::stringifier {
 static inline std::string ToString(const world_exe::enumeration::ArmorIdFlag& id) {
 
     switch (id) {
-    case enumeration::ArmorIdFlag::Hero:
+    case world_exe::enumeration::ArmorIdFlag::Hero:
         return "Hero";
-    case enumeration::ArmorIdFlag::Engineer:
+    case world_exe::enumeration::ArmorIdFlag::Engineer:
         return "Engineer";
-    case enumeration::ArmorIdFlag::InfantryIII:
+    case world_exe::enumeration::ArmorIdFlag::InfantryIII:
         return "InfantryIII";
-    case enumeration::ArmorIdFlag::InfantryIV:
+    case world_exe::enumeration::ArmorIdFlag::InfantryIV:
         return "InfantryIV";
-    case enumeration::ArmorIdFlag::InfantryV:
+    case world_exe::enumeration::ArmorIdFlag::InfantryV:
         return "InfantryV";
-    case enumeration::ArmorIdFlag::Sentry:
+    case world_exe::enumeration::ArmorIdFlag::Sentry:
         return "Sentry";
-    case enumeration::ArmorIdFlag::Base:
+    case world_exe::enumeration::ArmorIdFlag::Base:
         return "Base";
-    case enumeration::ArmorIdFlag::Outpost:
+    case world_exe::enumeration::ArmorIdFlag::Outpost:
         return "Outpost";
-    case enumeration::ArmorIdFlag::Unknow:
+    case world_exe::enumeration::ArmorIdFlag::Unknow:
         return "Unknow";
-    case enumeration::ArmorIdFlag::None:
+    case world_exe::enumeration::ArmorIdFlag::None:
         return "None";
     default:
         return "UnknownID";
