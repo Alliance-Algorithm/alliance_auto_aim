@@ -1,16 +1,17 @@
 
-#include "system_factory.hpp"
+#include "core/system_factory.hpp"
 #include "../v1/auto_aim_system_v1.hpp"
 #include "enum/system_version.hpp"
 #include <format>
 
+// 构建系统，Version 为特定版本
 void world_exe::core::SystemFactory::Build(const enumeration::SystemVersion& version) {
     switch (version) {
     case enumeration::SystemVersion::V1:
-        world_exe::v1::SystemV1::Build();
+        world_exe::v1::SystemV1::Build(); // 构建正常运行的V1版本
         break;
     case enumeration::SystemVersion::V1_TraceFlow:
-        world_exe::v1::SystemV1::Build_1();
+        world_exe::v1::SystemV1::Build_1(); // 构建跟踪流的V1版本
         break;
     default:
 #if __cplusplus >= 202002L
