@@ -12,17 +12,13 @@ namespace world_exe::v1::predictor {
  * @class CarPredictEkf
  * @brief 车辆预测EKF核心类
  *
- * 状态向量维度: 11维 [x, vx, y, vy, z, z1, z2, r1, r2, θ, ω]
+ * 状态向量维度: 11维 [x, vx, y, vy, z, z1, z2, r1, r2, θ, ω]，其中 θ为最近装甲板与车辆中心连线与选定系的x轴的夹角
  * 观测向量维度: 4维 [θ, yaw, pitch, distance]
  *
  * 这个是整个预测的核心，无论是逻辑的维护还是预测的模型都放在这里了，然后其他的主要是为了接口实现
  */
 class CarPredictEkf : public world_exe::util::Ekf<11, 4, CarPredictEkf> {
 public:
-    /**
-     * @brief 构造函数，初始化状态向量和协方差矩阵
-     * 状态: [x=2.0, vx=0, y=0, vy=0, z=-0.3, z1=-0.3, z2=-0.3, r1=0.2, r2=0.2, θ=π, ω=0]
-     */
     CarPredictEkf() {
         X_k << 2.0, 0.0, 0.0, 0.0, -0.3, -0.3, -0.3, 0.2, 0.2, std::numbers::pi, 0.0;
 
@@ -37,7 +33,7 @@ public:
     inline void set_second_armor() { second_armor_flag = true; }
 
     /**
-     * @brief 获取预测的装甲板位置
+     * @brief 获取预测的装甲板位置，这里的预测尚未加入速度擦差分得加速度
      * @param id 装甲板类型
      * @param sec 预测时间（秒）
      * @return 四个装甲板的预测位置和姿态
@@ -60,7 +56,7 @@ public:
         const double r2    = model_output(8);                          // 装甲板2到中心距离
         double model_yaw   = model_output(9) + model_output(10) * sec; // 预测yaw角
 
-        // TODO: 把 pitch 与 z 关联起来，这里可以通过z和z1、z2把pitch算出来
+        // 这里也可以通过z和z1、z2把pitch算出来
         const double pitch1 = 15. / 180. * std::numbers::pi;
         const double pitch2 = 15. / 180. * std::numbers::pi;
 

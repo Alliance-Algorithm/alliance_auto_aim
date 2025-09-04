@@ -23,6 +23,7 @@ public:
                 static_cast<enumeration::ArmorIdFlag>(0b00000001 << i));
             if (armors.empty()) continue;
             CarPredictEkf::ZVec input;
+            // 此处只对识别到一块或两块装甲板时做处理，因为对同一辆车不可能有更多，即便有此处也不应处理，当作异常
             if (armors.size() == 1) {
                 const auto tmp_armor = data::ArmorGimbalControlSpacing { armors[0].id,
                     transform * armors[0].position, rotation_transform * armors[0].orientation };
@@ -32,6 +33,7 @@ public:
                     tmp_armor.position.norm();
                 predictors_[i].Update(input, {}, dt);
             } else if (armors.size() == 2) {
+                // 当同时识别到两块装甲板时，优先更新近的那块，再更新远的
                 const auto armor0_yaw = util::math::get_yaw_from_quaternion(armors[0].orientation);
                 const auto armor1_yaw = util::math::get_yaw_from_quaternion(armors[1].orientation);
 
