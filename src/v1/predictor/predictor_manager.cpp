@@ -11,9 +11,9 @@ namespace world_exe::v1::predictor {
 
 class PredictorManager::Impl {
 public:
-    inline void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
+    inline void Update(const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data) {
         const auto time_stamp = data->GetTimeStamped().GetTimeStamp();
-        const auto dt         = (time_stamp - last_update_time_stamp_.GetTimeStamp()) / 1.e9;
+        const auto dt         = (time_stamp - last_update_time_stamp_.GetTimeStamp());
 
         const auto transform          = data->GetTransform();
         const auto rotation_transform = Eigen::Quaterniond { transform.linear() };
@@ -23,6 +23,7 @@ public:
                 static_cast<enumeration::ArmorIdFlag>(0b00000001 << i));
             if (armors.empty()) continue;
             CarPredictEkf::ZVec input;
+            // 此处只对识别到一块或两块装甲板时做处理，因为对同一辆车不可能有更多，即便有此处也不应处理，当作异常
             if (armors.size() == 1) {
                 const auto tmp_armor = data::ArmorGimbalControlSpacing { armors[0].id,
                     transform * armors[0].position, rotation_transform * armors[0].orientation };
@@ -32,6 +33,7 @@ public:
                     tmp_armor.position.norm();
                 predictors_[i].Update(input, {}, dt);
             } else if (armors.size() == 2) {
+                // 当同时识别到两块装甲板时，优先更新近的那块，再更新远的
                 const auto armor0_yaw = util::math::get_yaw_from_quaternion(armors[0].orientation);
                 const auto armor1_yaw = util::math::get_yaw_from_quaternion(armors[1].orientation);
 
@@ -46,6 +48,7 @@ public:
                         -std::atan(tmp_armor0.position.z() / tmp_armor0.position.x()),
                         tmp_armor0.position.norm();
                     predictors_[i].Update(input, {}, dt);
+                    // 同时识别到一辆车的两块装甲板时要调这个函数
                     predictors_[i].set_second_armor();
                     input << util::math::get_yaw_from_quaternion(tmp_armor1.orientation),
                         std::atan(tmp_armor1.position.y() / tmp_armor1.position.x()),
@@ -58,6 +61,7 @@ public:
                         -std::atan(tmp_armor1.position.z() / tmp_armor1.position.x()),
                         tmp_armor1.position.norm();
                     predictors_[i].Update(input, {}, dt);
+                    // 同时识别到一辆车的两块装甲板时要调这个函数
                     predictors_[i].set_second_armor();
                     input << util::math::get_yaw_from_quaternion(tmp_armor0.orientation),
                         std::atan(tmp_armor0.position.y() / tmp_armor0.position.x()),
