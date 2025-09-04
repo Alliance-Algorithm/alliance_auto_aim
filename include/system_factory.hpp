@@ -1,11 +1,5 @@
 #pragma once
 
-#include "enum/system_version.hpp"
+#warning "#include <core/system_factory.hpp> but <system_factory.hpp>"
 
-namespace world_exe::core {
-
-class SystemFactory {
-public:
-    static void Build(const enumeration::SystemVersion& version);
-};
-}
+#include <core/system_factory.hpp>

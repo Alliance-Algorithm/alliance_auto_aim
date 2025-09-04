@@ -1,8 +1,8 @@
-#include "cast.hpp"
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/armor_in_camera.hpp"
-#include "visualization.hpp"
+#include "utils/cast.hpp"
+#include "utils/visualization.hpp"
 #include <cstdio>
 #include <enum/enum_tools.hpp>
 #include <opencv2/core/mat.hpp>
