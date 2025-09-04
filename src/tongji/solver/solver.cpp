@@ -1,54 +1,18 @@
 #include "solver.hpp"
 
-#include <Eigen/src/Core/Matrix.h>
-#include <Eigen/src/Geometry/Quaternion.h>
+#include <memory>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/eigen.hpp>
-#include <opencv2/core/types.hpp>
-#include <vector>
 
 #include "data/armor_camera_spacing.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
-#include "data/armor_image_spaceing.hpp"
-#include "enum/armor_id.hpp"
-#include "interfaces/armor_in_camera.hpp"
-#include "interfaces/time_stamped.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
+#include "solver_armor.hpp"
 #include "util/coordinate.hpp"
 #include "util/index.hpp"
 #include "util/math.hpp"
 namespace world_exe::tongji::solver {
-
-class ArmorInCameraImpl final : public interfaces::IArmorInCamera, public interfaces::ITimeStamped {
-public:
-    void AddArmor(const data::ArmorCameraSpacing& armor) {
-        int index = util::enumeration::GetIndex(armor.id);
-        armors_.at(index).push_back(armor);
-    }
-
-    void SetTimeStamp(const std::time_t& timestamp) { timestamp_ = timestamp; }
-
-    const std::vector<data::ArmorCameraSpacing>& GetArmors(
-        const enumeration::ArmorIdFlag& armor_id) const override {
-        static const std::vector<data::ArmorCameraSpacing> empty_vector;
-        try {
-            int index = util::enumeration::GetIndex(armor_id);
-            return armors_.at(index);
-        } catch (const std::exception& e) {
-            return empty_vector;
-        }
-    }
-
-    const std::time_t& GetTimeStamp() const override { return timestamp_; }
-
-    const interfaces::ITimeStamped& GetTimeStamped() const override { return *this; }
-
-private:
-    std::vector<std::vector<data::ArmorCameraSpacing>> armors_ { static_cast<size_t>(
-        enumeration::ArmorIdFlag::Count) };
-    std::time_t timestamp_ = 0;
-};
 
 class Solver::Impl {
 public:
@@ -59,24 +23,20 @@ public:
         , t_camera2gimbal_(t_camera2gimbal) { }
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(
-        std::shared_ptr<interfaces::IArmorInImage> armors_in_image) const {
+        std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
+        std::vector<data::ArmorCameraSpacing> armor_plates;
 
-        auto result = std::make_shared<ArmorInCameraImpl>();
-        result->SetTimeStamp(armors_in_image->GetTimeStamped().GetTimeStamp());
-
-        for (int i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); ++i) {
-            const auto armor_id      = static_cast<enumeration::ArmorIdFlag>(1 << i);
-            const auto& image_armors = armors_in_image->GetArmors(armor_id);
-
-            for (const auto& armor_image : image_armors) {
-                const auto armor_in_camera_optional = Solve(armor_image);
-                if (armor_in_camera_optional.has_value()) {
-                    result->AddArmor(armor_in_camera_optional.value());
+        for (int i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); i++) {
+            const auto& armor_id = util::enumeration::GetArmorIdFlag(i);
+            const auto& armors   = armors_in_image->GetArmors(armor_id);
+            for (const auto& armor : armors) {
+                auto solved_armor = Solve(armor);
+                if (solved_armor.has_value()) {
+                    armor_plates.emplace_back(solved_armor.value());
                 }
             }
         }
-
-        return result;
+        return std::make_shared<SolverArmor>(armor_plates);
     }
 
     std::optional<world_exe::data::ArmorCameraSpacing> Solve(
@@ -166,6 +126,8 @@ public:
         result.orientation = orientation_in_world;
         return result;
     }
+
+    const std::time_t& GetTimeStamp() const { return time_stamp_; }
 
 private:
     std::vector<cv::Point2d> ReprojectArmor(const Eigen::Vector3d& xyz_in_world, const double& yaw,
@@ -332,21 +294,19 @@ private:
     Eigen::Matrix3d R_gimbal2world_;
     Eigen::Vector3d t_camera2gimbal_;
     inline constexpr static const double MaxArmorDistance = 15.0;
+
+    std::time_t time_stamp_ { 0 };
 };
 
 Solver::Solver(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
     Eigen::Vector3d t_camera2gimbal)
-    : pimpl_(std::make_unique<Impl>(R_camera2gimbal, R_gimbal2world, t_camera2gimbal))
-    , last_processed_time_(0) { }
+    : pimpl_(std::make_unique<Impl>(R_camera2gimbal, R_gimbal2world, t_camera2gimbal)) { }
 Solver::~Solver() = default;
 
-const std::time_t& Solver::GetTimeStamp() const { return last_processed_time_; }
-
-class ArmorInCameraImpl;
+const std::time_t& Solver::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }
 
 std::shared_ptr<world_exe::interfaces::IArmorInCamera> Solver::SolvePnp(
     std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
-    last_processed_time_ = armors_in_image->GetTimeStamped().GetTimeStamp();
     return pimpl_->SolvePnp(armors_in_image);
 }
 

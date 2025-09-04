@@ -19,7 +19,6 @@ public:
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
-    std::time_t last_processed_time_;
 };
 
 }
