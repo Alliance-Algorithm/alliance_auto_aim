@@ -20,7 +20,7 @@ public:
         compiled_model_ = core_.compile_model(
             ovmodel, "AUTO", ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
     }
-
+//
     void Classify(const cv::Mat& armor_pattern, enumeration::ArmorIdFlag& armor_id,
         double& armor_confidence) {
         if (armor_pattern.empty()) {
