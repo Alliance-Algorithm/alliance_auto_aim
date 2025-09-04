@@ -22,4 +22,13 @@ static inline int GetIndex(const world_exe::enumeration::ArmorIdFlag& flag) {
         throw std::runtime_error("Invalid ArmorIdFlag value: " + std::to_string(value));
     }
 }
+
+static const world_exe::enumeration::ArmorIdFlag GetArmorIdFlag(int index) {
+    if (index >= 0 && index < static_cast<int>(world_exe::enumeration::ArmorIdFlag::Count)) {
+        uint32_t value = 1U << index;
+        return static_cast<world_exe::enumeration::ArmorIdFlag>(value);
+    } else {
+        throw std::out_of_range("Invalid index for ArmorIdFlag conversion.");
+    }
+}
 }
