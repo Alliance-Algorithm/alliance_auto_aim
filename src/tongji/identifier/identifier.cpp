@@ -45,12 +45,13 @@ public:
         , min_confidence_(min_confidence)
         , max_rectangular_error_(max_rectangular_error / 57.3) // degree to rad
         , save_path_(std::move(save_path))
-        , debug_(debug) {
+        , debug_(debug)
+        , target_color_(blue) {
 
         if (!std::filesystem::exists(save_path_)) std::filesystem::create_directories(save_path_);
     }
 
-    void SetTargetColor(bool target_color) { target_color_ = target_color; }
+    void SetTargetColor(Color target_color) { target_color_ = target_color; }
 
     const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
     Identify(const cv::Mat& bgr_img) {
@@ -296,7 +297,7 @@ private:
         if (name_ok && !confidence_ok) Save(armor_pattern, armor_id);
 
         // 出现 5号 则显示 debug 信息。但不过滤。
-        if (armor_id == enumeration::ArmorIdFlag::InfantryV)
+        if (armor_id == enumeration::ArmorIdFlag::InfantryV && debug_)
             world_exe::util::logger::logger()->debug("See pattern 5 : InfantryV ");
 
         return name_ok && confidence_ok;
@@ -310,7 +311,7 @@ private:
                                              || armor_id == enumeration::ArmorIdFlag::Base);
 
         // 保存异常的图案，用于分类器的迭代
-        if (!name_ok) {
+        if (!name_ok && debug_) {
             util::logger::logger()->debug(
                 "see strange armor: {}", util::stringifier::ToString(armor_id));
             Save(armor_pattern, armor_id);
@@ -330,7 +331,7 @@ private:
     double min_confidence_;
     double max_rectangular_error_;
 
-    bool target_color_ = true; // true: red, false: blue
+    Color target_color_;
 
     bool debug_;
     std::string save_path_;
