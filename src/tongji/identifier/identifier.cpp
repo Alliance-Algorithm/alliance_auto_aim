@@ -32,7 +32,8 @@ public:
         const double& min_lightbar_ratio, const double& max_lightbar_ratio,
         const double& min_lightbar_length, const double& max_armor_ratio,
         const double& min_armor_ratio, const double& max_side_ratio, const double& min_confidence,
-        const double& max_rectangular_error, const std::string& save_path, const bool& debug = true)
+        const double& max_rectangular_error, const std::string& save_path, const bool& debug = true,
+        const bool& record = true)
         : classifier_(model_path, model_image_width, model_image_height)
         , threshold_(threshold)
         , max_angle_error_(max_angle_error / 57.3) // degree to rad
@@ -46,6 +47,7 @@ public:
         , max_rectangular_error_(max_rectangular_error / 57.3) // degree to rad
         , save_path_(std::move(save_path))
         , debug_(debug)
+        , record_(record)
         , target_color_(blue) {
 
         if (!std::filesystem::exists(save_path_)) std::filesystem::create_directories(save_path_);
@@ -294,7 +296,7 @@ private:
         auto confidence_ok = armor_confidence > min_confidence_;
 
         // 保存不确定的图案，用于分类器的迭代
-        if (name_ok && !confidence_ok && debug_) Save(armor_pattern, armor_id);
+        if (name_ok && !confidence_ok && record_) Save(armor_pattern, armor_id);
 
         // 出现 5号 则显示 debug 信息。但不过滤。
         if (armor_id == enumeration::ArmorIdFlag::InfantryV && debug_)
@@ -334,6 +336,7 @@ private:
     Color target_color_;
 
     bool debug_;
+    bool record_;
     std::string save_path_;
 };
 
