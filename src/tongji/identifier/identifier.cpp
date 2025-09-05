@@ -294,7 +294,7 @@ private:
         auto confidence_ok = armor_confidence > min_confidence_;
 
         // 保存不确定的图案，用于分类器的迭代
-        if (name_ok && !confidence_ok) Save(armor_pattern, armor_id);
+        if (name_ok && !confidence_ok && debug_) Save(armor_pattern, armor_id);
 
         // 出现 5号 则显示 debug 信息。但不过滤。
         if (armor_id == enumeration::ArmorIdFlag::InfantryV && debug_)
