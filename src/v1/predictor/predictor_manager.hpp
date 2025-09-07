@@ -1,19 +1,20 @@
 #pragma once
 
+#include "interfaces/predictor_update_package.hpp"
 #include "interfaces/target_predictor.hpp"
 
 namespace world_exe::v1::predictor {
-class PredictorManager : public world_exe::interfaces::ITargetPredictor {
+class PredictorManager final : public world_exe::interfaces::ITargetPredictor {
 public:
     PredictorManager();
     ~PredictorManager();
 
-    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) override;
+    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data);
 
     virtual std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
-        const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) override;
+        const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp);
 
-    const interfaces::IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) const override;
+    const interfaces::IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) const;
 
 private:
     class Impl;

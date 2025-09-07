@@ -93,7 +93,7 @@ public:
             ParamsForSystemV1::car_id_identify_event, //
             [this](const auto& data) {
                 FLOW_IN(ParamsForSystemV1::car_id_identify_event, enumeration::CarIDFlag)
-                car_state_->Update(data);
+                state_machine->Update(data);
                 core::EventBus::Publish<enumeration::CarIDFlag>( //
                     ParamsForSystemV1::car_tracing_event, car_state_->GetAllowdToFires());
                 FLOW_OUT(ParamsForSystemV1::car_id_identify_event, enumeration::CarIDFlag)
@@ -136,7 +136,7 @@ public:
                 FLOW_IN(
                     ParamsForSystemV1::tracker_update_event, interfaces::IPreDictorUpdatePackage)
                 fire_control->SetTimeStamp(data->GetTimeStamped().GetTimeStamp());
-                tracker_->Update(data);
+                predictor->Update(data);
                 FLOW_OUT(
                     ParamsForSystemV1::tracker_update_event, interfaces::IPreDictorUpdatePackage)
             });
