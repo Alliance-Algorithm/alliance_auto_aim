@@ -6,6 +6,11 @@
 
 namespace world_exe::interfaces {
 
+/**
+ * @brief 不必管他
+ *
+ * @tparam T
+ */
 template <class T> class ISyncLoad {
 
 public:
