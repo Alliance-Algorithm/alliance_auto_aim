@@ -17,11 +17,12 @@ public:
 
     const enumeration::ArmorIdFlag& GetId() const { return id_; }
 
-    const interfaces::IArmorInGimbalControl& Predictor(const std::time_t& time_stamp) {
-        target_armors_.SetWithSingleId(ekf_.get_predict_output_armor(id_,
-                                           (time_stamp - create_time_stamp_.GetTimeStamp()) / 1.e9),
+    std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(const std::time_t& time_stamp) {
+        auto ptr = std::make_shared<PredictArmorInGimbalControl>();
+        ptr->SetWithSingleId(ekf_.get_predict_output_armor(
+                                 id_, (time_stamp - create_time_stamp_.GetTimeStamp()) / 1.e9),
             time_stamp);
-        return target_armors_;
+        return ptr;
     }
 
     inline void SetId(const enumeration::CarIDFlag& id) { id_ = id; }
@@ -36,8 +37,6 @@ private:
     enumeration::CarIDFlag id_;
     CarPredictEkf ekf_;
     PredictTimeStamp create_time_stamp_;
-
-    PredictArmorInGimbalControl target_armors_;
 };
 
 CarPredictor::CarPredictor()
@@ -52,7 +51,7 @@ CarPredictor::~CarPredictor() = default;
 
 const enumeration::ArmorIdFlag& CarPredictor::GetId() const { return pimpl_->GetId(); }
 
-const interfaces::IArmorInGimbalControl& CarPredictor::Predictor(
+std::shared_ptr<interfaces::IArmorInGimbalControl> CarPredictor::Predictor(
     const std::time_t& time_stamp) const {
     return pimpl_->Predictor(time_stamp);
 }

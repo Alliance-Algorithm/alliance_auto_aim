@@ -23,6 +23,7 @@ public:
      * @param time_stamp 未来的某个时间点
      * @return const IArmorInGimbalControl&
      */
-    virtual const IArmorInGimbalControl& Predictor(const std::time_t& time_stamp) const = 0;
+    virtual std::shared_ptr<IArmorInGimbalControl> Predictor(
+        const std::time_t& time_stamp) const = 0;
 };
 }

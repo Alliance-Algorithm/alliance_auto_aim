@@ -48,7 +48,7 @@ public:
     const world_exe::data::FireControl CalculateTarget(const std::time_t& time_duration) {
         time_t fly_time        = 0;
         const auto& pre1       = predictor_->Predictor(fly_time + time_duration + control_delay_);
-        const auto& pre2       = pre1.GetArmors(predictor_->GetId());
+        const auto& pre2       = pre1->GetArmors(predictor_->GetId());
         double min_angular_dis = 1e9;
         int index = -1, index_ = 0;
         for (const auto vec : pre2) {
@@ -67,7 +67,7 @@ public:
         for (int i = 5; i-- > 0;) {
             const auto& armors_in_gimbal_control =
                 predictor_->Predictor(fly_time + time_duration + control_delay_);
-            const auto& armors = armors_in_gimbal_control.GetArmors(predictor_->GetId());
+            const auto& armors = armors_in_gimbal_control->GetArmors(predictor_->GetId());
             const auto& [fly_time, dir] =
                 trajectory_solver::gravity_only(armors[index].position, velocity_begin_, gravity_);
         }
