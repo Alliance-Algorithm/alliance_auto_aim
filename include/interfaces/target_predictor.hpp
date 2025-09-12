@@ -30,6 +30,6 @@ public:
      * @param id
      * @return const IPredictor&
      */
-    virtual const IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) const = 0;
+    virtual std::shared_ptr<IPredictor> GetPredictor(const enumeration::ArmorIdFlag& id) const = 0;
 };
 }

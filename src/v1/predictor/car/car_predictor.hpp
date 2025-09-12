@@ -17,7 +17,7 @@ public:
     void SetTimeStamp(const interfaces::ITimeStamped& time_stamp);
 
     const enumeration::ArmorIdFlag& GetId() const override;
-    const interfaces::IArmorInGimbalControl& Predictor(
+    std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
         const std::time_t& time_stamp) const override;
 
 private:

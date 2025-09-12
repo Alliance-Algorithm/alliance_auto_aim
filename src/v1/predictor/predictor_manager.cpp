@@ -90,10 +90,11 @@ public:
         return std::make_shared<PredictArmorInGimbalControl>(armors, last_update_time_stamp_);
     };
 
-    const interfaces::IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) {
-        predictor.SetId(id);
-        predictor.SetEkf(predictors_[util::enumeration::GetIndex(id)]);
-        predictor.SetTimeStamp(last_update_time_stamp_);
+    std::shared_ptr<interfaces::IPredictor> GetPredictor(const enumeration::ArmorIdFlag& id) {
+        auto predictor = std::make_shared<CarPredictor>();
+        predictor->SetId(id);
+        predictor->SetEkf(predictors_[util::enumeration::GetIndex(id)]);
+        predictor->SetTimeStamp(last_update_time_stamp_);
         return predictor;
     }
 
@@ -103,7 +104,6 @@ private:
 
     Eigen::Affine3d transform_from_camera_to_gimbal_;
     PredictArmorInGimbalControl predictted_armors_;
-    CarPredictor predictor;
 };
 
 PredictorManager::PredictorManager()
@@ -120,7 +120,7 @@ void PredictorManager::Update(std::shared_ptr<interfaces::IPreDictorUpdatePackag
     return pimpl_->Update(data);
 };
 
-const interfaces::IPredictor& PredictorManager::GetPredictor(
+std::shared_ptr<interfaces::IPredictor> PredictorManager::GetPredictor(
     const enumeration::ArmorIdFlag& id) const {
     return pimpl_->GetPredictor(id);
 };

@@ -1,8 +1,8 @@
 #include "./auto_aim_system_v1.hpp"
+#include "core/event_bus.hpp"
 #include "data/fire_control.hpp"
 #include "data/sync_data.hpp"
 #include "enum/armor_id.hpp"
-#include "event_bus.hpp"
 #include "fire_controller/fire_controller.hpp"
 #include "identifier/identifier.hpp"
 #include "interfaces/armor_in_camera.hpp"
@@ -157,7 +157,7 @@ public:
             [this](const auto& data) {
                 FLOW_IN(ParamsForSystemV1::get_lastest_predictor_event, enumeration::CarIDFlag)
                 if (data != enumeration::CarIDFlag::None)
-                    core::EventBus::Publish<interfaces::IPredictor>(
+                    core::EventBus::Publish<std::shared_ptr<interfaces::IPredictor>>(
                         ParamsForSystemV1::get_lastest_predictor_event,
                         tracker_->GetPredictor(data));
                 FLOW_OUT(ParamsForSystemV1::get_lastest_predictor_event, enumeration::CarIDFlag)

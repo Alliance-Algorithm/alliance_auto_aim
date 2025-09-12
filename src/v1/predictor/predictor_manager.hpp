@@ -14,7 +14,7 @@ public:
     virtual std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp);
 
-    const interfaces::IPredictor& GetPredictor(const enumeration::ArmorIdFlag& id) const;
+    std::shared_ptr<interfaces::IPredictor> GetPredictor(const enumeration::ArmorIdFlag& id) const;
 
 private:
     class Impl;
