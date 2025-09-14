@@ -1,8 +1,12 @@
 #pragma once
 
+<<<<<<< HEAD
 #include <algorithm>
 
 #include "tongji/predictor/time_stamp.hpp"
+=======
+#include <chrono>
+>>>>>>> 04b0cf7 (feat: add state machine)
 
 namespace world_exe::tongji::car_state {
 
