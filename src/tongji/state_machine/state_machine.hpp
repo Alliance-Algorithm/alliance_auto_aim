@@ -1,6 +1,6 @@
 #pragma once
 
-#include <chrono>
+#include <ctime>
 
 #include "car_state_manager.hpp"
 #include "enum/car_id.hpp"
@@ -14,7 +14,7 @@ public:
     const enumeration::CarIDFlag& GetAllowdToFires() const override;
 
     const interfaces::ICarState& Update(
-        const enumeration::CarIDFlag& car_detected, std::chrono::steady_clock::time_point now);
+        const enumeration::CarIDFlag& car_detected, std::time_t now);
 
 private:
     enumeration::CarIDFlag tracing_state_ = enumeration::CarIDFlag::None;

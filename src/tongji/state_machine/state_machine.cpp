@@ -14,7 +14,7 @@ StateMachine::StateMachine(int switch_threshold)
 const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const { return tracing_state_; }
 
 const interfaces::ICarState& StateMachine::Update(
-    const enumeration::CarIDFlag& car_detected, std::chrono::steady_clock::time_point now) {
+    const enumeration::CarIDFlag& car_detected, std::time_t now) {
     tracing_state_ = enumeration::CarIDFlag::None;
 
     for (int i = 0; i < static_cast<int>(enumeration::CarIDFlag::Count); ++i) {

@@ -1,6 +1,8 @@
 #pragma once
 
-#include <chrono>
+#include <algorithm>
+
+#include "tongji/predictor/time_stamp.hpp"
 
 namespace world_exe::tongji::car_state {
 
@@ -9,14 +11,19 @@ public:
     CarStateManager(int switch_threshold = 5)
         : switch_threshold_(switch_threshold) { }
 
-    void Update(bool detected, std::chrono::steady_clock::time_point now) {
+    void Update(bool detected, std::time_t now_raw) {
         if (detected) {
             count_     = std::min(count_ + 1, switch_threshold_);
+            auto now   = predictor::TimeStamp::FromRaw(now_raw);
             last_seen_ = now;
         } else {
             count_ = std::max(count_ - 1, 0);
         }
         is_locked_ = (count_ >= switch_threshold_);
+    }
+
+    bool IsLost(const predictor::TimeStamp& now, double timeout_sec) const {
+        return now.SecondsSince(last_seen_) > timeout_sec;
     }
 
     bool IsLocked() const { return is_locked_; }
@@ -32,7 +39,7 @@ public:
     void SetPriority(const int& p) { priority_ = p; }
     int GetPriority() const { return priority_; }
 
-    std::chrono::steady_clock::time_point LastSeen() const { return last_seen_; }
+    predictor::TimeStamp LastSeen() const { return last_seen_; }
 
     void IncrementUpdateCount() {
         update_count_++;
@@ -50,6 +57,6 @@ private:
     bool is_converged_ = false;
     bool is_diverged_  = false;
     int priority_      = 100; // 默认最低优先级
-    std::chrono::steady_clock::time_point last_seen_;
+    predictor::TimeStamp last_seen_;
 };
 }
