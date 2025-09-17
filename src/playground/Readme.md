@@ -6,6 +6,6 @@
 在test中编写测试工厂
 
 目前这个库没有人实现测试的部分，可以考虑拿ROS绑定库可视化
-https://github.com/Alliance-Algorithm/ros_alliance_auto_aim
+https://github.com/Alliance-Algorithm/alliance_ros_auto_aim
 
 测试后提交pr，会有专人审你的代码
