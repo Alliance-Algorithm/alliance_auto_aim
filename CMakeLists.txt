@@ -16,6 +16,9 @@ file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS
 # src/v1/*.cc
 src/tongji/*.cpp 
 src/tongji/*.cc
+src/tongji/*.cpp 
+src/playground/*.cpp
+src/playground/*.cc
 src/core/*.cpp
 src/util/*.cpp)
 target_sources(
