@@ -14,7 +14,7 @@ public:
     void Update(bool detected, std::time_t now_raw) {
         if (detected) {
             count_     = std::min(count_ + 1, switch_threshold_);
-            auto now   = predictor::TimeStamp::FromRaw(now_raw);
+            auto now   = predictor::TimeStamp(now_raw);
             last_seen_ = now;
         } else {
             count_ = std::max(count_ - 1, 0);
@@ -57,6 +57,6 @@ private:
     bool is_converged_ = false;
     bool is_diverged_  = false;
     int priority_      = 100; // 默认最低优先级
-    predictor::TimeStamp last_seen_;
+    predictor::TimeStamp last_seen_ { 0 };
 };
 }

@@ -5,13 +5,10 @@
 namespace world_exe::tongji::predictor {
 class TimeStamp : public interfaces::ITimeStamped {
 public:
-    TimeStamp() = default;
     TimeStamp(const std::time_t& time_stamp)
         : time_stamp_(time_stamp) { }
 
-    static TimeStamp FromRaw(std::time_t raw) { return TimeStamp(raw); }
-
-    inline void SetTimeStamp(const time_t& time_stamp) { time_stamp_ = time_stamp; }
+    void SetTimeStamp(const std::time_t& time_stamp) { time_stamp_ = time_stamp; }
 
     double SecondsSince(const TimeStamp& other) const {
         return std::difftime(time_stamp_, other.time_stamp_);

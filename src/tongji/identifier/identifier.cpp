@@ -17,7 +17,7 @@
 
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
-#include "identifier_armor.hpp"
+#include "identified_armor.hpp"
 #include "interfaces/armor_in_image.hpp"
 #include "tongji/identifier/classifier.hpp"
 #include "util/logger.hpp"
@@ -191,7 +191,7 @@ public:
             all_car_id |= static_cast<uint32_t>(armor.id);
         }
 
-        return { std::make_shared<IdentifierArmor>(armor_plates),
+        return { std::make_shared<IdentifiedArmor>(armor_plates),
             static_cast<enumeration::CarIDFlag>(all_car_id) };
     }
 

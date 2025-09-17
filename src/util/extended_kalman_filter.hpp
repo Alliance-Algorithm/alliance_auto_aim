@@ -30,17 +30,17 @@ public:
     }
 
     Eigen::VectorXd predict(const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q) {
-        return predict(F, Q, [&](const Eigen::VectorXd& x) { return F * x; });
+        return Predict(F, Q, [&](const Eigen::VectorXd& x) { return F * x; });
     }
 
-    Eigen::VectorXd predict(const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q,
+    Eigen::VectorXd Predict(const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q,
         std::function<Eigen::VectorXd(const Eigen::VectorXd&)> f) {
         P = F * P * F.transpose() + Q;
         x = f(x);
         return x;
     }
 
-    Eigen::VectorXd update(
+    Eigen::VectorXd Update(
         const Eigen::VectorXd& z, const Eigen::MatrixXd& H, const Eigen::MatrixXd& R,
         std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> z_subtract =
             [](const Eigen::VectorXd& a, const Eigen::VectorXd& b) { return a - b; }) {
