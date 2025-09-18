@@ -119,7 +119,6 @@ public:
         auto l_ok = ekf_.x[8] + ekf_.x[9] > 0.05 && ekf_.x[8] + ekf_.x[9] < 0.5;
 
         if (r_ok && l_ok) return false;
-
         // util::logger::logger()->debug("[Target] r={:.3f}, l={:.3f}", ekf_.x[8], ekf_.x[9]);
         return true;
     }

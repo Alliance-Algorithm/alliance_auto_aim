@@ -7,13 +7,10 @@
 #include "enum/car_id.hpp"
 #include "enum/enum_tools.hpp"
 #include "target.hpp"
-#include "tongji/predictor/target_snapshot_predictor.hpp"
 
 namespace world_exe::tongji::predictor {
 
 std::vector<Target> ConstructTargets(const enumeration::ArmorIdFlag& id, std::time_t time_stamp) {
-    std::vector<Target> targets;
-
     for (int i = 0; i < 8; ++i) {
         auto car_id = static_cast<enumeration::ArmorIdFlag>(1 << i);
         if (!enumeration::IsFlagContains(id, car_id)) continue;
@@ -46,39 +43,21 @@ std::vector<Target> ConstructTargets(const enumeration::ArmorIdFlag& id, std::ti
 
         Eigen::Vector3d armor_xyz_in_world = Eigen::Vector3d::Zero();
         Eigen::Vector3d armor_ypr_in_world = Eigen::Vector3d::Zero();
-
-        targets.emplace_back(Target(
-            armor_xyz_in_world, armor_ypr_in_world, car_id, time_stamp, radius, armor_num, P0_dig));
-        return targets;
     }
-
-    return targets;
 }
 
 class TargetPredictor::Impl {
 public:
-    Impl(const std::vector<Target>& targets)
-        : selected_targets_(targets) { }
+    Impl() { }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
-        const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) {
+        const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) { }
+
+    std::shared_ptr<interfaces::IPredictor> GetPredictor(const enumeration::ArmorIdFlag& id) const {
     
     }
 
-    std::shared_ptr<interfaces::IPredictor> GetPredictor(const enumeration::ArmorIdFlag& id) const {
-        auto targets = ConstructTargets(id, last_update_time_stamp_);
-        return std::make_shared<MultiTargetSnapshotPredictor>(targets);
-    }
-
-    void Update(const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data) {
-        for (auto target : selected_targets_) {
-            target.Update(data);
-        }
-    }
-
 private:
-    std::vector<Target> selected_targets_;
-
     std::time_t last_update_time_stamp_ { 0 };
 };
 
@@ -93,5 +72,5 @@ std ::shared_ptr<interfaces::IPredictor> TargetPredictor::GetPredictor(
 }
 
 TargetPredictor::TargetPredictor(const enumeration::ArmorIdFlag& id, std::time_t t)
-    : pimpl_(std::make_unique<Impl>(ConstructTargets(id, t))) { }
+    : pimpl_() { }
 }
