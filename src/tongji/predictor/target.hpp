@@ -2,11 +2,13 @@
 
 #include <functional>
 #include <memory>
+#include <utility>
+#include <vector>
 
+#include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
 #include "interfaces/predictor_update_package.hpp"
-#include "tongji/predictor/time_stamp.hpp"
 #include "util/extended_kalman_filter.hpp"
 #include "util/math.hpp"
 
@@ -32,7 +34,7 @@ public:
     Target(const Eigen::Vector3d& armor_xyz_in_world, const Eigen::Vector3d& armor_ypr_in_world,
         const enumeration::ArmorIdFlag& id, const std::time_t& t, const double& radius,
         const int& armor_num, const Eigen::VectorXd& P0_dig)
-        : time_stamp_(t)
+        : last_time_stamp_(t)
         , car_id_(id)
         , armor_num_(armor_num) {
 
@@ -64,25 +66,15 @@ public:
 
     Eigen::VectorXd GetEkf_x() const { return ekf_.x; }
 
-    void Predict(double dt) {
-        // 防止夹角求和出现异常值
-        auto f = [&](const Eigen::VectorXd& x) -> Eigen::VectorXd {
-            Eigen::VectorXd x_prior = this->F(dt) * x;
-            x_prior[6]              = util::math::clamp_pm_pi(x_prior[6]);
-            return x_prior;
-        };
-
-        // 前哨站转速特判
-        if (this->Convergened() && this->car_id_ == enumeration::CarIDFlag::Outpost
-            && std::abs(this->ekf_.x[7]) > 2)
-            this->ekf_.x[7] = this->ekf_.x[7] > 0 ? 2.51 : -2.51;
-
-        ekf_.Predict(this->F(dt), this->Q(dt), f);
-    }
-
-    std::time_t GetTimeStamp() const { return time_stamp_.GetTimeStamp(); }
+    std::time_t GetTimeStamp() const { return last_time_stamp_; }
     int GetArmorNum() const { return armor_num_; }
     enumeration::CarIDFlag GetId() const { return car_id_; }
+
+    void Predict(const std::time_t& time_stamp) {
+        const double dt = std::difftime(time_stamp, last_time_stamp_);
+        Predict(dt);
+        last_time_stamp_ = time_stamp;
+    }
 
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
         const auto& transform          = data->GetTransform();
@@ -123,7 +115,38 @@ public:
         return true;
     }
 
+    std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() {
+        std::vector<data::ArmorGimbalControlSpacing> armors;
+        for (int id = 0; id < armor_num_; id++) {
+            auto angle = util::math::clamp_pm_pi(this->ekf_.x[6] + id * 2 * CV_PI / armor_num_);
+            auto xyz   = h_armor_xyz(this->ekf_.x, id);
+
+            data::ArmorGimbalControlSpacing armor;
+            armor.id          = car_id_;
+            armor.position    = xyz;
+            armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
+            armors.emplace_back(std::move(armor));
+        }
+        return armors;
+    }
+
 private:
+    void Predict(double dt) {
+        // 防止夹角求和出现异常值
+        auto f = [&](const Eigen::VectorXd& x) -> Eigen::VectorXd {
+            Eigen::VectorXd x_prior = this->F(dt) * x;
+            x_prior[6]              = util::math::clamp_pm_pi(x_prior[6]);
+            return x_prior;
+        };
+
+        // 前哨站转速特判
+        if (this->Convergened() && this->car_id_ == enumeration::CarIDFlag::Outpost
+            && std::abs(this->ekf_.x[7]) > 2)
+            this->ekf_.x[7] = this->ekf_.x[7] > 0 ? 2.51 : -2.51;
+
+        ekf_.Predict(this->F(dt), this->Q(dt), f);
+    }
+
     void Update(const Eigen::Vector3d& armor_xyz_in_world,
         const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world) {
         // 装甲板匹配
@@ -321,10 +344,9 @@ auto Q(double dt)->Eigen::MatrixXd{
         // clang-format on
     }
 
-    TimeStamp time_stamp_;
+    std::time_t last_time_stamp_;
     util::ExtendedKalmanFilter ekf_;
     enumeration::CarIDFlag car_id_;
     int armor_num_;
 };
-
 }
