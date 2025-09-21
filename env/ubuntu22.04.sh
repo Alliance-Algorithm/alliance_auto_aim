@@ -17,5 +17,5 @@ sudo ln -s /usr/include/libdwarf/dwarf.h /usr/include/dwarf.h
 
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 13
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 13
-sudo update-alternatives --config g++
-sudo update-alternatives --config gcc
+sudo update-alternatives --set g++
+sudo update-alternatives --set gcc
