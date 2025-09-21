@@ -9,6 +9,14 @@ COPY ./env /env
 
 RUN apt-get update && apt-get install -y sudo
 
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=Asia/Shanghai
+
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata
+
 RUN chmod +x /env/ubuntu22.04.sh && /env/ubuntu22.04.sh
 
 COPY . /app
