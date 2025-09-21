@@ -15,7 +15,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and run in ubuntu 22.04
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and cache Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./tests/docker/ubuntu22.04.build.dockerfile
+          tags: alliance_auto_aim_ci:ubuntu2204-build
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Run in ubuntu 22.04
         run: |
-          docker build -t alliance-auto-aim-test-build-ubuntu2204 -f ${{github.workspace}}/tests/docker/ubuntu22.04.build.dockerfile ${{github.workspace}}
-          docker run --rm alliance-auto-aim-test-build-ubuntu2204
+          docker run --rm alliance_auto_aim_ci:ubuntu2204-build
