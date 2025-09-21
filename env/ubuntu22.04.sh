@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get update
-sudo apt-get -y install gnupg wget gpg curl
+sudo apt-get -y install gnupg wget gpg curl software-properties-common
 
 curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/ros2-latest-archive-keyring.gpg > /dev/null
 
