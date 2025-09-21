@@ -1,16 +1,19 @@
 #!/usr/bin/bash
 
-curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/ros2-latest-archive-keyring.gpg > /dev/null
+sudo apt-get update
+sudo apt-get -y install gnupg wget gpg curl software-properties-common
 
 sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-sudo apt-get install gnupg
+curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/ros2-latest-archive-keyring.gpg > /dev/null
 wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+
 sudo gpg --output /etc/apt/trusted.gpg.d/intel.gpg --dearmor GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
 rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+
 echo "deb https://apt.repos.intel.com/openvino ubuntu22 main" | sudo tee /etc/apt/sources.list.d/intel-openvino.list
+
 sudo apt-get update
 sudo apt-get install -y libtbb-dev  libeigen3-dev libopencv-dev openvino gcc-13 g++-13 libceres-dev libdwarf-dev libbackward-cpp-dev  binutils-dev libdw-dev  libunwind-dev libfmt-dev libspdlog-dev
-
 
 sudo ln -s /usr/include/libdwarf/libdwarf.h /usr/include/libdwarf.h 
 sudo ln -s /usr/include/libdwarf/dwarf.h /usr/include/dwarf.h
