@@ -24,11 +24,11 @@ jobs:
         with:
           context: .
           file: ./tests/docker/ubuntu22.04.build.dockerfile
-          tags: alliance-auto-aim-test-build-ubuntu2204
+          tags: alliance_auto_aim_ci:ubuntu2204-build
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Run in ubuntu 22.04
         run: |
-          docker run --rm alliance-auto-aim-test-build-ubuntu2204
+          docker run --rm alliance_auto_aim_ci:ubuntu2204-build
