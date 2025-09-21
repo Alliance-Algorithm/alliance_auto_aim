@@ -1,10 +1,23 @@
-#include <armor_identifier.hpp>
+#include "armor_identifier_detail.hpp"
+#include <cmath>
+#include <opencv2/opencv.hpp>
 
-ArmorIdentifier::ArmorIdentifier(){}
+namespace world_exe::interfaces::detail {
+
+ArmorIdentifier::ArmorIdentifier() {}
+
+std::tuple<std::shared_ptr<world_exe::interfaces::IArmorInImage>, world_exe::enumeration::CarIDFlag>
+ArmorIdentifier::identify(const cv::Mat& input_image)
+{
+    process_image(input_image);
+    auto armor_ptr = std::make_shared<ArmorInImage>(armors_);
+    return {armor_ptr, world_exe::enumeration::CarIDFlag::Unknow}; // 还没做数字识别
+}
 
 void ArmorIdentifier::process_image(const cv::Mat& image)
 {
-    coordinates_.clear();
+
+    armors_.clear();
 
     image_raw = image.clone();
     cv::cvtColor(image_raw, image_hsv, cv::COLOR_BGR2HSV);
@@ -73,7 +86,6 @@ void ArmorIdentifier::process_image(const cv::Mat& image)
 void ArmorIdentifier::pair_bars(const std::vector<cv::RotatedRect>& bars,
                                 const std::string & color)
 {
-    // 配对红色灯条
     for(size_t i = 0; i < bars.size(); i++) {
         for(size_t j = i+1; j < bars.size(); j++) {
             cv::RotatedRect box1 = bars[i];
@@ -83,61 +95,28 @@ void ArmorIdentifier::pair_bars(const std::vector<cv::RotatedRect>& bars,
             float distance_height = cv::norm(box1.center - box2.center);
             float distance_width = (box1.size.height + box2.size.height) / 2.0f;
             float ratio = distance_height / distance_width;
-            if(angle_diff < 10 || height_diff < 20 || ratio > 2 || ratio < 2.5) {
+            // 修正条件
+            if(angle_diff < 10 && height_diff < 20 && ratio > 2 && ratio < 2.5) {
                 cv::Point2f pts1[4], pts2[4];
                 box1.points(pts1);
                 box2.points(pts2);
+
                 std::vector<cv::Point2f> armor_pts = {pts1[0], pts1[1], pts1[2], pts1[3],
                                                       pts2[0], pts2[1], pts2[2], pts2[3]};
+
                 cv::RotatedRect armor_box = cv::minAreaRect(armor_pts);
                 cv::Point2f armor_box_pts[4];
-                armor_box.points(armor_box_pts);
-                ArmorCoordinates armor_coordinate;
-                armor_coordinate.leftup    = armor_box_pts[1];
-                armor_coordinate.rightup   = armor_box_pts[2];
-                armor_coordinate.leftdown  = armor_box_pts[3];
-                armor_coordinate.rightdown = armor_box_pts[0];
-                armor_coordinate.center    = armor_box.center;
-                armor_coordinate.is_identified = true;
-                armor_coordinate.color = color;
-                coordinates_.push_back(armor_coordinate);
+
+                world_exe::data::ArmorImageSpacing armor_;
+                armor_box.points(armor_box_pts); 
+
+                for(int i=0;i<4;i++)
+                {
+                    armor_.image_points[i] = armor_box_pts[i];
+                }
+                armors_.push_back(armor_);
             }
         }
     }
 }
-
-void ArmorIdentifier::show()
-{
-    image_output = image_raw.clone();
-
-    // 画所有装甲板
-    for(const auto& coordinate : coordinates_) {
-        // 四个角点
-        cv::Point2f pts[4] = {coordinate.leftup, coordinate.rightup, coordinate.rightdown, coordinate.leftdown};
-        cv::Scalar color = (coordinate.color == "red") ? cv::Scalar(0,0,255) : cv::Scalar(255,0,0);
-
-        for (int i = 0; i < 4; ++i) {
-            cv::line(image_output, pts[i], pts[(i+1)%4], color, 2);
-        }
-        cv::circle(image_output, coordinate.center, 3, color, -1);
-    }
-    cv::imshow("Armor Identifier", image_output);
-}
-
-ArmorCoordinates ArmorIdentifier::get_coordinates_closest() const
-{
-    if(coordinates_.empty()) {
-        return ArmorCoordinates(); // 返回默认值，表示未识别到装甲板
-    }
-    // 找到最靠近图像中心的装甲板
-    cv::Point2f image_center(image_raw.cols / 2.0f, image_raw.rows / 2.0f);
-    auto closest_armor = std::min_element(coordinates_.begin(), coordinates_.end(),
-        [&image_center](const ArmorCoordinates& a, const ArmorCoordinates& b) {
-            return cv::norm(a.center - image_center) < cv::norm(b.center - image_center);
-        });
-    return *closest_armor;
-}
-std::vector<ArmorCoordinates> ArmorIdentifier::get_coordinates_all() const
-{
-    return coordinates_;
 }
