@@ -6,8 +6,8 @@ namespace world_exe::interfaces::detail {
         public:
             TimeStamped();
             virtual ~TimeStamped() = default;
-            const std::time_t& GetTimeStamp() const override;
-        
+            virtual const std::time_t& GetTimeStamp() const override;
+
         private:
             std::time_t time_stamp_;
     };
