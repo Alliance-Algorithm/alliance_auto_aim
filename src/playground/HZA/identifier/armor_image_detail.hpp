@@ -1,5 +1,5 @@
 #pragma once
-#include "data/armor_in_image.hpp"
+#include "interfaces/armor_in_image.hpp"
 
 namespace world_exe::interfaces::detail{
     class ArmorInImage : public world_exe::interfaces::IArmorInImage {
@@ -7,8 +7,10 @@ namespace world_exe::interfaces::detail{
         ArmorInImage(const std::vector<world_exe::data::ArmorImageSpacing>& armors)
             : armors_(armors) {}
         virtual ~ArmorInImage() = default;
-        const std::vector<world_exe::data::ArmorImageSpacing>& GetArmors(const enumeration::ArmorFlag& armor_id) const override;
+        COMBINE_TIME_STAMPED;
+        const std::vector<world_exe::data::ArmorImageSpacing> armors_;
+        const std::vector<world_exe::data::ArmorImageSpacing>& GetArmors(const enumeration::ArmorIdFlag& armor_id) const override;
     private:
-        std::vector<world_exe::data::ArmorImageSpacing> armors_;
+
     };
 }

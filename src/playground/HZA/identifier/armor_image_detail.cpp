@@ -1,18 +1,17 @@
 #include "armor_image_detail.hpp"
 
 namespace world_exe::interfaces::detail {
-ArmorInImage::GetArmor(const enumeration::ArmorIdFlag& armor_id) 
+const std::vector<data::ArmorImageSpacing>& ArmorInImage::GetArmors(const enumeration::ArmorIdFlag& armor_id) const 
 {
+    static std::vector<world_exe::data::ArmorImageSpacing> result;
+    result.clear();
     for(const auto& armor : armors_)
     {
         if(armor.id == armor_id)
         {
-            return armor;
+            result.push_back(armor);
         }
     }
-    else
-    {
-        return 0;
-    }
+    return result;
 }
 }

@@ -1,5 +1,6 @@
 #pragma once
-
+#include "interfaces/identifier.hpp"
+#include "armor_image_detail.hpp"
 namespace world_exe::interfaces::detail {
 
 class ArmorIdentifier : public world_exe::interfaces::IIdentifier {
@@ -7,10 +8,7 @@ public:
     ArmorIdentifier();
     virtual ~ArmorIdentifier() = default;
 
-    std::tuple<
-        std::shared_ptr<world_exe::interfaces::IArmorInImage>,
-        world_exe::enumeration::CarIDFlag
-    > identify(const cv::Mat& input_image) override;
+    const std::tuple<const std::shared_ptr<world_exe::interfaces::IArmorInImage>,world_exe::enumeration::CarIDFlag> identify(const cv::Mat& input_image) override;
     cv::Mat image_output;
 
 private:

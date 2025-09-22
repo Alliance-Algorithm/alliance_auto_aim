@@ -6,14 +6,17 @@ namespace world_exe::interfaces::detail {
 
 ArmorIdentifier::ArmorIdentifier() {}
 
-std::tuple<std::shared_ptr<world_exe::interfaces::IArmorInImage>, world_exe::enumeration::CarIDFlag>
+const std::tuple<const std::shared_ptr<world_exe::interfaces::IArmorInImage>, world_exe::enumeration::CarIDFlag>
 ArmorIdentifier::identify(const cv::Mat& input_image)
 {
     process_image(input_image);
-    auto armor_ptr = std::make_shared<ArmorInImage>(armors_);
-    return {armor_ptr, world_exe::enumeration::CarIDFlag::Unknow}; // 还没做数字识别
+    const auto armors_cooy = armors_;
+    auto armor_ptr = std::make_shared<world_exe::interfaces::detail::ArmorInImage>(armors_cooy);
+     return std::make_tuple(
+        std::static_pointer_cast<world_exe::interfaces::IArmorInImage>(armor_ptr),
+        world_exe::enumeration::CarIDFlag::Unknow
+    );
 }
-
 void ArmorIdentifier::process_image(const cv::Mat& image)
 {
 
