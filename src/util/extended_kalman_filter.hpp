@@ -29,51 +29,38 @@ public:
         data["recent_nis_failures"] = 0.0;
     }
 
-    Eigen::VectorXd predict(const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q) {
-        return Predict(F, Q, [&](const Eigen::VectorXd& x) { return F * x; });
-    }
-
-    Eigen::VectorXd Predict(const Eigen::MatrixXd& F, const Eigen::MatrixXd& Q,
-        std::function<Eigen::VectorXd(const Eigen::VectorXd&)> f) {
-        P = F * P * F.transpose() + Q;
-        x = f(x);
-        return x;
-    }
-
     Eigen::VectorXd Update(
-        const Eigen::VectorXd& z, const Eigen::MatrixXd& H, const Eigen::MatrixXd& R,
-        std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> z_subtract =
-            [](const Eigen::VectorXd& a, const Eigen::VectorXd& b) { return a - b; }) {
-        return update(z, H, R, [&](const Eigen::VectorXd& x) { return H * x; }, z_subtract);
-    }
-
-    Eigen::VectorXd update(
+        const double& dt, const Eigen::MatrixXd& A, const Eigen::MatrixXd& Q,
+        std::function<Eigen::VectorXd(const Eigen::VectorXd&, const double&)> f,
         const Eigen::VectorXd& z, const Eigen::MatrixXd& H, const Eigen::MatrixXd& R,
         std::function<Eigen::VectorXd(const Eigen::VectorXd&)> h,
         std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> z_subtract =
             [](const Eigen::VectorXd& a, const Eigen::VectorXd& b) { return a - b; }) {
-        Eigen::VectorXd x_prior = x;
-        Eigen::MatrixXd K       = P * H.transpose() * (H * P * H.transpose() + R).inverse();
+
+        auto x_n = f(x, dt);
+
+        auto P_n = A * P * A.transpose() + Q;
+
+        auto residual = z_subtract(z, h(x_n));
+
+        auto S = H * P * H.transpose() + R;
+
+        auto K = P_n * H.transpose() * S.inverse();
+
+        x = x_add(x, K * residual);
 
         // Stable Compution of the Posterior Covariance
         // https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/07-Kalman-Filter-Math.ipynb
         P = (I - K * H) * P * (I - K * H).transpose() + K * R * K.transpose();
 
-        x = x_add(x, K * z_subtract(z, h(x)));
-
         /// 卡方检验
-        Eigen::VectorXd residual = z_subtract(z, h(x));
         // 新增检验
-        Eigen::MatrixXd S = H * P * H.transpose() + R;
-        double nis        = residual.transpose() * S.inverse() * residual;
-        double nees       = (x - x_prior).transpose() * P.inverse() * (x - x_prior);
+        double nis = residual.transpose() * S.inverse() * residual;
 
         // 卡方检验阈值（自由度=4，取置信水平95%）
-        constexpr double nis_threshold  = 0.711;
-        constexpr double nees_threshold = 0.711;
+        constexpr double nis_threshold = 0.711;
 
         if (nis > nis_threshold) nis_count_++, data["nis_fail"] = 1;
-        if (nees > nees_threshold) nees_count_++, data["nees_fail"] = 1;
         total_count_++;
         last_nis = nis;
 
@@ -92,7 +79,6 @@ public:
         data["residual_distance"]   = residual[2];
         data["residual_angle"]      = residual[3];
         data["nis"]                 = nis;
-        data["nees"]                = nees;
         data["recent_nis_failures"] = recent_rate;
 
         return x;

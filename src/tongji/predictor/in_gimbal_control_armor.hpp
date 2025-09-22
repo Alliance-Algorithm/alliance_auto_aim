@@ -16,7 +16,7 @@ public:
     InGimbalControlArmor(const std::unordered_map<enumeration::ArmorIdFlag,
                              std::vector<data::ArmorGimbalControlSpacing>>& all_armors,
         const std::time_t& time_stamp)
-        : armors_map_(all_armors)
+        : armors_map_(std::move(all_armors))
         , time_stamp_(time_stamp) { }
 
     const std ::vector<data ::ArmorGimbalControlSpacing>& GetArmors(

@@ -4,14 +4,14 @@
 
 #include "enum/armor_id.hpp"
 #include "interfaces/target_predictor.hpp"
-#include "target.hpp"
+
 
 namespace world_exe::tongji::predictor {
 
-class TargetPredict final : public interfaces::ITargetPredictor {
+class LiveTargetManager final : public interfaces::ITargetPredictor {
 public:
-    TargetPredict(std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<Target>> targets);
-    ~TargetPredict();
+    LiveTargetManager();
+    ~LiveTargetManager();
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> Predict(
         const enumeration ::ArmorIdFlag& id, const std ::time_t& time_stamp) override;

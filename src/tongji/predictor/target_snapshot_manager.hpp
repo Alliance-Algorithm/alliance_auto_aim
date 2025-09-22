@@ -5,15 +5,15 @@
 
 #include "enum/armor_id.hpp"
 #include "interfaces/predictor.hpp"
-#include "tongji/predictor/target.hpp"
+#include "tongji/predictor/live_target.hpp"
 
 namespace world_exe::tongji::predictor {
 
-class PredictorRecord final : public interfaces::IPredictor {
+class TargetSnapshotManager final : public interfaces::IPredictor {
 public:
-    PredictorRecord(const enumeration::ArmorIdFlag& id,
-        const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<Target>>& snapshots);
-    ~PredictorRecord();
+    TargetSnapshotManager(const enumeration::ArmorIdFlag& id,
+        const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> snapshots);
+    ~TargetSnapshotManager();
 
     const enumeration ::ArmorIdFlag& GetId() const override;
 
