@@ -10,6 +10,7 @@
 #include "tongji/predictor/in_gimbal_control_armor.hpp"
 #include "tongji/predictor/live_target.hpp"
 #include "tongji/predictor/target_snapshot_manager.hpp"
+#include "util/index.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -28,10 +29,10 @@ public:
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
 
-        for (auto id : ExpandArmorIdFlags(flag)) {
+        for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
             auto it = targets_.find(id);
             if (it != targets_.end() && it->second) {
-                result[id] = it->second->GetArmorGimbalControlSpacings();
+                result[id].emplace_back(it->second->GetTargetArmorGimbalControlSpacings());
             }
         }
 
@@ -42,7 +43,7 @@ public:
         const enumeration::ArmorIdFlag& flag) const {
         std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> snapshot_map;
 
-        for (auto id : ExpandArmorIdFlags(flag)) {
+        for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
             auto it = targets_.find(id);
             if (it != targets_.end() && it->second) {
                 snapshot_map[id] = it->second;
@@ -72,19 +73,6 @@ public:
     }
 
 private:
-    inline std::vector<enumeration::ArmorIdFlag> ExpandArmorIdFlags(
-        enumeration::ArmorIdFlag flags) const {
-        std::vector<enumeration::ArmorIdFlag> result;
-        for (int i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); ++i) {
-            auto single = static_cast<enumeration::ArmorIdFlag>(
-                static_cast<uint32_t>(enumeration::ArmorIdFlag::Hero) << i);
-            if ((static_cast<uint32_t>(flags) & static_cast<uint32_t>(single)) != 0) {
-                result.push_back(single);
-            }
-        }
-        return result;
-    }
-
     std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> targets_;
 };
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #define BACKWARD_HAS_DW 1
 // #include "backward.hpp"
 #include "enum/armor_id.hpp"
@@ -31,4 +32,18 @@ static const world_exe::enumeration::ArmorIdFlag GetArmorIdFlag(int index) {
         throw std::out_of_range("Invalid index for ArmorIdFlag conversion.");
     }
 }
+
+static std::vector<::world_exe::enumeration::ArmorIdFlag> ExpandArmorIdFlags(
+    ::world_exe::enumeration::ArmorIdFlag flags) {
+    std::vector<::world_exe::enumeration::ArmorIdFlag> result;
+    for (int i = 0; i < static_cast<int>(::world_exe::enumeration::ArmorIdFlag::Count); ++i) {
+        auto single = static_cast<::world_exe::enumeration::ArmorIdFlag>(
+            static_cast<uint32_t>(::world_exe::enumeration::ArmorIdFlag::Hero) << i);
+        if ((static_cast<uint32_t>(flags) & static_cast<uint32_t>(single)) != 0) {
+            result.push_back(single);
+        }
+    }
+    return result;
+}
+
 }
