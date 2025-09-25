@@ -8,7 +8,7 @@
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
-#include "solver_armor.hpp"
+#include "solved_armor.hpp"
 #include "util/coordinate.hpp"
 #include "util/index.hpp"
 #include "util/math.hpp"
@@ -36,7 +36,7 @@ public:
                 }
             }
         }
-        return std::make_shared<SolverArmor>(armor_plates);
+        return std::make_shared<SolvedArmor>(armor_plates);
     }
 
     std::optional<world_exe::data::ArmorCameraSpacing> Solve(
