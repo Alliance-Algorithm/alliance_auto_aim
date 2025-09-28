@@ -9,6 +9,9 @@ project(alliance_auto_aim VERSION 0.0.1 LANGUAGES CXX)
 
 include_directories(./include ./src)
 
+option(ENABLE_TESTS "Enable building tests" OFF)
+message(STATUS "ENABLE_TESTS is set to: ${ENABLE_TESTS}")
+
 ### Target lib ===
 add_library(${PROJECT_NAME} SHARED)
 file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS 
@@ -79,3 +82,10 @@ EXPORT ${PROJECT_NAME}
   RUNTIME DESTINATION bin
 )
 
+if(ENABLE_TESTS)
+    message(STATUS "Tests are enabled")
+    enable_testing()  # 启用 CTest
+    add_subdirectory(tests)
+else()
+    message(STATUS "Tests are disabled. Use -DENABLE_TESTS=ON to enable.")
+endif()
