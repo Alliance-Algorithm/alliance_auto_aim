@@ -24,6 +24,7 @@ FetchContent_MakeAvailable(googletest)
 target_link_libraries(test_main 
     GTest::gtest_main 
     GTest::gmock_main
+    alliance_auto_aim
 )
 
 include(GoogleTest)
