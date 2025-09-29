@@ -15,15 +15,8 @@ message(STATUS "ENABLE_TESTS is set to: ${ENABLE_TESTS}")
 ### Target lib ===
 add_library(${PROJECT_NAME} SHARED)
 file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS 
-# src/v1/*.cpp 
-# src/v1/*.cc
-src/tongji/*.cpp 
-src/tongji/*.cc
-src/tongji/*.cpp 
-src/playground/*.cpp
-src/playground/*.cc
-src/core/*.cpp
-src/util/*.cpp)
+src/*/*.cpp
+src/*/*.cc)
 target_sources(
     ${PROJECT_NAME}  PUBLIC
     ${sources_v1}
