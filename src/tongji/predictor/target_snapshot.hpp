@@ -1,8 +1,8 @@
 #pragma once
 
-#include "extended_kalman_filter.hpp"
 #include "tongji/predictor/live_target.hpp"
 #include "tongji/predictor/predict_model.hpp"
+#include "util/extended_kalman_filter.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -30,7 +30,7 @@ public:
 
 private:
     PredictModel model_;
-    ExtendedKalmanFilter ekf_;
+    util::ExtendedKalmanFilter ekf_;
 };
 
 }

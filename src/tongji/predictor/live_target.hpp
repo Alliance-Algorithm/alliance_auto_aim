@@ -8,8 +8,8 @@
 
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/car_id.hpp"
-#include "extended_kalman_filter.hpp"
 #include "predict_model.hpp"
+#include "util/extended_kalman_filter.hpp"
 #include "util/math.hpp"
 
 namespace world_exe::tongji::predictor {
@@ -53,7 +53,8 @@ public:
             0, 0;
 
         Eigen::MatrixXd P0 = model_.GetP0Dig().asDiagonal();
-        ekf_ = ExtendedKalmanFilter(x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
+        ekf_               = util::ExtendedKalmanFilter(
+            x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
     }
 
     Eigen::VectorXd GetEkfX() const { return ekf_.x; }
@@ -65,7 +66,7 @@ public:
         const auto& ekf_x     = GetEkfX();
         const auto& xyza_list = model_.GetArmorXYZAList(ekf_x);
 
-        Eigen::Vector4d xyza = xyza_list.at(0);
+        Eigen::Vector4d xyza;
         data::ArmorGimbalControlSpacing armor;
 
         if (!status_.jumped) {
@@ -198,7 +199,7 @@ private:
     }
 
     std::time_t last_time_stamp_;
-    ExtendedKalmanFilter ekf_;
+    util::ExtendedKalmanFilter ekf_;
     PredictModel model_;
 
     double comming_angle_ = 60 / 57.3;
