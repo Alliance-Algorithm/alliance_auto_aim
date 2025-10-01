@@ -5,7 +5,6 @@
 #include "enum/armor_id.hpp"
 #include "interfaces/target_predictor.hpp"
 
-
 namespace world_exe::tongji::predictor {
 
 class LiveTargetManager final : public interfaces::ITargetPredictor {
