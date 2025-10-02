@@ -26,18 +26,13 @@ public:
 
         const auto& sq_armor_list = armors.get_sq_armor();
 
-        sq_armor_list->sort(
-            [](const std::tuple<const world_exe::data::ArmorImageSpacing&, cv::Point2f>& a,
-                const std::tuple<const world_exe::data::ArmorImageSpacing&, cv::Point2f>& b) {
-                cv::Point2f img_center(1440.0 / 2, 1080.0 / 2); // TODO
-
-                auto const& [a_, a_center] = a;
-                auto const& [b_, b_center] = b;
-
-                auto distance_1 = cv::norm(a_center - img_center);
-                auto distance_2 = cv::norm(b_center - img_center);
-                return distance_1 < distance_2;
-            });
+        sq_armor_list->sort([](const world_exe::tongji::identifier::SPArmor& a,
+                                const world_exe::tongji::identifier::SPArmor& b) {
+            cv::Point2f img_center(1440.0 / 2, 1080.0 / 2); // TODO
+            auto distance_1 = cv::norm(a.center - img_center);
+            auto distance_2 = cv::norm(b.center - img_center);
+            return distance_1 < distance_2;
+        });
         sq_armor_list->sort([](const auto& a, const auto& b) { return a.priority < b.priority; });
 
         auto iterator    = sq_armor_list->begin();
