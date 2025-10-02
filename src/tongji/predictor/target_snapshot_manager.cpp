@@ -32,6 +32,15 @@ public:
         return std::make_shared<InGimbalControlArmor>(result, time_stamp);
     }
 
+    const std::unique_ptr<TargetSnapshot> GetSingleSnapshot(
+        const enumeration::ArmorIdFlag& id) const {
+        auto it = snapshots_.find(id);
+        if (it != snapshots_.end()) {
+            return std::make_unique<TargetSnapshot>(it->second);
+        }
+        return nullptr;
+    }
+
 private:
     std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> snapshots_;
     enumeration::ArmorIdFlag id_;
@@ -43,6 +52,11 @@ TargetSnapshotManager::TargetSnapshotManager(const enumeration::ArmorIdFlag& id,
 TargetSnapshotManager::~TargetSnapshotManager() = default;
 
 const enumeration ::ArmorIdFlag& TargetSnapshotManager::GetId() const { return pimpl_->GetId(); }
+
+const std::unique_ptr<TargetSnapshot> TargetSnapshotManager::GetSingleSnapshot(
+    const enumeration::ArmorIdFlag& id) const {
+    return pimpl_->GetSingleSnapshot(id);
+}
 
 std ::shared_ptr<interfaces::IArmorInGimbalControl> TargetSnapshotManager::Predictor(
     const std ::time_t& time_stamp) const {

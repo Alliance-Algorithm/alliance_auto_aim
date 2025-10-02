@@ -6,6 +6,7 @@
 #include "enum/armor_id.hpp"
 #include "interfaces/predictor.hpp"
 #include "tongji/predictor/live_target.hpp"
+#include "tongji/predictor/target_snapshot.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -16,6 +17,9 @@ public:
     ~TargetSnapshotManager();
 
     const enumeration ::ArmorIdFlag& GetId() const override;
+
+    const std::unique_ptr<TargetSnapshot> GetSingleSnapshot(
+        const enumeration::ArmorIdFlag& id) const;
 
     std ::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
         const std ::time_t& time_stamp) const override;
