@@ -1,12 +1,14 @@
 #pragma once
 
+#include <memory>
+
+#include <opencv2/core/types.hpp>
+
 #include "../predictor/target_snapshot.hpp"
 #include "../predictor/target_snapshot_manager.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/car_state.hpp"
 #include "tongji/identifier/identified_armor.hpp"
-#include <memory>
-#include <opencv2/core/types.hpp>
 
 class DefaultTracker final {
     using TargetSnapshotManager = world_exe::tongji::predictor::TargetSnapshotManager;
