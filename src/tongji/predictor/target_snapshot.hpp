@@ -1,5 +1,8 @@
 #pragma once
 
+#include <ctime>
+
+#include "data/armor_gimbal_control_spacing.hpp"
 #include "tongji/predictor/live_target.hpp"
 #include "tongji/predictor/predict_model.hpp"
 #include "util/extended_kalman_filter.hpp"
@@ -10,7 +13,8 @@ class TargetSnapshot {
 public:
     TargetSnapshot(const LiveTarget& target)
         : model_(target.GetModel())
-        , ekf_(target.GetEkfX(), target.GetP0Dig().asDiagonal(), model_.x_add) { }
+        , ekf_(target.GetEkfX(), target.GetP0Dig().asDiagonal(), model_.x_add)
+        , time_stamp_(target.GetTimeStamp()) { }
 
     std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() const {
         std::vector<data::ArmorGimbalControlSpacing> armors;
@@ -28,9 +32,25 @@ public:
         return armors;
     }
 
+    auto GetXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> const {
+        return model_.GetArmorXYZAList(this->Predict(dt));
+    }
+
+    auto GetTimeStamp() const { return time_stamp_; }
+
+    auto GetID() const { return model_.GetID(); }
+
+    auto GetEkfX() const { return ekf_.x; }
+
+    auto Predict(const double& dt) -> Eigen::Vector<double, 11> const {
+        auto predicted_x = model_.f(ekf_.x, dt);
+        return predicted_x;
+    }
+
 private:
     PredictModel model_;
     util::ExtendedKalmanFilter ekf_;
+    const std::time_t time_stamp_;
 };
 
 }

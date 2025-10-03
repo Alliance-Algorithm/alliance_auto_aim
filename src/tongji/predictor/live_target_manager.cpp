@@ -29,12 +29,14 @@ public:
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
 
-        for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
-            auto it = targets_.find(id);
-            if (it != targets_.end() && it->second) {
-                result[id].emplace_back(it->second->GetTargetArmorGimbalControlSpacings());
-            }
-        }
+        // TODO
+
+        // for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
+        //     auto it = targets_.find(id);
+        //     if (it != targets_.end() && it->second) {
+        //         result[id].emplace_back(it->second->GetArmorGimbalControlSpacings());
+        //     }
+        // }
 
         return std::make_shared<InGimbalControlArmor>(result, time_stamp);
     }
