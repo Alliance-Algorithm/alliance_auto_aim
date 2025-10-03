@@ -79,8 +79,8 @@ public:
     }
 
 private:
-    double comming_angle_ = 60 / 57.3;
-    double leaving_angle_ = 20 / 57.3;
+    double comming_angle_ = 60 / 57.3; // degree
+    double leaving_angle_ = 20 / 57.3; // degree
     int lock_id_          = -1;
 };
 
