@@ -6,7 +6,7 @@ namespace world_exe::tongji::fire_control {
 struct TrajectoryResult {
     bool solvable = true;
     double fly_time;
-    double pitch; // 抬头为正
+    double pitch; // 抬头为正,rad
 };
 
 struct TrajectorySolver {
