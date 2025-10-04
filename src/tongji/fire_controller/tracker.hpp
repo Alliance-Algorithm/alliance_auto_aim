@@ -6,6 +6,7 @@
 
 #include "../predictor/target_snapshot.hpp"
 #include "../predictor/target_snapshot_manager.hpp"
+#include "enum/car_id.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/car_state.hpp"
 #include "tongji/identifier/identified_armor.hpp"
@@ -44,8 +45,14 @@ public:
             ++iterator;
             if (iterator == sq_armor_list->end()) return nullptr;
         }
-        return snapshot_manager_->GetSingleSnapshot(iterator->armor.id);
+        auto snapshot = snapshot_manager_->GetSingleSnapshot(iterator->armor.id);
+        if (!snapshot) return nullptr;
+        tracking_car_id_ = snapshot->GetID();
+        return snapshot;
     }
 
+    world_exe::enumeration::CarIDFlag GetCurrentTargetID() const { return tracking_car_id_; }
+
 private:
+    world_exe::enumeration::CarIDFlag tracking_car_id_;
 };
