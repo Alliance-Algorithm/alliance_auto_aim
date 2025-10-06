@@ -4,6 +4,7 @@
 #include <Eigen/src/Core/Matrix.h>
 #include <cstdlib>
 #include <ctime>
+#include <numeric>
 
 #include "enum/car_id.hpp"
 #include "predict_model.hpp"
@@ -11,23 +12,23 @@
 
 namespace world_exe::tongji::predictor {
 
-struct TargetStatus {
-    bool jumped       = false;
-    bool switched     = false;
-    bool converged    = false;
-    bool diverged     = false;
-    bool lost         = false;
-    bool reidentified = false;
-    int last_id       = -1;
-    double lock_id_   = -1;
-    int switch_count  = 0;
-    int update_count  = 0;
-    int lost_count    = 0;
-};
+// struct TargetStatus {
+//     bool jumped       = false;
+//     bool switched     = false;
+//     bool converged    = false;
+//     bool diverged     = false;
+//     bool lost         = false;
+//     bool reidentified = false;
+//     int last_id       = -1;
+//     double lock_id_   = -1;
+//     int switch_count  = 0;
+//     int update_count  = 0;
+//     int lost_count    = 0;
+// };
 
 class LiveTarget {
 public:
-    TargetStatus status_;
+    // TargetStatus status_;
 
     LiveTarget(const Eigen::Vector3d& armor_xyz_in_world, const Eigen::Vector3d& armor_ypr_in_world,
         const enumeration::CarIDFlag& car_id, const std::time_t& t)
@@ -61,35 +62,30 @@ public:
 
     void Update(const double& dt, const Eigen::Vector3d& armor_xyz_in_world,
         const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world) {
-
         // 装甲板匹配
         int id =
             model_.MatchArmor(ekf_.x, armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world);
-        if (id != 0) status_.jumped = true;
-        status_.switched = (id != status_.last_id);
-        if (status_.switched) status_.switch_count++;
+        last_id = id;
+        update_count++;
 
-        status_.last_id = id;
         Update_ypda(armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world, id, dt);
-        status_.update_count++;
     }
 
 private:
-    bool Converged() {
-        if (model_.GetID() != enumeration::CarIDFlag::Outpost && status_.update_count > 3
-            && !this->Diverged()) {
-            status_.converged = true;
-        }
-
+    bool EvaluateConvergence() {
         // 前哨站特殊判断
-        if (model_.GetID() == enumeration::CarIDFlag::Outpost && status_.update_count > 10
-            && !this->Diverged()) {
-            status_.converged = true;
-        }
-        return status_.converged;
+        const int required_count = (model_.GetID() == enumeration::CarIDFlag::Outpost) ? 10 : 3;
+        if (update_count < required_count) return false;
+        if (EvaluateDivergence()) return false;
+
+        auto nis_failures =
+            std::accumulate(ekf_.recent_nis_failures.begin(), ekf_.recent_nis_failures.end(), 0);
+        if (nis_failures > 0.4 * ekf_.window_size) return false;
+
+        return true;
     }
 
-    bool Diverged() const {
+    bool EvaluateDivergence() const {
         auto r_ok = ekf_.x[8] > 0.05 && ekf_.x[8] < 0.5;
         auto l_ok = ekf_.x[8] + ekf_.x[9] > 0.05 && ekf_.x[8] + ekf_.x[9] < 0.5;
 
@@ -120,13 +116,19 @@ private:
         ekf_.Update(dt, A, Q, f, z, H, R, h, z_subtract);
 
         // 前哨站转速特判
-        if (this->Converged() && model_.GetID() == enumeration::CarIDFlag::Outpost
-            && std::abs(this->ekf_.x[7]) > 2)
-            this->ekf_.x[7] = this->ekf_.x[7] > 0 ? 2.51 : -2.51;
+        // TODO
+        // if (this->Converged() && model_.GetID() == enumeration::CarIDFlag::Outpost
+        //     && std::abs(this->ekf_.x[7]) > 2)
+        //     this->ekf_.x[7] = this->ekf_.x[7] > 0 ? 2.51 : -2.51;
     }
 
     std::time_t time_stamp_;
     util::ExtendedKalmanFilter ekf_;
     PredictModel model_;
+
+    int last_id      = -1;
+    int update_count = 0;
+
+    // bool converged_ { false };
 };
 }
