@@ -1,10 +1,12 @@
 #include "live_target_manager.hpp"
 
 #include <memory>
+#include <stdexcept>
 #include <unordered_map>
 #include <utility>
 
 #include "enum/armor_id.hpp"
+#include "enum/car_id.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/predictor_update_package.hpp"
 #include "tongji/predictor/in_gimbal_control_armor.hpp"
@@ -16,24 +18,30 @@ namespace world_exe::tongji::predictor {
 
 class LiveTargetManager::Impl {
 public:
-    Impl() = default;
+    Impl(double timeout_sec = 0.1)
+        : timeout_sec_(timeout_sec) { }
 
     void RegisterTarget(enumeration::ArmorIdFlag id, std::shared_ptr<LiveTarget> target) {
         targets_[id] = std::move(target);
     }
 
     void RemoveTarget(enumeration::ArmorIdFlag id) { targets_.erase(id); }
+    bool HasTarget(enumeration::ArmorIdFlag id) const { return targets_.count(id) > 0; }
+    std::shared_ptr<LiveTarget> GetTarget(enumeration::ArmorIdFlag id) const {
+        auto it = targets_.find(id);
+        return (it != targets_.end()) ? it->second : nullptr;
+    }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& flag, const std::time_t& time_stamp) {
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
 
+        throw std::runtime_error("Not implemented");
         // TODO
-
         // for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
         //     auto it = targets_.find(id);
-        //     if (it != targets_.end() && it->second) {
+        //     if (it != targets_.end() && it->second && it->second->IsConverged()) {
         //         result[id].emplace_back(it->second->GetArmorGimbalControlSpacings());
         //     }
         // }
@@ -47,7 +55,7 @@ public:
 
         for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
             auto it = targets_.find(id);
-            if (it != targets_.end() && it->second) {
+            if (it != targets_.end() && it->second && it->second->IsConverged()) {
                 snapshot_map[id] = it->second;
             }
         }
@@ -55,7 +63,15 @@ public:
         return std::make_shared<TargetSnapshotManager>(flag, snapshot_map);
     }
 
-    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, const double& dt) {
+    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, double dt) {
+        const auto now = predictor::TimeStamp(std::time(nullptr));
+        RemoveLostTargets(now);
+        UpdateTargets(data, dt);
+    }
+
+private:
+    void UpdateTargets(
+        const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data, double dt) {
         const auto& transform          = data->GetTransform();
         const auto& rotation_transform = Eigen::Quaterniond(transform.linear());
 
@@ -74,8 +90,23 @@ public:
         }
     }
 
-private:
+    void RemoveLostTargets(const predictor::TimeStamp& now) {
+        for (auto it = targets_.begin(); it != targets_.end();) {
+            if (IsTargetLost(it->second, now)) {
+                it = targets_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    bool IsTargetLost(
+        const std::shared_ptr<LiveTarget>& target, const predictor::TimeStamp& now) const {
+        return now.SecondsSince(target->LastSeen()) > timeout_sec_;
+    }
+
     std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> targets_;
+    const double timeout_sec_ { 0.1 };
 };
 
 LiveTargetManager::LiveTargetManager()  = default;

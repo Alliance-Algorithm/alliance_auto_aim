@@ -46,11 +46,14 @@ public:
         } else {
             armor_num_ = 4;
         }
+
+        // TODO :add priority
     }
 
     auto GetP0Dig() const { return P0_dig_; }
     auto GetRadius() const { return radius_; }
     auto GetID() const { return car_id_; }
+    auto GetPriority() const { return priority_; }
     int GetArmorNum() const { return armor_num_; }
 
     // 防止夹角求和出现异常值
@@ -69,6 +72,7 @@ public:
         return x_prior;
     };
 
+    //TODO
     int MatchArmor(const Eigen::VectorXd& x, const Eigen::Vector3d& armor_xyz_in_world,
         const Eigen::Vector3d& armor_ypr_in_world,
         const Eigen::Vector3d& armor_ypd_in_world) const {
@@ -248,6 +252,7 @@ public:
     }
 
 private:
+    int priority_;
     int armor_num_;
     enumeration::CarIDFlag car_id_;
 

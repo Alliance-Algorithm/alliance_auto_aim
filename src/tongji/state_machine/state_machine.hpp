@@ -12,9 +12,10 @@ public:
     StateMachine(int switch_threshold = 5);
 
     const enumeration::CarIDFlag& GetAllowdToFires() const override;
-
+    bool IsAllowedToFire(enumeration::CarIDFlag id) const;
+    const car_state::CarStateManager& GetState(enumeration::CarIDFlag single_id) const;
     const interfaces::ICarState& Update(
-        const enumeration::CarIDFlag& car_detected, std::time_t now);
+        const enumeration::CarIDFlag& car_detected, const std::time_t& now);
 
 private:
     enumeration::CarIDFlag tracing_state_ = enumeration::CarIDFlag::None;

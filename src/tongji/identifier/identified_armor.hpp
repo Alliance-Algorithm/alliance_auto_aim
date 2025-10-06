@@ -1,9 +1,11 @@
 #pragma once
 
 #include "enum/armor_id.hpp"
+#include "enum/car_id.hpp"
 #include "interfaces/armor_in_image.hpp"
 #include "interfaces/time_stamped.hpp"
 #include "util/index.hpp"
+#include <cstdint>
 #include <list>
 #include <memory>
 
@@ -46,6 +48,17 @@ public:
 
     static IdentifiedArmor DecorateIArmorInImage(const interfaces::IArmorInImage& armor) {
         throw std::runtime_error("Not implemented");
+    }
+
+    auto GetDetectedIDs() {
+        enumeration::CarIDFlag result;
+        for (int i = 0; i < 8; i++) {
+            if (!armors_[i].empty()) {
+                result = static_cast<enumeration::CarIDFlag>(
+                    static_cast<uint32_t>(result) | static_cast<uint32_t>(armors_[i][0].id));
+            }
+        }
+        return result;
     }
 
 private:

@@ -22,14 +22,17 @@ struct AimSolution {
 
 class AimingSolver {
 public:
-    AimingSolver(std::unique_ptr<predictor::TargetSnapshot> snapshot, const double& bullet_speed,
+    AimingSolver( const double& bullet_speed,
         const double& yaw_offset, const double& pitch_offset, const double& gravity = 9.7833)
-        : snapshot_(std::move(snapshot))
-        , aim_point_chooser_(std::make_unique<AimPointChooser>())
+        : aim_point_chooser_(std::make_unique<AimPointChooser>())
         , bullet_speed_(bullet_speed)
         , yaw_offset_(yaw_offset / 57.3)     // degree to rad
         , pitch_offset_(pitch_offset / 57.3) // degree to rad
         , g_(gravity) { }
+
+    void UpdateSnapshot(std::unique_ptr<predictor::TargetSnapshot> snapshot) {
+        snapshot_ = std::move(snapshot);
+    }
 
     AimSolution SolveAimSolution(const double& time_delay) {
         if (!snapshot_) return { false, 0, 0, {}, 0 };
@@ -63,10 +66,6 @@ public:
         const double yaw   = std::atan2(xyz.y(), xyz.x()) + yaw_offset_;
         const double pitch = -(final_trajectory.pitch + pitch_offset_);
         return { true, yaw, pitch, final_aim_point };
-    }
-
-    void UpdateSnapshot(std::unique_ptr<predictor::TargetSnapshot> snapshot) {
-        snapshot_ = std::move(snapshot);
     }
 
 private:

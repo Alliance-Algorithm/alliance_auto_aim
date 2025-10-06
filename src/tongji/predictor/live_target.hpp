@@ -8,31 +8,16 @@
 
 #include "enum/car_id.hpp"
 #include "predict_model.hpp"
+#include "tongji/state_machine/car_state_manager.hpp"
 #include "util/extended_kalman_filter.hpp"
 
 namespace world_exe::tongji::predictor {
 
-// struct TargetStatus {
-//     bool jumped       = false;
-//     bool switched     = false;
-//     bool converged    = false;
-//     bool diverged     = false;
-//     bool lost         = false;
-//     bool reidentified = false;
-//     int last_id       = -1;
-//     double lock_id_   = -1;
-//     int switch_count  = 0;
-//     int update_count  = 0;
-//     int lost_count    = 0;
-// };
-
 class LiveTarget {
 public:
-    // TargetStatus status_;
-
     LiveTarget(const Eigen::Vector3d& armor_xyz_in_world, const Eigen::Vector3d& armor_ypr_in_world,
-        const enumeration::CarIDFlag& car_id, const std::time_t& t)
-        : time_stamp_(t)
+        const enumeration::CarIDFlag& car_id)
+        : last_see_time_stamp_(std::time(nullptr))
         , model_(car_id) {
 
         // x vx y vy z vz a w r l h
@@ -52,13 +37,13 @@ public:
 
         Eigen::MatrixXd P0 = model_.GetP0Dig().asDiagonal();
         ekf_               = util::ExtendedKalmanFilter(
-            x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
+                          x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
     }
 
     Eigen::VectorXd GetEkfX() const { return ekf_.x; }
     Eigen::VectorXd GetP0Dig() const { return model_.GetP0Dig(); }
     const PredictModel& GetModel() const { return model_; }
-    std::time_t GetTimeStamp() const { return time_stamp_; }
+    predictor::TimeStamp LastSeen() const { return predictor::TimeStamp(last_see_time_stamp_); }
 
     void Update(const double& dt, const Eigen::Vector3d& armor_xyz_in_world,
         const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world) {
@@ -69,10 +54,14 @@ public:
         update_count++;
 
         Update_ypda(armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world, id, dt);
+
+        last_see_time_stamp_ = std::time(nullptr);
     }
 
+    bool IsConverged() const { return EvaluateConvergence(); }
+
 private:
-    bool EvaluateConvergence() {
+    bool EvaluateConvergence() const {
         // 前哨站特殊判断
         const int required_count = (model_.GetID() == enumeration::CarIDFlag::Outpost) ? 10 : 3;
         if (update_count < required_count) return false;
@@ -116,19 +105,19 @@ private:
         ekf_.Update(dt, A, Q, f, z, H, R, h, z_subtract);
 
         // 前哨站转速特判
-        // TODO
-        // if (this->Converged() && model_.GetID() == enumeration::CarIDFlag::Outpost
-        //     && std::abs(this->ekf_.x[7]) > 2)
-        //     this->ekf_.x[7] = this->ekf_.x[7] > 0 ? 2.51 : -2.51;
+        if (model_.GetID() == enumeration::CarIDFlag::Outpost && EvaluateConvergence()) {
+            constexpr double max_outpost_w = 2.51;
+            if (std::abs(ekf_.x[7]) > 2.0) {
+                ekf_.x[7] = ekf_.x[7] > 0 ? max_outpost_w : -max_outpost_w;
+            }
+        }
     }
 
-    std::time_t time_stamp_;
+    std::time_t last_see_time_stamp_;
     util::ExtendedKalmanFilter ekf_;
     PredictModel model_;
 
     int last_id      = -1;
     int update_count = 0;
-
-    // bool converged_ { false };
 };
 }

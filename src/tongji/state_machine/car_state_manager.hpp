@@ -6,57 +6,61 @@
 
 namespace world_exe::tongji::car_state {
 
+using TimeStamp = predictor::TimeStamp;
 class CarStateManager {
 public:
     CarStateManager(int switch_threshold = 5)
-        : switch_threshold_(switch_threshold) { }
+        : switch_threshold_(switch_threshold)
+        , last_seen_(std::time(nullptr)) { }
 
-    void Update(bool detected, std::time_t now_raw) {
+    void Update(bool detected, const TimeStamp& now) {
         if (detected) {
             count_     = std::min(count_ + 1, switch_threshold_);
-            auto now   = predictor::TimeStamp(now_raw);
             last_seen_ = now;
+            update_count_++;
+            if (update_count_ >= converge_threshold_ && is_diverged_) is_converged_ = true;
         } else {
             count_ = std::max(count_ - 1, 0);
         }
         is_locked_ = (count_ >= switch_threshold_);
     }
 
-    bool IsLost(const predictor::TimeStamp& now, double timeout_sec) const {
-        return now.SecondsSince(last_seen_) > timeout_sec;
+    bool IsConverged() const { return is_converged_ && !is_diverged_; }
+
+    bool IsLost(const TimeStamp& now) const {
+        return is_locked_ && now.SecondsSince(last_seen_) > timeout_sec_;
     }
 
-    bool IsLocked() const { return is_locked_; }
-    bool IsConverged() const { return is_converged_; }
-    bool IsDiverged() const { return is_diverged_; }
-
-    void SetPriority(int p);
-    void SetThreshold(const int& value) { switch_threshold_ = value; }
-    void SetDiverged(bool diverged) {
-        is_diverged_ = diverged;
-        if (diverged) is_converged_ = false;
+    void Reset() {
+        count_        = 0;
+        update_count_ = 0;
+        is_locked_    = false;
+        is_converged_ = false;
+        is_diverged_  = true;
+        priority_     = default_priority_;
+        last_seen_    = predictor::TimeStamp(0);
     }
+
     void SetPriority(const int& p) { priority_ = p; }
     int GetPriority() const { return priority_; }
 
-    predictor::TimeStamp LastSeen() const { return last_seen_; }
+    void SetThreshold(const int& value) { switch_threshold_ = value; }
 
-    void IncrementUpdateCount() {
-        update_count_++;
-        if (update_count_ > 3 && !is_diverged_) {
-            is_converged_ = true;
-        }
-    }
+    predictor::TimeStamp LastSeen() const { return last_seen_; }
 
 private:
     int count_ = 0;
     int switch_threshold_;
-    int update_count_ = 0;
+    int converge_threshold_ = 3;
+    int update_count_       = 0;
+    double timeout_sec_;
 
-    bool is_locked_    = false;
-    bool is_converged_ = false;
-    bool is_diverged_  = false;
-    int priority_      = 100; // 默认最低优先级
-    predictor::TimeStamp last_seen_ { 0 };
+    bool is_locked_       = false;
+    bool is_converged_    = false;
+    bool is_diverged_     = true;
+    int priority_         = 100;
+    int default_priority_ = 100;
+
+    predictor::TimeStamp last_seen_;
 };
 }
