@@ -5,6 +5,8 @@
 
 namespace world_exe::tongji::fire_control {
 
+using CarIDFlag = enumeration::CarIDFlag;
+
 class AimPointChooser {
 public:
     AimPointChooser(
@@ -13,7 +15,7 @@ public:
         , leaving_angle_(leaving_angle) { }
 
     std::pair<bool, Eigen::Vector4d> ChooseAimArmor(const Eigen::Vector<double, 11>& ekf_x,
-        const std::vector<Eigen::Vector4d>& xyza_list, const enumeration::CarIDFlag& single_id) {
+        const std::vector<Eigen::Vector4d>& xyza_list, const CarIDFlag& single_id) {
         const auto armor_num = xyza_list.size();
         int chosen_id        = -1;
 
@@ -28,7 +30,7 @@ public:
         }
 
         // 不考虑小陀螺
-        if (std::abs(ekf_x[8]) <= 2 && single_id != enumeration::CarIDFlag::Outpost) {
+        if (std::abs(ekf_x[8]) <= 2 && single_id != CarIDFlag::Outpost) {
             // 选择在可射击范围内的装甲板
             std::vector<int> id_list;
             for (int i = 0; i < armor_num; i++) {
@@ -53,9 +55,9 @@ public:
         } else {
             // 小陀螺
             double coming_angle =
-                (single_id == enumeration::CarIDFlag::Outpost) ? 70 / 57.3 : comming_angle_;
+                (single_id == CarIDFlag::Outpost) ? 70 / 57.3 : comming_angle_;
             double leaving_angle =
-                (single_id == enumeration::CarIDFlag::Outpost) ? 30 / 57.3 : leaving_angle_;
+                (single_id == CarIDFlag::Outpost) ? 30 / 57.3 : leaving_angle_;
 
             // 在小陀螺时，一侧的装甲板不断出现，另一侧的装甲板不断消失，显然前者被打中的概率更高
             for (int i = 0; i < armor_num; i++) {

@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "enum/armor_id.hpp"
-#include "enum/car_id.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/predictor_update_package.hpp"
 #include "tongji/predictor/in_gimbal_control_armor.hpp"
