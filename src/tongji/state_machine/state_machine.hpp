@@ -15,7 +15,6 @@ public:
 
     const enumeration ::CarIDFlag& GetAllowdToFires() const override;
     const car_state::CarStateManager& GetState(enumeration::CarIDFlag single_id) const;
-    bool IsAllowedToFire(enumeration::CarIDFlag id) const;
     const interfaces::ICarState& Update(
         const enumeration::CarIDFlag& car_detected, const std::time_t& now);
 

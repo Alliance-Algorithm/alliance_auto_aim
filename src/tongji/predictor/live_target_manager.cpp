@@ -1,11 +1,12 @@
 #include "live_target_manager.hpp"
 
+#include <cstdint>
 #include <memory>
-#include <stdexcept>
 #include <unordered_map>
 #include <utility>
 
 #include "enum/armor_id.hpp"
+#include "enum/car_id.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/predictor_update_package.hpp"
 #include "tongji/predictor/in_gimbal_control_armor.hpp"
@@ -36,14 +37,13 @@ public:
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
 
-        throw std::runtime_error("Not implemented");
-        // TODO
-        // for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
-        //     auto it = targets_.find(id);
-        //     if (it != targets_.end() && it->second && it->second->IsConverged()) {
-        //         result[id].emplace_back(it->second->GetArmorGimbalControlSpacings());
-        //     }
-        // }
+        for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
+            auto it = targets_.find(id);
+            if (it != targets_.end() && it->second && it->second->IsConverged()) {
+                auto spacings = it->second->GetArmorGimbalControlSpacings();
+                result[id]    = std::move(spacings);
+            }
+        }
 
         return std::make_shared<InGimbalControlArmor>(result, time_stamp);
     }
@@ -68,23 +68,48 @@ public:
         UpdateTargets(data, dt);
     }
 
+    auto GetLiveTargetIDs() -> enumeration::CarIDFlag const {
+        enumeration::CarIDFlag result = enumeration::CarIDFlag::None;
+        for (const auto& [id, target] : targets_) {
+            if (target && target->IsConverged()) {
+                result = static_cast<enumeration::CarIDFlag>(
+                    static_cast<uint32_t>(result) | static_cast<uint32_t>(id));
+            }
+        }
+        return result;
+    }
+
 private:
     void UpdateTargets(
         const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data, double dt) {
-        const auto& transform          = data->GetTransform();
-        const auto& rotation_transform = Eigen::Quaterniond(transform.linear());
+        const Eigen::Affine3d transform       = data->GetTransform();
+        const Eigen::Matrix3d rotation_matrix = transform.linear();
+        const Eigen::Quaterniond rotation_quat(rotation_matrix);
 
-        for (const auto& [id, target] : targets_) {
-            const auto armors = data->GetArmors()->GetArmors(id);
+        const auto& armors_interface = data->GetArmors();
+        for (int i; i < 8; i++) {
+            auto id = static_cast<enumeration::CarIDFlag>(
+                static_cast<uint32_t>(enumeration::CarIDFlag::Hero) << i);
+            const auto& armors = armors_interface->GetArmors(id);
 
             if (armors.empty()) continue;
 
-            for (auto armor : armors) {
-                const auto& armor_in_world_position  = transform * armor.position;
-                const auto& armor_in_world_oritaiton = rotation_transform * armor.orientation;
-                target->Update(dt, armor_in_world_position,
-                    util::math::quaternion_to_euler(armor_in_world_oritaiton, 2, 1, 0),
-                    util::math::xyz2ypd(armor_in_world_position));
+            if (!HasTarget(id)) {
+                const auto& armor                       = armors.front();
+                const Eigen::Vector3d position_in_world = transform * armor.position;
+                const Eigen::Vector3d ypr_in_world = rotation_matrix.eulerAngles(2, 1, 0); // ZYX
+
+                auto target = std::make_shared<LiveTarget>(position_in_world, ypr_in_world, id);
+                RegisterTarget(id, target);
+            }
+
+            auto target = GetTarget(id);
+            for (const auto& armor : armors) {
+                const Eigen::Vector3d position_in_world = transform * armor.position;
+                const Eigen::Vector3d ypr =
+                    util::math::quaternion_to_euler(Eigen::Quaterniond(rotation_matrix), 2, 1, 0);
+
+                target->Update(dt, position_in_world, ypr, util::math::xyz2ypd(position_in_world));
             }
         }
     }
@@ -120,5 +145,4 @@ std ::shared_ptr<interfaces::IPredictor> LiveTargetManager::GetPredictor(
     const enumeration ::ArmorIdFlag& id) const {
     return pimpl_->GetPredictor(id);
 }
-
 }

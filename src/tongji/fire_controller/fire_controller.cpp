@@ -55,23 +55,17 @@ public:
 
         state_machine_->Update(identified_armors_->GetDetectedIDs(), time_stamp_.GetTimeStamp());
 
-        const auto allowed_id = state_machine_->GetAllowdToFires(); // TODO
-        const auto current_id = tracker_->GetCurrentTargetID();
-
         const Eigen::Vector3d target_pos = aim_solution.aim_point.head<3>();
-        const bool fireable = fire_decision_->ShouldFire(aim_solution, target_pos, gimbal_pos_)
-            && state_machine_->IsAllowedToFire(current_id);
+        const bool fireable = fire_decision_->ShouldFire(aim_solution, target_pos, gimbal_pos_);
+
+        if (fireable) attacked_cars_ = snapshot->GetID();
 
         return { .time_stamp = time_stamp_.GetTimeStamp(),
             .gimbal_dir      = Eigen::Vector3d(aim_solution.yaw, aim_solution.pitch, 0),
             .fire_allowance  = fireable };
     }
 
-    // TODO
-    const CarIDFlag GetAttackCarId() const {
-        if (!tracker_) return CarIDFlag::Unknow;
-        return tracker_->GetCurrentTargetID();
-    }
+    const CarIDFlag GetAttackCarId() const { return attacked_cars_; }
 
     void SetSnapshotManager(std::shared_ptr<TargetSnapshotManager> manager) {
         snapshot_manager_ = std::move(manager);
@@ -85,6 +79,8 @@ private:
     Eigen::Vector3d gimbal_pos_ { Eigen::Vector3d::Zero() };
     double control_delay_;
     double bullet_speed_;
+
+    mutable CarIDFlag attacked_cars_ { CarIDFlag::None }; // TODO
 
     mutable std::optional<IdentifiedArmor> identified_armors_;
     std::unique_ptr<DefaultTracker> tracker_;
@@ -107,8 +103,6 @@ void FireController::SetSnapshotManager(std::shared_ptr<TargetSnapshotManager> m
     pimpl_->SetSnapshotManager(std::move(manager));
 }
 
-const CarIDFlag FireController::GetAttackCarId() const {
-    return pimpl_->GetAttackCarId();
-}
+const CarIDFlag FireController::GetAttackCarId() const { return pimpl_->GetAttackCarId(); }
 
 }

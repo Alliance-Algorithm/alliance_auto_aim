@@ -47,7 +47,7 @@ public:
             armor_num_ = 4;
         }
 
-        // TODO :add priority
+        // TODO :init priority
     }
 
     auto GetP0Dig() const { return P0_dig_; }
@@ -72,7 +72,6 @@ public:
         return x_prior;
     };
 
-    //TODO
     int MatchArmor(const Eigen::VectorXd& x, const Eigen::Vector3d& armor_xyz_in_world,
         const Eigen::Vector3d& armor_ypr_in_world,
         const Eigen::Vector3d& armor_ypd_in_world) const {

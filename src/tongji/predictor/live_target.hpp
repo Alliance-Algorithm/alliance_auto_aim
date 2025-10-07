@@ -6,9 +6,10 @@
 #include <ctime>
 #include <numeric>
 
+#include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/car_id.hpp"
 #include "predict_model.hpp"
-#include "tongji/state_machine/car_state_manager.hpp"
+#include "tongji/predictor/time_stamp.hpp"
 #include "util/extended_kalman_filter.hpp"
 
 namespace world_exe::tongji::predictor {
@@ -37,13 +38,29 @@ public:
 
         Eigen::MatrixXd P0 = model_.GetP0Dig().asDiagonal();
         ekf_               = util::ExtendedKalmanFilter(
-                          x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
+            x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
     }
 
     Eigen::VectorXd GetEkfX() const { return ekf_.x; }
     Eigen::VectorXd GetP0Dig() const { return model_.GetP0Dig(); }
     const PredictModel& GetModel() const { return model_; }
     predictor::TimeStamp LastSeen() const { return predictor::TimeStamp(last_see_time_stamp_); }
+
+    std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() const {
+        std::vector<data::ArmorGimbalControlSpacing> armors;
+        for (int id = 0; id < model_.GetArmorNum(); id++) {
+            auto angle =
+                util::math::clamp_pm_pi(this->ekf_.x[6] + id * 2 * CV_PI / model_.GetArmorNum());
+            auto xyz = model_.h_armor_xyz(this->ekf_.x, id);
+
+            data::ArmorGimbalControlSpacing armor;
+            armor.id          = model_.GetID();
+            armor.position    = xyz;
+            armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
+            armors.emplace_back(std::move(armor));
+        }
+        return armors;
+    }
 
     void Update(const double& dt, const Eigen::Vector3d& armor_xyz_in_world,
         const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world) {
