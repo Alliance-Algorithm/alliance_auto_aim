@@ -1,16 +1,15 @@
 #pragma once
 
 #include <Eigen/Dense>
-#include <Eigen/src/Core/Matrix.h>
 #include <cstdlib>
 #include <ctime>
 #include <numeric>
 
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/car_id.hpp"
+#include "extended_kalman_filter.hpp"
 #include "predict_model.hpp"
 #include "tongji/predictor/time_stamp.hpp"
-#include "util/extended_kalman_filter.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -32,17 +31,17 @@ public:
             armor_xyz_in_world[1] + model_.GetRadius() * std::sin(armor_ypr_in_world[0]);
         auto center_z = armor_xyz_in_world[2];
 
-        Eigen::VectorXd x0(11);
+        ExtendedKalmanFilter<11, 4>::XVec x0;
         x0 << center_x, 0, center_y, 0, center_z, 0, armor_ypr_in_world[0], 0, model_.GetRadius(),
             0, 0;
 
-        Eigen::MatrixXd P0 = model_.GetP0Dig().asDiagonal();
-        ekf_               = util::ExtendedKalmanFilter(
+        ExtendedKalmanFilter<11, 4>::PMat P0 = model_.GetP0Dig().asDiagonal();
+        ekf_               = ExtendedKalmanFilter<11, 4>(
             x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
     }
 
-    Eigen::VectorXd GetEkfX() const { return ekf_.x; }
-    Eigen::VectorXd GetP0Dig() const { return model_.GetP0Dig(); }
+    ExtendedKalmanFilter<11, 4>::XVec GetEkfX() const { return ekf_.x; }
+    ExtendedKalmanFilter<11, 4>::PDig GetP0Dig() const { return model_.GetP0Dig(); }
     const PredictModel& GetModel() const { return model_; }
     predictor::TimeStamp LastSeen() const { return predictor::TimeStamp(last_see_time_stamp_); }
 
@@ -104,19 +103,19 @@ private:
         const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world,
         const int& id, const double& dt) {
         // 观测jacobi
-        auto H          = model_.H(ekf_.x, id);
-        auto R          = model_.R(armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world, id);
-        auto A          = model_.A(dt);
-        auto Q          = model_.Q(dt);
-        auto f          = model_.f;
-        auto h          = [this, id](const Eigen::VectorXd& x) { return model_.h(x, id); };
+        auto H = model_.H(ekf_.x, id);
+        auto R = model_.R(armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world, id);
+        auto A = model_.A(dt);
+        auto Q = model_.Q(dt);
+        auto f = model_.f;
+        auto h = [this, id](const ExtendedKalmanFilter<11, 4>::XVec& x) { return model_.h(x, id); };
         auto z_subtract = model_.z_subtract;
 
-        const Eigen::VectorXd& ypd = armor_ypd_in_world;
-        const Eigen::VectorXd& ypr = armor_ypr_in_world;
+        const Eigen::Vector3d& ypd = armor_ypd_in_world;
+        const Eigen::Vector3d& ypr = armor_ypr_in_world;
 
         // 获得观测量
-        Eigen::VectorXd z(4);
+        ExtendedKalmanFilter<11, 4>::ZVec z(4);
         z << ypd[0], ypd[1], ypd[2], ypr[0];
 
         ekf_.Update(dt, A, Q, f, z, H, R, h, z_subtract);
@@ -131,7 +130,7 @@ private:
     }
 
     std::time_t last_see_time_stamp_;
-    util::ExtendedKalmanFilter ekf_;
+    ExtendedKalmanFilter<11, 4> ekf_;
     PredictModel model_;
 
     int last_id      = -1;

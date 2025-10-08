@@ -3,10 +3,10 @@
 #include <ctime>
 
 #include "data/armor_gimbal_control_spacing.hpp"
+#include "extended_kalman_filter.hpp"
 #include "tongji/predictor/live_target.hpp"
 #include "tongji/predictor/predict_model.hpp"
 #include "tongji/predictor/time_stamp.hpp"
-#include "util/extended_kalman_filter.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -49,7 +49,7 @@ public:
 
 private:
     PredictModel model_;
-    util::ExtendedKalmanFilter ekf_;
+    ExtendedKalmanFilter<11, 4> ekf_;
     TimeStamp time_stamp_;
 };
 

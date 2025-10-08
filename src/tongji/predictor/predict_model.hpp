@@ -2,10 +2,12 @@
 
 #include <functional>
 
+#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <opencv2/core/cvdef.h>
 
 #include "enum/car_id.hpp"
+#include "tongji/predictor/extended_kalman_filter.hpp"
 #include "util/math.hpp"
 
 namespace world_exe::tongji::predictor {
@@ -57,23 +59,27 @@ public:
     int GetArmorNum() const { return armor_num_; }
 
     // 防止夹角求和出现异常值
-    std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> x_add =
-        [](const Eigen::VectorXd& a, const Eigen::VectorXd& b) {
-            Eigen::VectorXd c = a + b;
-            c(6)              = util::math::clamp_pm_pi(c(6));
+    std::function<ExtendedKalmanFilter<11, 4>::XVec(
+        const ExtendedKalmanFilter<11, 4>::XVec&, const ExtendedKalmanFilter<11, 4>::XVec&)>
+        x_add = [](const ExtendedKalmanFilter<11, 4>::XVec& a,
+                    const ExtendedKalmanFilter<11, 4>::XVec& b) {
+            ExtendedKalmanFilter<11, 4>::XVec c = a + b;
+            c(6)                                = util::math::clamp_pm_pi(c(6));
             return c;
         };
 
     // 防止夹角求和出现异常值
-    std::function<Eigen::VectorXd(const Eigen::VectorXd& x, const double& dt)> f =
-        [=, this](const Eigen::VectorXd& x, const double& dt) -> Eigen::VectorXd {
-        Eigen::VectorXd x_prior = A(dt) * x;
-        x_prior(6)              = util::math::clamp_pm_pi(x_prior(6));
+    std::function<ExtendedKalmanFilter<11, 4>::XVec(
+        const ExtendedKalmanFilter<11, 4>::XVec& x, const double& dt)>
+        f = [this](const ExtendedKalmanFilter<11, 4>::XVec& x,
+                const double& dt) -> ExtendedKalmanFilter<11, 4>::XVec {
+        ExtendedKalmanFilter<11, 4>::XVec x_prior = A(dt) * x;
+        x_prior(6)                                = util::math::clamp_pm_pi(x_prior(6));
         return x_prior;
     };
 
-    int MatchArmor(const Eigen::VectorXd& x, const Eigen::Vector3d& armor_xyz_in_world,
-        const Eigen::Vector3d& armor_ypr_in_world,
+    int MatchArmor(const ExtendedKalmanFilter<11, 4>::XVec& x,
+        const Eigen::Vector3d& armor_xyz_in_world, const Eigen::Vector3d& armor_ypr_in_world,
         const Eigen::Vector3d& armor_ypd_in_world) const {
 
         const auto& xyza_list = GetArmorXYZAList(x);
@@ -107,7 +113,7 @@ public:
     }
 
     // 计算出装甲板中心的坐标（考虑长短轴）
-    Eigen::Vector3d h_armor_xyz(const Eigen::VectorXd& x, int id) const {
+    Eigen::Vector3d h_armor_xyz(const ExtendedKalmanFilter<11, 4>::XVec& x, int id) const {
         auto angle   = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
         auto use_l_h = (armor_num_ == 4) && (id == 1 || id == 3);
 
@@ -119,7 +125,7 @@ public:
         return { armor_x, armor_y, armor_z };
     }
 
-    Eigen::MatrixXd H(const Eigen::VectorXd& x, int id) const {
+    ExtendedKalmanFilter<11, 4>::HMat H(const ExtendedKalmanFilter<11, 4>::XVec& x, int id) const {
         auto angle   = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
         auto use_l_h = (armor_num_ == 4) && (id == 1 || id == 3);
 
@@ -135,7 +141,7 @@ public:
         auto dz_dh = (use_l_h) ? 1.0 : 0.0;
 
         // clang-format off
-  Eigen::MatrixXd H_armor_xyza{
+    Eigen::MatrixXd H_armor_xyza{
     {1, 0, 0, 0, 0, 0, dx_da, 0, dx_dr, dx_dl,     0},
     {0, 0, 1, 0, 0, 0, dy_da, 0, dy_dr, dy_dl,     0},
     {0, 0, 0, 0, 1, 0,     0, 0,     0,     0, dz_dh},
@@ -146,7 +152,7 @@ public:
         Eigen::VectorXd armor_xyz   = h_armor_xyz(x, id);
         Eigen::MatrixXd H_armor_ypd = util::math::xyz2ypd_jacobian(armor_xyz);
         // clang-format off
-        Eigen::MatrixXd H_armor_ypda{
+        Eigen::Matrix<double ,4,4> H_armor_ypda{
           {H_armor_ypd(0, 0), H_armor_ypd(0, 1), H_armor_ypd(0, 2), 0},
           {H_armor_ypd(1, 0), H_armor_ypd(1, 1), H_armor_ypd(1, 2), 0},
           {H_armor_ypd(2, 0), H_armor_ypd(2, 1), H_armor_ypd(2, 2), 0},
@@ -157,13 +163,13 @@ public:
         return H_armor_ypda * H_armor_xyza;
     }
 
-    Eigen::MatrixXd R(const Eigen::Vector3d& armor_xyz_in_world,
+    ExtendedKalmanFilter<11, 4>::RMat R(const Eigen::Vector3d& armor_xyz_in_world,
         const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world,
         int id) {
         // Eigen::VectorXd R_dig{{4e-3, 4e-3, 1, 9e-2}};
         auto center_yaw  = std::atan2(armor_xyz_in_world(1), armor_xyz_in_world(0));
         auto delta_angle = util::math::clamp_pm_pi(armor_ypr_in_world(0) - center_yaw);
-        Eigen::VectorXd R_dig(4);
+        ExtendedKalmanFilter<11, 4>::RDig R_dig(4);
         R_dig << 4e-3, 4e-3, log(std::abs(delta_angle) + 1) + 1,
             log(std::abs(armor_ypd_in_world(2)) + 1) / 200 + 9e-2;
 
@@ -171,10 +177,11 @@ public:
         return R_dig.asDiagonal();
     }
 
-    Eigen::MatrixXd A(double dt) const {
+    ExtendedKalmanFilter<11, 4>::AMat A(double dt) const {
         // 状态转移矩阵
+        ExtendedKalmanFilter<11, 4>::AMat _A;
         // clang-format off
-    return (Eigen::MatrixXd(11, 11) <<
+        _A<<
         1, dt,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  0,  1, dt,  0,  0,  0,  0,  0,  0,  0,
@@ -185,11 +192,13 @@ public:
         0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,
         0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,
         0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,
-        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1).finished();
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1;
+        //clang-format on
+        return _A;
     }
-     //clang-format on
+     
 
- Eigen::MatrixXd Q(double dt) const { 
+ExtendedKalmanFilter<11, 4>::QMat Q(double dt) const { 
         // Piecewise White Noise Model
         // https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/07-Kalman-Filter-Math.ipynb
     double v1, v2;
@@ -205,8 +214,10 @@ public:
     auto c = dt * dt;
       
     // 预测过程噪声偏差的方差
+    Eigen::Matrix<double,11,11> _Q;
     // clang-format off
-    return (Eigen::MatrixXd(11, 11) <<
+    _Q
+        <<
     a * v1, b * v1,      0,      0,      0,      0,      0,      0, 0, 0, 0,
     b * v1, c * v1,      0,      0,      0,      0,      0,      0, 0, 0, 0,
          0,      0, a * v1, b * v1,      0,      0,      0,      0, 0, 0, 0,
@@ -217,29 +228,33 @@ public:
          0,      0,      0,      0,      0,      0, b * v2, c * v2, 0, 0, 0,
          0,      0,      0,      0,      0,      0,      0,      0, 0, 0, 0,
          0,      0,      0,      0,      0,      0,      0,      0, 0, 0, 0,
-         0,      0,      0,      0,      0,      0,      0,      0, 0, 0, 0).finished();
+         0,      0,      0,      0,      0,      0,      0,      0, 0, 0, 0;
         // clang-format on
+        return _Q;
     }
 
-    std::function<Eigen::VectorXd(const Eigen::VectorXd&, int)> h = [this](const Eigen::VectorXd& x,
-                                                                        int id) {
-        Eigen::Vector3d xyz = this->h_armor_xyz(x, id);
-        Eigen::Vector3d ypd = util::math::xyz2ypd(xyz);
-        double angle        = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / this->armor_num_);
-        return Eigen::Vector4d { ypd(0), ypd(1), ypd(2), angle };
-    };
+    std::function<ExtendedKalmanFilter<11, 4>::ZVec(const ExtendedKalmanFilter<11, 4>::XVec&, int)>
+        h = [this](const ExtendedKalmanFilter<11, 4>::XVec& x, int id) {
+            Eigen::Vector3d xyz = this->h_armor_xyz(x, id);
+            Eigen::Vector3d ypd = util::math::xyz2ypd(xyz);
+            double angle        = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / this->armor_num_);
+            return Eigen::Vector4d { ypd(0), ypd(1), ypd(2), angle };
+        };
 
     // 防止夹角求差出现异常值
-    std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> z_subtract =
-        [](const Eigen::VectorXd& a, const Eigen::VectorXd& b) {
-            Eigen::VectorXd c = a - b;
-            c(0)              = util::math::clamp_pm_pi(c(0));
-            c(1)              = util::math::clamp_pm_pi(c(1));
-            c(3)              = util::math::clamp_pm_pi(c(3));
+    std::function<ExtendedKalmanFilter<11, 4>::ZVec(
+        const ExtendedKalmanFilter<11, 4>::ZVec&, const ExtendedKalmanFilter<11, 4>::ZVec&)>
+        z_subtract = [](const ExtendedKalmanFilter<11, 4>::ZVec& a,
+                         const ExtendedKalmanFilter<11, 4>::ZVec& b) {
+            ExtendedKalmanFilter<11, 4>::ZVec c = a - b;
+            c(0)                                = util::math::clamp_pm_pi(c(0));
+            c(1)                                = util::math::clamp_pm_pi(c(1));
+            c(3)                                = util::math::clamp_pm_pi(c(3));
             return c;
         };
 
-    std::vector<Eigen::Vector4d> GetArmorXYZAList(const Eigen::VectorXd& ekf_x) const {
+    std::vector<Eigen::Vector4d> GetArmorXYZAList(
+        const ExtendedKalmanFilter<11, 4>::XVec& ekf_x) const {
         std::vector<Eigen::Vector4d> _armor_xyza_list;
 
         for (int i = 0; i < armor_num_; i++) {
@@ -255,7 +270,7 @@ private:
     int armor_num_;
     enumeration::CarIDFlag car_id_;
 
-    Eigen::VectorXd P0_dig_;
+    ExtendedKalmanFilter<11, 4>::PDig P0_dig_;
     double radius_;
 };
 
