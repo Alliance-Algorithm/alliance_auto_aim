@@ -12,14 +12,17 @@
 #include "tongji/predictor/in_gimbal_control_armor.hpp"
 #include "tongji/predictor/live_target.hpp"
 #include "tongji/predictor/target_snapshot_manager.hpp"
+#include "tongji/predictor/time_stamp.hpp"
+#include "tongji/state_machine/state_machine.hpp"
 #include "util/index.hpp"
 
 namespace world_exe::tongji::predictor {
 
 class LiveTargetManager::Impl {
 public:
-    Impl(double timeout_sec = 0.1)
-        : timeout_sec_(timeout_sec) { }
+    Impl(std::shared_ptr<state_machine::StateMachine> state_machine, double timeout_sec = 0.1)
+        : timeout_sec_(timeout_sec)
+        , state_machine_(state_machine) { }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& flag, const std::time_t& time_stamp) {
@@ -54,7 +57,7 @@ public:
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, double dt) {
         const auto now = predictor::TimeStamp(std::time(nullptr));
         RemoveLostTargets(now);
-        UpdateTargets(data, dt);
+        AddNewTargets(data, dt);
         // TODO:update the state_machine
     }
 
@@ -80,7 +83,7 @@ private:
         return (it != targets_.end()) ? it->second : nullptr;
     }
 
-    void UpdateTargets(
+    void AddNewTargets(
         const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data, double dt) {
         const Eigen::Affine3d transform       = data->GetTransform();
         const Eigen::Matrix3d rotation_matrix = transform.linear();
@@ -94,6 +97,8 @@ private:
 
             if (armors.empty()) continue;
 
+            UpdateStateMachine(id, std::time(nullptr));
+
             if (!HasTarget(id)) {
                 const auto& armor                       = armors.front();
                 const Eigen::Vector3d position_in_world = transform * armor.position;
@@ -101,6 +106,7 @@ private:
 
                 auto target = std::make_shared<LiveTarget>(position_in_world, ypr_in_world, id);
                 RegisterTarget(id, target);
+                continue;
             }
 
             auto target = GetTarget(id);
@@ -124,16 +130,23 @@ private:
         }
     }
 
+    void UpdateStateMachine(enumeration::CarIDFlag cars_detected, TimeStamp now) {
+        state_machine_->Update(cars_detected, now.GetTimeStamp());
+    }
+
     bool IsTargetLost(
         const std::shared_ptr<LiveTarget>& target, const predictor::TimeStamp& now) const {
         return now.SecondsSince(target->LastSeen()) > timeout_sec_;
     }
 
     std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> targets_;
+    std::shared_ptr<state_machine::StateMachine> state_machine_;
     const double timeout_sec_ { 0.1 };
 };
 
-LiveTargetManager::LiveTargetManager()  = default;
+LiveTargetManager::LiveTargetManager(
+    std::shared_ptr<state_machine::StateMachine> state_machine, double timeout_sec)
+    : pimpl_(std::make_unique<Impl>(state_machine, timeout_sec)) { }
 LiveTargetManager::~LiveTargetManager() = default;
 
 std ::shared_ptr<interfaces ::IArmorInGimbalControl> LiveTargetManager::Predict(

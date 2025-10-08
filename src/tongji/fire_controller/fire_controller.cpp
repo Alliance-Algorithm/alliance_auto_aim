@@ -28,21 +28,22 @@ using TimeStamp             = predictor::TimeStamp;
 
 class FireController::Impl {
 public:
-    Impl(bool auto_fire, const double& control_delay_in_second, const double& bullet_speed,
-        double yaw_offset, double pitch_offset)
+    Impl(std::shared_ptr<StateMachine> state_machine, bool auto_fire,
+        const double& control_delay_in_second, const double& bullet_speed, double yaw_offset,
+        double pitch_offset)
         : control_delay_(control_delay_in_second)
         , bullet_speed_(bullet_speed)
         , tracker_(std::make_unique<DefaultTracker>())
         , aim_solver_(std::make_unique<AimingSolver>(bullet_speed, yaw_offset, pitch_offset))
         , fire_decision_(std::make_unique<FireDecision>(auto_fire))
-        , live_target_manager_(std::make_shared<LiveTargetManager>()) { }
+        , live_target_manager_(std::make_shared<LiveTargetManager>(state_machine)) { }
 
     // TODO:std::time_t
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const {
         if (!identified_armors_ || !tracker_ || !aim_solver_ || !fire_decision_
             || !live_target_manager_)
             return { .fire_allowance = false };
-            
+
         auto snapshot_manager = std::dynamic_pointer_cast<TargetSnapshotManager>(
             live_target_manager_->GetPredictor(live_target_manager_->GetLiveTargetIDs()));
         auto snapshot = tracker_->SelectTrackingTarget(*identified_armors_, snapshot_manager);
@@ -92,10 +93,11 @@ private:
     predictor::TimeStamp time_stamp_ { std::time(nullptr) };
 };
 
-FireController::FireController(bool auto_fire, const double& control_delay_in_second,
-    const double& bullet_speed, double yaw_offset, double pitch_offset)
-    : pimpl_(std::make_unique<Impl>(
-          auto_fire, control_delay_in_second, bullet_speed, yaw_offset, pitch_offset)) { }
+FireController::FireController(std::shared_ptr<StateMachine> state_machine, bool auto_fire,
+    const double& control_delay_in_second, const double& bullet_speed, double yaw_offset,
+    double pitch_offset)
+    : pimpl_(std::make_unique<Impl>(state_machine, auto_fire, control_delay_in_second, bullet_speed,
+          yaw_offset, pitch_offset)) { }
 
 const data ::FireControl FireController::CalculateTarget(const std ::time_t& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);

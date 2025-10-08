@@ -6,12 +6,14 @@
 #include "enum/car_id.hpp"
 #include "interfaces/predictor_update_package.hpp"
 #include "interfaces/target_predictor.hpp"
+#include "tongji/state_machine/state_machine.hpp"
 
 namespace world_exe::tongji::predictor {
 
 class LiveTargetManager final : public interfaces::ITargetPredictor {
 public:
-    LiveTargetManager();
+    LiveTargetManager(
+        std::shared_ptr<state_machine::StateMachine> state_machine, double timeout_sec = 0.1);
     ~LiveTargetManager();
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> Predict(
@@ -22,7 +24,7 @@ public:
 
     auto GetLiveTargetIDs() -> enumeration::CarIDFlag const;
 
-    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, double dt) ;
+    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, double dt);
 
 private:
     class Impl;
