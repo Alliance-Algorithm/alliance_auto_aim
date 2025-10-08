@@ -51,7 +51,6 @@ public:
         });
         sq_armor_list->sort([](const auto& a, const auto& b) { return a.priority < b.priority; });
 
-        // auto iterator    = sq_armor_list->begin();
         auto filter_flag = snapshot_manager_->GetId();
         for (const auto& armor : *sq_armor_list) {
             if (!enumeration::IsFlagContains(filter_flag, armor.armor.id)) continue;

@@ -3,6 +3,8 @@
 #include <memory>
 
 #include "enum/armor_id.hpp"
+#include "enum/car_id.hpp"
+#include "interfaces/predictor_update_package.hpp"
 #include "interfaces/target_predictor.hpp"
 
 namespace world_exe::tongji::predictor {
@@ -17,6 +19,10 @@ public:
 
     std ::shared_ptr<interfaces::IPredictor> GetPredictor(
         const enumeration ::ArmorIdFlag& id) const override;
+
+    auto GetLiveTargetIDs() -> enumeration::CarIDFlag const;
+
+    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, double dt) ;
 
 private:
     class Impl;

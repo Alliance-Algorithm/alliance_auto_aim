@@ -21,17 +21,6 @@ public:
     Impl(double timeout_sec = 0.1)
         : timeout_sec_(timeout_sec) { }
 
-    void RegisterTarget(enumeration::ArmorIdFlag id, std::shared_ptr<LiveTarget> target) {
-        targets_[id] = std::move(target);
-    }
-
-    void RemoveTarget(enumeration::ArmorIdFlag id) { targets_.erase(id); }
-    bool HasTarget(enumeration::ArmorIdFlag id) const { return targets_.count(id) > 0; }
-    std::shared_ptr<LiveTarget> GetTarget(enumeration::ArmorIdFlag id) const {
-        auto it = targets_.find(id);
-        return (it != targets_.end()) ? it->second : nullptr;
-    }
-
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& flag, const std::time_t& time_stamp) {
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
@@ -66,6 +55,7 @@ public:
         const auto now = predictor::TimeStamp(std::time(nullptr));
         RemoveLostTargets(now);
         UpdateTargets(data, dt);
+        // TODO:update the state_machine
     }
 
     auto GetLiveTargetIDs() -> enumeration::CarIDFlag const {
@@ -80,6 +70,16 @@ public:
     }
 
 private:
+    void RegisterTarget(enumeration::ArmorIdFlag id, std::shared_ptr<LiveTarget> target) {
+        targets_[id] = std::move(target);
+    }
+    void RemoveTarget(enumeration::ArmorIdFlag id) { targets_.erase(id); }
+    bool HasTarget(enumeration::ArmorIdFlag id) const { return targets_.count(id) > 0; }
+    std::shared_ptr<LiveTarget> GetTarget(enumeration::ArmorIdFlag id) const {
+        auto it = targets_.find(id);
+        return (it != targets_.end()) ? it->second : nullptr;
+    }
+
     void UpdateTargets(
         const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data, double dt) {
         const Eigen::Affine3d transform       = data->GetTransform();
@@ -145,4 +145,14 @@ std ::shared_ptr<interfaces::IPredictor> LiveTargetManager::GetPredictor(
     const enumeration ::ArmorIdFlag& id) const {
     return pimpl_->GetPredictor(id);
 }
+
+auto LiveTargetManager::GetLiveTargetIDs() -> enumeration::CarIDFlag const {
+    return pimpl_->GetLiveTargetIDs();
+}
+
+void LiveTargetManager::Update(
+    std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, double dt) {
+    return pimpl_->Update(data, dt);
+}
+
 }
