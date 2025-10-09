@@ -1,7 +1,7 @@
 #pragma once
 #include "parameters/profile.hpp"
 
-namespace world_exe::parameters::mock {
+namespace world_exe::tests::mock {
 class MockHikCameraProfile{
     public:
         static const cv::Mat& get_intrinsic_parameters(){

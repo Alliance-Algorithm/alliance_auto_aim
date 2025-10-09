@@ -7,7 +7,7 @@
 #include <ctime>
 #include <chrono>
 
-namespace world_exe::interfaces::mock{
+namespace world_exe::tests::mock{
     class MockArmorInImage :public world_exe::interfaces::IArmorInImage,public world_exe::interfaces::ITimeStamped{
     public:
         std::vector<world_exe::data::ArmorImageSpacing> armors;
@@ -25,7 +25,7 @@ namespace world_exe::interfaces::mock{
         }
         const std::time_t& GetTimeStamp() const override { return time_stamp; }
         //MockArmorInImage工厂函数
-        static std::shared_ptr<world_exe::interfaces::mock::MockArmorInImage> createMockArmorInImage(){  
+        static std::shared_ptr<world_exe::tests::mock::MockArmorInImage> createMockArmorInImage(){  
             //Mock装甲板生成
             std::vector<world_exe::data::ArmorImageSpacing> MockArmors;//装甲板组
             world_exe::data::ArmorImageSpacing MockArmor;//单装甲板
@@ -40,7 +40,7 @@ namespace world_exe::interfaces::mock{
                 MockArmor.isLargeArmor = false;
                 MockArmors.push_back(MockArmor);
             }
-            return std::make_shared<world_exe::interfaces::mock::MockArmorInImage>(MockArmors);
+            return std::make_shared<world_exe::tests::mock::MockArmorInImage>(MockArmors);
         }
     };
 
