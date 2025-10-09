@@ -31,6 +31,6 @@ private:
     TimeStamp time_stamp_;
     std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
         armors_map_;
-    static const std::vector<data::ArmorGimbalControlSpacing> empty;
+    static inline const std::vector<data::ArmorGimbalControlSpacing> empty={};
 };
 }
