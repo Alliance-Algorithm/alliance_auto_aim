@@ -45,7 +45,6 @@ private:
     int switch_threshold_;
     int converge_threshold_ = 3;
     int update_count_       = 0;
-    double timeout_sec_;
 
     bool is_locked_    = false;
     bool is_converged_ = false;
