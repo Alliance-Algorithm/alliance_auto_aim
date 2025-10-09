@@ -2,8 +2,8 @@
 
 #include <memory>
 
+#include "interfaces/armor_in_image.hpp"
 #include "interfaces/fire_controller.hpp"
-#include "tongji/identifier/identified_armor.hpp"
 #include "tongji/predictor/time_stamp.hpp"
 #include "tongji/state_machine/state_machine.hpp"
 
@@ -18,7 +18,7 @@ public:
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const override;
     const enumeration ::CarIDFlag GetAttackCarId() const override;
 
-    void UpdateIdentifiedArmors(const identifier::IdentifiedArmor& armors);
+    void UpdateIdentifiedArmors(std::shared_ptr<interfaces::IArmorInImage> armors);
     void UpdateGimbalPosition(const Eigen::Vector3d& gimbal_pos);
 
     void SetTimeStamp(const std::time_t& time_stamp);

@@ -48,14 +48,11 @@ public:
         } else {
             armor_num_ = 4;
         }
-
-        // TODO :init priority
     }
 
     auto GetP0Dig() const { return P0_dig_; }
     auto GetRadius() const { return radius_; }
     auto GetID() const { return car_id_; }
-    auto GetPriority() const { return priority_; }
     int GetArmorNum() const { return armor_num_; }
 
     // 防止夹角求和出现异常值
@@ -266,7 +263,6 @@ ExtendedKalmanFilter<11, 4>::QMat Q(double dt) const {
     }
 
 private:
-    int priority_;
     int armor_num_;
     enumeration::CarIDFlag car_id_;
 

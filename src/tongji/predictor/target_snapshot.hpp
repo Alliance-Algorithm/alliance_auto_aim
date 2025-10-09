@@ -40,7 +40,6 @@ public:
     auto GetTimeStamp() const { return time_stamp_; }
     auto GetID() const { return model_.GetID(); }
     auto GetEkfX() const { return ekf_.x; }
-    auto GetPriority() const { return model_.GetPriority(); }
 
     auto Predict(const double& dt) -> Eigen::Vector<double, 11> const {
         auto predicted_x = model_.f(ekf_.x, dt);

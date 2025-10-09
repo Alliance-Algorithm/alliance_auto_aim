@@ -37,12 +37,8 @@ public:
         is_locked_    = false;
         is_converged_ = false;
         is_diverged_  = true;
-        priority_     = default_priority_;
         last_seen_    = predictor::TimeStamp(0);
     }
-
-    void SetPriority(const int& p) { priority_ = p; }
-    int GetPriority() const { return priority_; }
 
     void SetThreshold(const int& value) { switch_threshold_ = value; }
 
@@ -55,11 +51,10 @@ private:
     int update_count_       = 0;
     double timeout_sec_;
 
-    bool is_locked_       = false;
-    bool is_converged_    = false;
-    bool is_diverged_     = true;
-    int priority_         = 100;
-    int default_priority_ = 100;
+    bool is_locked_    = false;
+    bool is_converged_ = false;
+    bool is_diverged_  = true;
+    ;
 
     predictor::TimeStamp last_seen_;
 };

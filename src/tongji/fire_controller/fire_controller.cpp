@@ -8,6 +8,7 @@
 #include <opencv2/core/cvdef.h>
 
 #include "enum/car_id.hpp"
+#include "interfaces/armor_in_image.hpp"
 #include "tongji/fire_controller/aim_solver.hpp"
 #include "tongji/fire_controller/fire_decision.hpp"
 #include "tongji/fire_controller/tracker.hpp"
@@ -33,7 +34,7 @@ public:
         double pitch_offset)
         : control_delay_(control_delay_in_second)
         , bullet_speed_(bullet_speed)
-        , tracker_(std::make_unique<DefaultTracker>())
+        , tracker_(std::make_unique<Tracker>())
         , aim_solver_(std::make_unique<AimingSolver>(bullet_speed, yaw_offset, pitch_offset))
         , fire_decision_(std::make_unique<FireDecision>(auto_fire))
         , live_target_manager_(std::make_shared<LiveTargetManager>(state_machine)) { }
@@ -46,7 +47,7 @@ public:
 
         auto snapshot_manager = std::dynamic_pointer_cast<TargetSnapshotManager>(
             live_target_manager_->GetPredictor(live_target_manager_->GetLiveTargetIDs()));
-        auto snapshot = tracker_->SelectTrackingTarget(*identified_armors_, snapshot_manager);
+        auto snapshot = tracker_->SelectTrackingTarget(identified_armors_, snapshot_manager);
 
         bool found = (snapshot != nullptr);
         tracker_->UpdateState(found);
@@ -70,7 +71,9 @@ public:
 
     const CarIDFlag GetAttackCarId() const { return attacked_cars_; }
 
-    void UpdateIdentifiedArmors(const IdentifiedArmor& armors) { identified_armors_ = armors; }
+    void UpdateIdentifiedArmors(std::shared_ptr<interfaces::IArmorInImage> armors) {
+        identified_armors_ = armors;
+    }
     void UpdateGimbalPosition(const Eigen::Vector3d& gimbal_pos) { gimbal_pos_ = gimbal_pos; };
     void SetTimeStamp(const std::time_t& time_stamp) { time_stamp_.SetTimeStamp(time_stamp); }
     TimeStamp GetTimeStamp() const { return time_stamp_; }
@@ -84,8 +87,8 @@ private:
         CarIDFlag::None
     }; // TODO:Mutable should not be used to break const encapsulation
 
-    mutable std::optional<IdentifiedArmor> identified_armors_;
-    std::unique_ptr<DefaultTracker> tracker_;
+    std::shared_ptr<interfaces::IArmorInImage> identified_armors_;
+    std::unique_ptr<Tracker> tracker_;
     std::shared_ptr<predictor::LiveTargetManager> live_target_manager_;
     std::unique_ptr<AimingSolver> aim_solver_;
     std::unique_ptr<FireDecision> fire_decision_;
@@ -105,7 +108,7 @@ const data ::FireControl FireController::CalculateTarget(const std ::time_t& tim
 
 const CarIDFlag FireController::GetAttackCarId() const { return pimpl_->GetAttackCarId(); }
 
-void FireController::UpdateIdentifiedArmors(const IdentifiedArmor& armors) {
+void FireController::UpdateIdentifiedArmors(std::shared_ptr<interfaces::IArmorInImage> armors) {
     return pimpl_->UpdateIdentifiedArmors(armors);
 }
 

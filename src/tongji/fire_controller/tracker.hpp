@@ -1,15 +1,21 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 
 #include <opencv2/core/types.hpp>
+#include <vector>
 
 #include "../predictor/target_snapshot.hpp"
 #include "../predictor/target_snapshot_manager.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
 #include "enum/enum_tools.hpp"
+#include "interfaces/armor_in_image.hpp"
 #include "interfaces/car_state.hpp"
+#include "tongji/decider/armor_info.hpp"
+#include "tongji/decider/decider.hpp"
+#include "tongji/fire_controller/aim_point_chooser.hpp"
 #include "tongji/identifier/identified_armor.hpp"
 #include "tongji/predictor/time_stamp.hpp"
 
@@ -23,60 +29,73 @@ enum class TrackState {
     Switching  //
 };
 
-class DefaultTracker final {
+class Tracker final {
     using TargetSnapshotManager = world_exe::tongji::predictor::TargetSnapshotManager;
     using TargetSnapshot        = world_exe::tongji::predictor::TargetSnapshot;
     using ArmorInImage          = world_exe::tongji::identifier::IdentifiedArmor;
     using EnemiesState          = world_exe::interfaces::ICarState;
 
 public:
-    DefaultTracker()
-        : last_timestamp_(0) { }
+    Tracker()
+        : last_timestamp_(std::time(nullptr))
+        , decider_(std::make_unique<decider::Decider>()) { }
 
-    ~DefaultTracker() = default;
+    ~Tracker() = default;
 
-    auto SelectTrackingTarget(                                          //
-        ArmorInImage& armors,                                           //
-        const std::shared_ptr<TargetSnapshotManager>& snapshot_manager_ //
-        ) noexcept -> std::unique_ptr<TargetSnapshot> {
+    auto SelectTrackingTarget(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+        const std::shared_ptr<TargetSnapshotManager>& snapshot_manager_) noexcept
+        -> std::unique_ptr<TargetSnapshot> {
 
-        const auto& sq_armor_list = armors.get_sq_armor();
+        auto detected_ids    = enumeration::CarIDFlag::None;
+        auto armor_info_list = std::vector<decider::ArmorInfo> { };
 
-        sq_armor_list->sort([](const world_exe::tongji::identifier::SPArmor& a,
-                                const world_exe::tongji::identifier::SPArmor& b) {
-            cv::Point2f img_center(1440.0 / 2, 1080.0 / 2); // TODO
-            auto distance_1 = cv::norm(a.center - img_center);
-            auto distance_2 = cv::norm(b.center - img_center);
-            return distance_1 < distance_2;
-        });
-        sq_armor_list->sort([](const auto& a, const auto& b) { return a.priority < b.priority; });
+        for (uint32_t i = 0; i < static_cast<uint32_t>(CarIDFlag::Count); ++i) {
+            auto id = static_cast<CarIDFlag>(static_cast<uint32_t>(CarIDFlag::Hero) << i);
 
-        auto filter_flag = snapshot_manager_->GetId();
-        for (const auto& armor : *sq_armor_list) {
-            if (!enumeration::IsFlagContains(filter_flag, armor.armor.id)) continue;
+            if (armors_in_image->GetArmors(id).empty()) continue;
 
-            auto snapshot = snapshot_manager_->GetSingleSnapshot(armor.armor.id);
-            if (!snapshot) continue;
+            detected_ids = static_cast<CarIDFlag>(
+                static_cast<uint32_t>(detected_ids) | static_cast<uint32_t>(id));
 
-            if (state_ == TrackState::Tracking && snapshot->GetPriority() < current_priority_) {
-                SetState(TrackState::Switching);
-                temp_lost_count_ = 0;
+            for (const auto& armor : armors_in_image->GetArmors(id)) {
+                auto armor_info = decider::ArmorInfo(armor);
+                armor_info_list.emplace_back(armor_info);
             }
-
-            auto now = predictor::TimeStamp(std::time(nullptr));
-            if (state_ != TrackState::Lost && now.SecondsSince(last_timestamp_) > 0.1) {
-                SetState(TrackState::Lost);
-                ResetTracking();
-                return nullptr;
-            }
-
-            last_timestamp_   = now;
-            tracking_car_id_  = snapshot->GetID();
-            current_priority_ = snapshot->GetPriority();
-            return snapshot;
         }
+    
+        decider_->SetInvincibleArmors(invincible_armors_);
+        decider_->ArmorFilter(armor_info_list);
+        decider_->SetPriority(armor_info_list);
+
+        auto sorted_id = decider_->GetSortedArmor(armor_info_list);
+        if (sorted_id == enumeration::ArmorIdFlag::None) {
+            return nullptr;
+        }
+
+        auto snapshot = snapshot_manager_->GetSingleSnapshot(sorted_id);
+
+        if (state_ == TrackState::Tracking) {
+            SetState(TrackState::Switching);
+            temp_lost_count_ = 0;
+        }
+
+        auto now = predictor::TimeStamp(std::time(nullptr));
+        if (state_ != TrackState::Lost && now.SecondsSince(last_timestamp_) > 0.1) {
+            SetState(TrackState::Lost);
+            ResetTracking();
+            return nullptr;
+        }
+
+        last_timestamp_  = now;
+        tracking_car_id_ = snapshot->GetID();
+        return snapshot;
+
         ResetTracking();
         return nullptr;
+    }
+
+    void SetInvincibleArmors(const CarIDFlag& invincible_armors) {
+        invincible_armors_ = invincible_armors;
     }
 
     world_exe::enumeration::CarIDFlag GetCurrentTargetID() const { return tracking_car_id_; }
@@ -153,15 +172,12 @@ private:
         state_     = new_state;
     }
 
-    void ResetTracking() {
-        tracking_car_id_  = enumeration::CarIDFlag::None;
-        current_priority_ = 100;
-    }
+    void ResetTracking() { tracking_car_id_ = enumeration::CarIDFlag::None; }
 
-    int current_priority_ = 100;
     world_exe::enumeration::CarIDFlag tracking_car_id_ { enumeration::CarIDFlag::None };
     TrackState state_     = TrackState::Lost;
     TrackState pre_state_ = TrackState::Lost;
+    CarIDFlag invincible_armors_ { CarIDFlag::None };
 
     int detect_count_                      = 0;
     int temp_lost_count_                   = 0;
@@ -172,6 +188,8 @@ private:
     const int max_switch_count_            = 200;
 
     predictor::TimeStamp last_timestamp_;
+
+    std::unique_ptr<decider::Decider> decider_;
 };
 
 }
