@@ -26,10 +26,10 @@ public:
         }
     }
 
-    void SetPriority(const std::vector<ArmorInfo>& detected_result) const {
+    void SetPriority( std::vector<ArmorInfo>& detected_result) const {
         const PriorityMap& priority_map = (mode_ == PriorityMode::MODE_ONE) ? mode1 : mode2;
         if (!detected_result.empty()) {
-            for (auto armor : detected_result) {
+            for (auto& armor : detected_result) {
                 armor.priority = priority_map.at(armor.armor_spacing.id);
             }
         }
@@ -117,7 +117,7 @@ void Decider::SetInvincibleArmors(const enumeration::ArmorIdFlag& armors) {
     return pimpl_->SetInvincibleArmors(armors);
 }
 
-void Decider::SetPriority(const std::vector<ArmorInfo>& detected_result) const {
+void Decider::SetPriority( std::vector<ArmorInfo>& detected_result) const {
     return pimpl_->SetPriority(detected_result);
 }
 

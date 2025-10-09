@@ -62,9 +62,9 @@ public:
                 armor_info_list.emplace_back(armor_info);
             }
         }
-    
+
         decider_->SetInvincibleArmors(invincible_armors_);
-        decider_->ArmorFilter(armor_info_list);
+        auto is_empty = decider_->ArmorFilter(armor_info_list);
         decider_->SetPriority(armor_info_list);
 
         auto sorted_id = decider_->GetSortedArmor(armor_info_list);

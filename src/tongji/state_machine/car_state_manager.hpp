@@ -18,7 +18,7 @@ public:
             count_     = std::min(count_ + 1, switch_threshold_);
             last_seen_ = now;
             update_count_++;
-            if (update_count_ >= converge_threshold_ && is_diverged_) is_converged_ = true;
+            if (update_count_ >= converge_threshold_ && !is_diverged_) is_converged_ = true;
         } else {
             count_ = std::max(count_ - 1, 0);
         }
@@ -27,17 +27,13 @@ public:
 
     bool IsConverged() const { return is_converged_ && !is_diverged_; }
 
-    bool IsLost(const TimeStamp& now) const {
-        return is_locked_ && now.SecondsSince(last_seen_) > timeout_sec_;
-    }
-
     void Reset() {
         count_        = 0;
         update_count_ = 0;
         is_locked_    = false;
         is_converged_ = false;
         is_diverged_  = true;
-        last_seen_    = predictor::TimeStamp(0);
+        last_seen_    = predictor::TimeStamp(std::time(nullptr));
     }
 
     void SetThreshold(const int& value) { switch_threshold_ = value; }
@@ -54,7 +50,6 @@ private:
     bool is_locked_    = false;
     bool is_converged_ = false;
     bool is_diverged_  = true;
-    ;
 
     predictor::TimeStamp last_seen_;
 };

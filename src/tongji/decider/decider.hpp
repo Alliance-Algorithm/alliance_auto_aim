@@ -18,7 +18,7 @@ public:
     ~Decider();
 
     void SetInvincibleArmors(const enumeration::ArmorIdFlag& armors);
-    void SetPriority(const std::vector<ArmorInfo>& detected_result) const;
+    void SetPriority(std::vector<ArmorInfo>& detected_result) const;
     enumeration::ArmorIdFlag GetSortedArmor(std::vector<ArmorInfo>& armors) const;
     bool ArmorFilter(std::vector<ArmorInfo>& armors);
 

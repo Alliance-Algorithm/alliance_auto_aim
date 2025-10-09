@@ -22,7 +22,7 @@ public:
     const car_state::CarStateManager& GetState(enumeration::CarIDFlag single_id) const {
         return car_states_[util::enumeration::GetIndex(single_id)];
     }
-    
+
     void Update(const enumeration::CarIDFlag& car_detected, const std::time_t& now) {
         tracing_state_ = enumeration::CarIDFlag::None;
 
@@ -34,11 +34,6 @@ public:
             state.Update(detected, now);
 
             if (!state.IsConverged()) {
-                state.Reset();
-                continue;
-            }
-
-            if (state.IsLost(now)) {
                 state.Reset();
                 continue;
             }
