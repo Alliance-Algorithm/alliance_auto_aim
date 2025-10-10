@@ -19,9 +19,8 @@ public:
     const enumeration ::CarIDFlag GetAttackCarId() const override;
 
     void UpdateIdentifiedArmors(std::shared_ptr<interfaces::IArmorInImage> armors);
-    void UpdateGimbalPosition(const Eigen::Vector3d& gimbal_pos);
+    void UpdateGimbalPosition(const double& gimbal_yaw);
 
-    void SetTimeStamp(const std::time_t& time_stamp);
     predictor::TimeStamp GetTimeStamp() const;
 
 private:

@@ -18,7 +18,7 @@ public:
         , judge_distance_(judge_distance) { }
 
     bool ShouldFire(const AimSolution& aimsolution, const Eigen::Vector3d& valid_target_pos,
-        const Eigen::Vector3d& gimbal_pos) {
+        const double& gimbal_yaw) {
 
         if (!aimsolution.valid || !auto_fire_) return false;
         const auto& tolerance = std::sqrt(valid_target_pos.x() * valid_target_pos.x()
@@ -29,7 +29,8 @@ public:
 
         if (std::abs(last_aim_solution_.yaw - aimsolution.yaw)
                 < tolerance * 2 // 此时认为command突变不应该射击
-            && std::abs(gimbal_pos[0] - last_aim_solution_.yaw) < tolerance && last_aim_solution_.valid) {
+            && std::abs(gimbal_yaw - last_aim_solution_.yaw) < tolerance
+            && last_aim_solution_.valid) {
             last_aim_solution_ = aimsolution;
             return true;
         }

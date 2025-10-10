@@ -60,7 +60,7 @@ public:
         if (!aim_solution.valid) return { .fire_allowance = false };
 
         const Eigen::Vector3d target_pos = aim_solution.aim_point.head<3>();
-        const bool fireable = fire_decision_->ShouldFire(aim_solution, target_pos, gimbal_pos_);
+        const bool fireable = fire_decision_->ShouldFire(aim_solution, target_pos, gimbal_yaw_);
 
         if (fireable) attacked_cars_ = snapshot->GetID();
 
@@ -74,12 +74,11 @@ public:
     void UpdateIdentifiedArmors(std::shared_ptr<interfaces::IArmorInImage> armors) {
         identified_armors_ = armors;
     }
-    void UpdateGimbalPosition(const Eigen::Vector3d& gimbal_pos) { gimbal_pos_ = gimbal_pos; };
-    void SetTimeStamp(const std::time_t& time_stamp) { time_stamp_.SetTimeStamp(time_stamp); }
+    void UpdateGimbalPosition(const double gimbal_yaw) { gimbal_yaw_ = gimbal_yaw; };
     TimeStamp GetTimeStamp() const { return time_stamp_; }
 
 private:
-    Eigen::Vector3d gimbal_pos_ { Eigen::Vector3d::Zero() };
+    double gimbal_yaw_;
     double control_delay_;
     double bullet_speed_;
 
@@ -112,8 +111,8 @@ void FireController::UpdateIdentifiedArmors(std::shared_ptr<interfaces::IArmorIn
     return pimpl_->UpdateIdentifiedArmors(armors);
 }
 
-void FireController::UpdateGimbalPosition(const Eigen::Vector3d& gimbal_pos) {
-    return pimpl_->UpdateGimbalPosition(gimbal_pos);
+void FireController::UpdateGimbalPosition(const double& gimbal_yaw) {
+    return pimpl_->UpdateGimbalPosition(gimbal_yaw);
 };
 
 }
