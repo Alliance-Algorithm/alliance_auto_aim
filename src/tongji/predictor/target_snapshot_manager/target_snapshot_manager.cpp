@@ -6,7 +6,6 @@
 
 #include "../in_gimbal_control_armor.hpp"
 #include "../live_target_manager/live_target.hpp"
-#include "../target_snapshot_manager/target_snapshot.hpp"
 #include "aim_solver.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/enum_tools.hpp"
@@ -20,7 +19,7 @@ public:
             live_target_map,
         const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
         const double& pitch_offset)
-        : aim_solver_(std::make_unique<armor_solver::AimingSolver>(yaw_offset, pitch_offset))
+        : aim_solver_(std::make_unique<predictor::AimingSolver>(yaw_offset, pitch_offset))
 
         , now_(now)
         , ids_(id)
@@ -71,7 +70,7 @@ private:
         return result;
     }
 
-    std::unique_ptr<armor_solver::AimingSolver> aim_solver_;
+    std::unique_ptr<predictor::AimingSolver> aim_solver_;
     const std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> snapshots_;
     const std::time_t& now_;
     const enumeration::ArmorIdFlag ids_;

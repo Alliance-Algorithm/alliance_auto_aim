@@ -9,7 +9,7 @@
 #include "target_snapshot.hpp"
 #include "trajectory.hpp"
 
-namespace world_exe::tongji::armor_solver {
+namespace world_exe::tongji::predictor {
 
 using TargetSnapshot = predictor::TargetSnapshot;
 
@@ -25,7 +25,7 @@ class AimingSolver {
 public:
     AimingSolver(
         const double& yaw_offset, const double& pitch_offset, const double& gravity = 9.7833)
-        : aim_point_chooser_(std::make_unique<fire_control::AimPointChooser>())
+        : aim_point_chooser_(std::make_unique<predictor::AimPointChooser>())
         , yaw_offset_(yaw_offset / 57.3)     // degree to rad
         , pitch_offset_(pitch_offset / 57.3) // degree to rad
         , g_(gravity) { }
@@ -83,6 +83,6 @@ private:
     double yaw_offset_, pitch_offset_;
     const double g_;
 
-    std::unique_ptr<fire_control::AimPointChooser> aim_point_chooser_;
+    std::unique_ptr<predictor::AimPointChooser> aim_point_chooser_;
 };
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ctime>
 #include <memory>
 #include <opencv2/core/types.hpp>
 #include <utility>
@@ -165,7 +166,7 @@ private:
     const int normal_max_temp_lost_count_  = max_temp_lost_count_;
     const int max_switch_count_            = 200;
 
-    predictor::TimeStamp last_track_timestamp_;
+    time_stamp::TimeStamp last_track_timestamp_;
 };
 
 }

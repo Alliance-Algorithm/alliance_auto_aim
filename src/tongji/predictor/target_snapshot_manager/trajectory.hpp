@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-namespace world_exe::tongji::armor_solver {
+namespace world_exe::tongji::predictor {
 
 struct TrajectoryResult {
     bool solvable = true;

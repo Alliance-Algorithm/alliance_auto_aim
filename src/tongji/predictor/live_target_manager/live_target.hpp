@@ -43,7 +43,7 @@ public:
     ExtendedKalmanFilter<11, 4>::XVec GetEkfX() const { return ekf_.x; }
     ExtendedKalmanFilter<11, 4>::PDig GetP0Dig() const { return model_.GetP0Dig(); }
     const PredictModel& GetModel() const { return model_; }
-    predictor::TimeStamp LastSeen() const { return predictor::TimeStamp(last_see_time_stamp_); }
+    time_stamp::TimeStamp LastSeen() const { return time_stamp::TimeStamp(last_see_time_stamp_); }
 
     std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() const {
         std::vector<data::ArmorGimbalControlSpacing> armors;

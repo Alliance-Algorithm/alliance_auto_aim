@@ -21,7 +21,7 @@ public:
 
     void Update(std::shared_ptr<interfaces::IArmorInImage> armors, const double& gimbal_yaw);
 
-    predictor::TimeStamp GetTimeStamp() const;
+    time_stamp::TimeStamp GetTimeStamp() const;
 
 private:
     class Impl;

@@ -48,7 +48,7 @@ public:
 private:
     PredictModel model_;
     ExtendedKalmanFilter<11, 4> ekf_;
-    TimeStamp time_stamp_;
+    time_stamp::TimeStamp time_stamp_;
 };
 
 }

@@ -2,7 +2,7 @@
 
 #include "interfaces/time_stamped.hpp"
 
-namespace world_exe::tongji::predictor {
+namespace world_exe::tongji::time_stamp {
 class TimeStamp : public interfaces::ITimeStamped {
 public:
     TimeStamp(const std::time_t& time_stamp)

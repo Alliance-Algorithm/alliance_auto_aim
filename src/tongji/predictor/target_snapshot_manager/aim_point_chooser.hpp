@@ -3,7 +3,7 @@
 #include "enum/car_id.hpp"
 #include "util/math.hpp"
 
-namespace world_exe::tongji::fire_control {
+namespace world_exe::tongji::predictor {
 
 using CarIDFlag = enumeration::CarIDFlag;
 

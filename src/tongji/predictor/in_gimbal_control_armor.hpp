@@ -28,7 +28,7 @@ public:
     const interfaces::ITimeStamped& GetTimeStamped() const override { return time_stamp_; }
 
 private:
-    TimeStamp time_stamp_;
+    time_stamp::TimeStamp time_stamp_;
     std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
         armors_map_;
     static const std::vector<data::ArmorGimbalControlSpacing> empty;

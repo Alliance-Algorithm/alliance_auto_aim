@@ -18,7 +18,7 @@ using StateMachine          = state_machine::StateMachine;
 using IdentifiedArmor       = identifier::IdentifiedArmor;
 using CarIDFlag             = enumeration::CarIDFlag;
 using LiveTargetManager     = predictor::LiveTargetManager;
-using TimeStamp             = predictor::TimeStamp;
+using TimeStamp             = time_stamp::TimeStamp;
 
 class FireController::Impl {
 public:
@@ -93,7 +93,7 @@ private:
     std::shared_ptr<interfaces::IArmorInImage> identified_armors_;
 
     std::unique_ptr<FireDecision> fire_decision_;
-    predictor::TimeStamp time_stamp_ { std::time(nullptr) };
+    time_stamp::TimeStamp time_stamp_ { std::time(nullptr) };
 
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
