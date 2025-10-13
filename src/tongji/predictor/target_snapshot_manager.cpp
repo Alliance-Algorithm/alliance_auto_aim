@@ -2,64 +2,99 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/enum_tools.hpp"
 #include "in_gimbal_control_armor.hpp"
+#include "tongji/armor_solver/aim_solver.hpp"
+#include "tongji/predictor/live_target.hpp"
 #include "tongji/predictor/target_snapshot.hpp"
 
 namespace world_exe::tongji::predictor {
+
 class TargetSnapshotManager::Impl {
 public:
     Impl(const enumeration::ArmorIdFlag& id,
-        const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>& snapshots)
-        : id_(id) {
-        for (const auto& [flag, target] : snapshots) {
-            snapshots_.emplace(flag, TargetSnapshot(*target));
-        }
-    }
+        const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
+            live_target_map,
+        const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
+        const double& pitch_offset)
+        : aim_solver_(std::make_unique<armor_solver::AimingSolver>(yaw_offset, pitch_offset))
 
-    const enumeration::ArmorIdFlag& GetId() const { return id_; }
+        , now_(now)
+        , ids_(id)
+        , bullet_speed_(bullet_speed)
+        , snapshots_(BuildSnapshots(live_target_map))
+        , gimbal_command_({ std::numeric_limits<double>::quiet_NaN(),
+              std::numeric_limits<double>::quiet_NaN() }) { }
+
+    const enumeration::ArmorIdFlag& GetId() const { return ids_; }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
         const std::time_t& time_stamp) const {
+
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
 
-        for (const auto& [flag, snapshot] : snapshots_) {
-            result[flag] = snapshot.GetArmorGimbalControlSpacings();
+        for (const auto& [id, snapshot] : snapshots_) {
+            auto aim_solution =
+                aim_solver_->SolveAimSolution(std::make_unique<TargetSnapshot>(snapshot),
+                    bullet_speed_, snapshot.GetTimeStamp().GetTimeStamp());
+
+            if (!aim_solution.valid) continue;
+
+            auto target_pos = aim_solution.aim_point.head<3>();
+            auto armor_yaw  = aim_solution.aim_point[3];
+            result.emplace(id,
+                std::vector<data::ArmorGimbalControlSpacing> {
+                    data::ArmorGimbalControlSpacing { id, target_pos,
+                        util::math::euler_to_quaternion(armor_yaw, 15. / 180. * CV_PI, 0) } });
+
+            gimbal_command_.yaw   = aim_solution.yaw;
+            gimbal_command_.pitch = aim_solution.pitch;
         }
         return std::make_shared<InGimbalControlArmor>(result, time_stamp);
     }
 
-    const std::unique_ptr<TargetSnapshot> GetSingleSnapshot(
-        const enumeration::ArmorIdFlag& id) const {
-        auto it = snapshots_.find(id);
-        if (it != snapshots_.end()) {
-            return std::make_unique<TargetSnapshot>(it->second);
-        }
-        return nullptr;
-    }
+    auto GetGimbalCommand() const -> GimbalCommand const { return gimbal_command_; }
 
 private:
-    std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> snapshots_;
-    enumeration::ArmorIdFlag id_;
+    static std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> BuildSnapshots(
+        const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>& input) {
+        std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> result;
+        for (const auto& [id, target] : input) {
+            if (target) {
+                result.emplace(id, TargetSnapshot(*target));
+            }
+        }
+        return result;
+    }
+
+    std::unique_ptr<armor_solver::AimingSolver> aim_solver_;
+    const std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> snapshots_;
+    const std::time_t& now_;
+    const enumeration::ArmorIdFlag ids_;
+    const double bullet_speed_;
+    mutable GimbalCommand gimbal_command_;
 };
 
 TargetSnapshotManager::TargetSnapshotManager(const enumeration::ArmorIdFlag& id,
-    const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> snapshots)
-    : pimpl_(std::make_unique<Impl>(id, snapshots)) { }
+    const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
+        live_target_map,
+    const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
+    const double& pitch_offset)
+    : pimpl_(std::make_unique<Impl>(
+          id, live_target_map, now, bullet_speed, yaw_offset, pitch_offset)) { }
 TargetSnapshotManager::~TargetSnapshotManager() = default;
 
 const enumeration ::ArmorIdFlag& TargetSnapshotManager::GetId() const { return pimpl_->GetId(); }
-
-const std::unique_ptr<TargetSnapshot> TargetSnapshotManager::GetSingleSnapshot(
-    const enumeration::ArmorIdFlag& id) const {
-    return pimpl_->GetSingleSnapshot(id);
-}
-
 std ::shared_ptr<interfaces::IArmorInGimbalControl> TargetSnapshotManager::Predictor(
     const std ::time_t& time_stamp) const {
     return pimpl_->Predictor(time_stamp);
+}
+
+auto TargetSnapshotManager::GetGimbalCommand() const -> GimbalCommand const {
+    return pimpl_->GetGimbalCommand();
 }
 }

@@ -1,21 +1,11 @@
 #pragma once
 
-#include <cstdint>
-#include <list>
-#include <memory>
-
 #include "enum/armor_id.hpp"
-#include "enum/car_id.hpp"
 #include "interfaces/armor_in_image.hpp"
 #include "interfaces/time_stamped.hpp"
 #include "util/index.hpp"
 
 namespace world_exe::tongji::identifier {
-
-struct SPArmor {
-    const data::ArmorImageSpacing& armor;
-    const cv::Point2f center;
-};
 
 class IdentifiedArmor final : public interfaces::IArmorInImage, public interfaces::ITimeStamped {
 public:
@@ -38,20 +28,8 @@ public:
         throw std::runtime_error("Not implemented");
     }
 
-    auto GetDetectedIDs() {
-        enumeration::CarIDFlag result;
-        for (int i = 0; i < 8; i++) {
-            if (!armors_[i].empty()) {
-                result = static_cast<enumeration::CarIDFlag>(
-                    static_cast<uint32_t>(result) | static_cast<uint32_t>(armors_[i][0].id));
-            }
-        }
-        return result;
-    }
-
 private:
     std::time_t time_stamp_ { std::time(nullptr) };
     std::array<std::vector<data::ArmorImageSpacing>, 8> armors_;
-    std::shared_ptr<std::list<SPArmor>> armor_list = nullptr;
 };
 }

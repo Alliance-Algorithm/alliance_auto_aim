@@ -16,7 +16,7 @@ public:
     using PMat = Eigen::Matrix<double, xn, xn>;
     using PDig = Eigen::Matrix<double, xn, 1>;
     using RMat = Eigen::Matrix<double, zn, zn>;
-    using RDig = Eigen::Matrix<double, 4, 1>;
+    using RDig = Eigen::Matrix<double, zn, 1>;
     using QMat = Eigen::Matrix<double, xn, xn>;
     using HMat = Eigen::Matrix<double, zn, xn>;
 

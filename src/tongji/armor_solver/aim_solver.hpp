@@ -4,13 +4,12 @@
 #include <ctime>
 #include <memory>
 #include <optional>
-#include <utility>
 
-#include "tongji/fire_controller/aim_point_chooser.hpp"
-#include "tongji/fire_controller/trajectory.hpp"
+#include "tongji/armor_solver/aim_point_chooser.hpp"
+#include "tongji/armor_solver/trajectory.hpp"
 #include "tongji/predictor/target_snapshot.hpp"
 
-namespace world_exe::tongji::fire_control {
+namespace world_exe::tongji::armor_solver {
 
 using TargetSnapshot = predictor::TargetSnapshot;
 
@@ -24,20 +23,16 @@ struct AimSolution {
 
 class AimingSolver {
 public:
-    AimingSolver(const double& bullet_speed, const double& yaw_offset, const double& pitch_offset,
-        const double& gravity = 9.7833)
-        : aim_point_chooser_(std::make_unique<AimPointChooser>())
-        , bullet_speed_(bullet_speed)
+    AimingSolver(
+        const double& yaw_offset, const double& pitch_offset, const double& gravity = 9.7833)
+        : aim_point_chooser_(std::make_unique<fire_control::AimPointChooser>())
         , yaw_offset_(yaw_offset / 57.3)     // degree to rad
         , pitch_offset_(pitch_offset / 57.3) // degree to rad
         , g_(gravity) { }
 
-    void UpdateSnapshot(std::unique_ptr<TargetSnapshot> snapshot) {
-        snapshot_ = std::move(snapshot);
-    }
-
-    AimSolution SolveAimSolution(const double& time_delay) {
-        if (!snapshot_) return { false, 0, 0, { }, 0 };
+    AimSolution SolveAimSolution(const std::shared_ptr<TargetSnapshot>& snapshot,
+        const double& bullet_speed, const double& time_delay) {
+        if (!snapshot) return { false, 0, 0, { }, 0 };
 
         // 迭代求解飞行时间 (最多10次，收敛条件：相邻两次fly_time差 <0.001)
         double prev_fly_time = 0;
@@ -48,10 +43,10 @@ public:
         // 预测目标在未来 dt时间后的位置
         for (int i = 0; i < 10; ++i) {
             double dt      = time_delay + prev_fly_time;
-            const auto aim = SelectPredictedAim(dt);
+            const auto aim = SelectPredictedAim(snapshot, dt);
             if (!aim.has_value()) return { false, 0, 0, { }, 0 }; // failed: no valid aim point
 
-            const auto traj = SolveTrajectory(aim->head(3));
+            const auto traj = SolveTrajectory(aim->head(3), bullet_speed);
             if (!traj.has_value()) return { false, 0, 0, { }, 0 }; // failed: trajectory unsolvable
 
             if (i > 0 && std::abs(traj->fly_time - prev_fly_time) < 0.001) {
@@ -71,23 +66,23 @@ public:
     }
 
 private:
-    std::optional<Eigen::Vector4d> SelectPredictedAim(double dt) const {
+    std::optional<Eigen::Vector4d> SelectPredictedAim(
+        const std::shared_ptr<TargetSnapshot>& snapshot, const double& dt) const {
         const auto& [selectable, aim_point] = aim_point_chooser_->ChooseAimArmor(
-            snapshot_->Predict(dt), snapshot_->GetPredictedXYZAList(dt), snapshot_->GetID());
+            snapshot->Predict(dt), snapshot->GetPredictedXYZAList(dt), snapshot->GetID());
         return selectable ? std::optional { aim_point } : std::nullopt;
     }
 
-    std::optional<TrajectoryResult> SolveTrajectory(const Eigen::Vector3d& xyz) const {
+    std::optional<TrajectoryResult> SolveTrajectory(
+        const Eigen::Vector3d& xyz, const double& bullet_speed) const {
         double d    = std::hypot(xyz.x(), xyz.y());
-        auto result = TrajectorySolver::SolveTrajectory(bullet_speed_, d, xyz.z(), g_);
+        auto result = TrajectorySolver::SolveTrajectory(bullet_speed, d, xyz.z(), g_);
         return result.solvable ? std::optional { result } : std::nullopt;
     }
 
-    double bullet_speed_; // m/s
     double yaw_offset_, pitch_offset_;
     const double g_;
 
-    std::unique_ptr<AimPointChooser> aim_point_chooser_;
-    std::unique_ptr<TargetSnapshot> snapshot_;
+    std::unique_ptr<fire_control::AimPointChooser> aim_point_chooser_;
 };
 }
