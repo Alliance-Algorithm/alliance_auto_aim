@@ -14,6 +14,7 @@ public:
         : auto_fire_(auto_fire)
         , last_gimbal_command_({ std::numeric_limits<double>::quiet_NaN(),
               std::numeric_limits<double>::quiet_NaN() })
+        , gimbal_yaw_(std::numeric_limits<double>::quiet_NaN())
         , first_tolerance_(first_tolerance)
         , second_tolerance_(second_tolerance)
         , judge_distance_(judge_distance) { }

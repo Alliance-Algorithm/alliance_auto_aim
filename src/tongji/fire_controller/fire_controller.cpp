@@ -10,6 +10,7 @@
 #include "data/fire_control.hpp"
 #include "fire_decision.hpp"
 #include "interfaces/target_predictor.hpp"
+#include "tongji/time_stamp/time_stamp.hpp"
 
 namespace world_exe::tongji::fire_control {
 
@@ -28,6 +29,9 @@ public:
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
         : control_delay_(control_delay_in_second)
         , bullet_speed_(bullet_speed)
+        , allowed_target_id_(CarIDFlag::None)
+        , firable_(false)
+        , time_stamp_(std::time(nullptr))
         , fire_decision_(std::make_unique<FireDecision>(auto_fire))
         , state_machine_(state_machine)
         , live_target_manager_(std::move(live_target_manager)) { }
@@ -66,8 +70,8 @@ public:
     }
 
     const CarIDFlag GetAttackCarId() const {
-        if (firable_) { }
-        return allowed_target_id_;
+        if (firable_) return allowed_target_id_;
+        return CarIDFlag::None;
     }
 
     void Update(std::shared_ptr<interfaces::IArmorInImage> armors, const double& gimbal_yaw) {
@@ -86,15 +90,13 @@ private:
     double gimbal_yaw_;
     double control_delay_;
     double bullet_speed_;
-
-    mutable CarIDFlag allowed_target_id_;
-    mutable double firable_ { false };
-
     std::shared_ptr<interfaces::IArmorInImage> identified_armors_;
 
-    std::unique_ptr<FireDecision> fire_decision_;
-    time_stamp::TimeStamp time_stamp_ { std::time(nullptr) };
+    mutable CarIDFlag allowed_target_id_;
+    mutable double firable_;
 
+    time_stamp::TimeStamp time_stamp_;
+    std::unique_ptr<FireDecision> fire_decision_;
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
 };

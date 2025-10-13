@@ -27,8 +27,7 @@ public:
         , tracking_id_(enumeration::CarIDFlag::None)
         , time_delay_(time_delay)
         , yaw_offset_(yaw_offset)
-        , pitch_offset_(pitch_offset)
-        , timeout_sec_(timeout_sec) { }
+        , pitch_offset_(pitch_offset) { }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& flag, const std::time_t& time_stamp) {
@@ -124,8 +123,6 @@ private:
     const double time_delay_;
     const double yaw_offset_;
     const double pitch_offset_;
-
-    const double timeout_sec_;
 };
 
 LiveTargetManager::LiveTargetManager(const double& time_delay, const double& yaw_offset,

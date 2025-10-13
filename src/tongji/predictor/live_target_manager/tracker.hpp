@@ -140,7 +140,7 @@ private:
         // TODO:If the underlying timestamp is std::time_t, then this if branch will never be
         // entered
         if (state_ != TrackState::Lost
-            && static_cast<double>(now - last_track_timestamp_.GetTimeStamp()) < 0.1)
+            && static_cast<double>(now - last_track_timestamp_.GetTimeStamp()) < timeout_sec_)
             SetState(TrackState::Lost);
     }
 
@@ -165,6 +165,7 @@ private:
     const int outpost_max_temp_lost_count_ = 75;
     const int normal_max_temp_lost_count_  = max_temp_lost_count_;
     const int max_switch_count_            = 200;
+    const double timeout_sec_              = 0.1;
 
     time_stamp::TimeStamp last_track_timestamp_;
 };

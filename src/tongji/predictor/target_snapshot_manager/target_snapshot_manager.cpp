@@ -20,11 +20,10 @@ public:
         const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
         const double& pitch_offset)
         : aim_solver_(std::make_unique<predictor::AimingSolver>(yaw_offset, pitch_offset))
-
+        , snapshots_(BuildSnapshots(live_target_map))
         , now_(now)
         , ids_(id)
         , bullet_speed_(bullet_speed)
-        , snapshots_(BuildSnapshots(live_target_map))
         , gimbal_command_({ std::numeric_limits<double>::quiet_NaN(),
               std::numeric_limits<double>::quiet_NaN() }) { }
 
