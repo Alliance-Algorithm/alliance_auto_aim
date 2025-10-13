@@ -30,4 +30,4 @@ jobs:
 
       - name: Run in ubuntu 22.04
         run: |
-          docker run --rm alliance_auto_aim_ci:ubuntu2204-test
+          docker run --rm alliance_auto_aim_ci:ubuntu2204-test bash -c  "cmake -B build -D ENABLE_TESTS=ON && cd build && make -j && ctest"

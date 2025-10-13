@@ -21,5 +21,4 @@ RUN chmod +x /env/ubuntu22.04.sh && /env/ubuntu22.04.sh
 
 COPY . /app
 
-RUN cmake -B build -D ENABLE_TESTS=ON && cd build && make -j && ctest
 

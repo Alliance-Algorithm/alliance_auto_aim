@@ -10,7 +10,7 @@ class TracingFireControl final : public interfaces::IFireControl {
 public:
     const data::FireControl CalculateTarget(const std::time_t& time_duration) const override;
     const enumeration::CarIDFlag GetAttackCarId() const override;
-    void SetArmorsInGimbalControl(const std::shared_ptr<interfaces::IArmorInGimbalControl>& armors);
+    void set_armor(const std::shared_ptr<interfaces::IArmorInGimbalControl>& armors);
     void SetPredictor(const std::shared_ptr<interfaces::IPredictor>& predictor);
     void SetTargetCarID(const enumeration::CarIDFlag& tracing_id);
     void SetTimeStamp(const time_t& time);
