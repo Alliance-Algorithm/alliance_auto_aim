@@ -2,11 +2,11 @@
 
 #include <memory>
 
+#include "../time_stamp/time_stamp.hpp"
 #include "interfaces/armor_in_image.hpp"
 #include "interfaces/car_state.hpp"
 #include "interfaces/fire_controller.hpp"
 #include "interfaces/target_predictor.hpp"
-#include "tongji/predictor/time_stamp.hpp"
 
 namespace world_exe::tongji::fire_control {
 

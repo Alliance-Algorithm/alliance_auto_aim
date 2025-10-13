@@ -4,12 +4,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../in_gimbal_control_armor.hpp"
+#include "../live_target_manager/live_target.hpp"
+#include "../target_snapshot_manager/target_snapshot.hpp"
+#include "aim_solver.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/enum_tools.hpp"
-#include "in_gimbal_control_armor.hpp"
-#include "tongji/armor_solver/aim_solver.hpp"
-#include "tongji/predictor/live_target.hpp"
-#include "tongji/predictor/target_snapshot.hpp"
 
 namespace world_exe::tongji::predictor {
 

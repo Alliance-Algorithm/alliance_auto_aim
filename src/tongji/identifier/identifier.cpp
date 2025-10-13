@@ -19,7 +19,7 @@
 #include "enum/armor_id.hpp"
 #include "identified_armor.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "tongji/identifier/classifier.hpp"
+#include "../identifier/classifier.hpp"
 #include "util/logger.hpp"
 #include "util/stringifier.hpp"
 

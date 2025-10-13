@@ -5,13 +5,13 @@
 #include <memory>
 #include <unordered_map>
 
+#include "../in_gimbal_control_armor.hpp"
+#include "../target_snapshot_manager/target_snapshot_manager.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
 #include "interfaces/predictor_update_package.hpp"
-#include "tongji/predictor/in_gimbal_control_armor.hpp"
-#include "tongji/predictor/live_target.hpp"
-#include "tongji/predictor/target_snapshot_manager.hpp"
-#include "tongji/predictor/tracker.hpp"
+#include "live_target.hpp"
+#include "tracker.hpp"
 #include "util/index.hpp"
 #include "util/math.hpp"
 

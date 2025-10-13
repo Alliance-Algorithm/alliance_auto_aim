@@ -2,10 +2,10 @@
 
 #include <ctime>
 
-#include "extended_kalman_filter.hpp"
-#include "tongji/predictor/live_target.hpp"
-#include "tongji/predictor/predict_model.hpp"
-#include "tongji/predictor/time_stamp.hpp"
+#include "../../time_stamp/time_stamp.hpp"
+#include "../kalman_filter/extended_kalman_filter.hpp"
+#include "../kalman_filter/predict_model.hpp"
+#include "../live_target_manager/live_target.hpp"
 
 namespace world_exe::tongji::predictor {
 

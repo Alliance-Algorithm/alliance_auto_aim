@@ -5,11 +5,11 @@
 #include <ctime>
 #include <numeric>
 
+#include "../../time_stamp/time_stamp.hpp"
+#include "../kalman_filter/extended_kalman_filter.hpp"
+#include "../kalman_filter/predict_model.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/car_id.hpp"
-#include "extended_kalman_filter.hpp"
-#include "predict_model.hpp"
-#include "tongji/predictor/time_stamp.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -36,7 +36,7 @@ public:
             0, 0;
 
         ExtendedKalmanFilter<11, 4>::PMat P0 = model_.GetP0Dig().asDiagonal();
-        ekf_               = ExtendedKalmanFilter<11, 4>(
+        ekf_                                 = ExtendedKalmanFilter<11, 4>(
             x0, P0, model_.x_add); // 初始化滤波器（预测量、预测量协方差）
     }
 

@@ -1,10 +1,11 @@
 #pragma once
 
-#include <Eigen/Dense>
 #include <deque>
 #include <functional>
 #include <map>
 #include <numeric>
+
+#include <Eigen/Dense>
 
 namespace world_exe::tongji::predictor {
 template <int xn, int zn> //

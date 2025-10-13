@@ -7,7 +7,7 @@
 #include <opencv2/core/cvdef.h>
 
 #include "enum/car_id.hpp"
-#include "tongji/predictor/extended_kalman_filter.hpp"
+#include "extended_kalman_filter.hpp"
 #include "util/math.hpp"
 
 namespace world_exe::tongji::predictor {

@@ -5,13 +5,13 @@
 #include <utility>
 #include <vector>
 
+#include "../../identifier/armor_filter.hpp"
+#include "../../identifier/identified_armor.hpp"
+#include "../../time_stamp/time_stamp.hpp"
+#include "../target_snapshot_manager/target_snapshot.hpp"
+#include "../target_snapshot_manager/target_snapshot_manager.hpp"
+#include "decider.hpp"
 #include "enum/armor_id.hpp"
-#include "tongji/identifier/armor_filter.hpp"
-#include "tongji/identifier/identified_armor.hpp"
-#include "tongji/predictor/decider.hpp"
-#include "tongji/predictor/target_snapshot.hpp"
-#include "tongji/predictor/target_snapshot_manager.hpp"
-#include "tongji/predictor/time_stamp.hpp"
 
 namespace world_exe::tongji::predictor {
 

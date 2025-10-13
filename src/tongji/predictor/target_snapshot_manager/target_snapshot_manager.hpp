@@ -3,9 +3,9 @@
 #include <memory>
 #include <unordered_map>
 
+#include "../live_target_manager/live_target.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/predictor.hpp"
-#include "tongji/predictor/live_target.hpp"
 
 namespace world_exe::tongji::predictor {
 

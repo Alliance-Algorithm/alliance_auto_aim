@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "tongji/predictor/target_snapshot_manager.hpp"
+#include "tongji/predictor/target_snapshot_manager/target_snapshot_manager.hpp"
 
 namespace world_exe::tongji::fire_control {
 

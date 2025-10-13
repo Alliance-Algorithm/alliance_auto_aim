@@ -5,9 +5,9 @@
 #include <memory>
 #include <optional>
 
-#include "tongji/armor_solver/aim_point_chooser.hpp"
-#include "tongji/armor_solver/trajectory.hpp"
-#include "tongji/predictor/target_snapshot.hpp"
+#include "aim_point_chooser.hpp"
+#include "target_snapshot.hpp"
+#include "trajectory.hpp"
 
 namespace world_exe::tongji::armor_solver {
 
