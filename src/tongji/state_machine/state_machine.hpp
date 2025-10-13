@@ -1,23 +1,24 @@
 #pragma once
 
 #include <ctime>
-#include <memory>
 
+#include "car_state_manager.hpp"
 #include "enum/car_id.hpp"
 #include "interfaces/car_state.hpp"
-#include "interfaces/target_predictor.hpp"
 
 namespace world_exe::tongji::state_machine {
 class StateMachine final : public interfaces::ICarState {
 public:
-    StateMachine();
-    ~StateMachine();
+    StateMachine(int switch_threshold = 5);
 
-    const enumeration ::CarIDFlag& GetAllowdToFires() const override;
-    StateMachine(std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager);
+    const enumeration::CarIDFlag& GetAllowdToFires() const override;
+
+    const interfaces::ICarState& Update(
+        const enumeration::CarIDFlag& car_detected, std::time_t now);
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+    enumeration::CarIDFlag tracing_state_ = enumeration::CarIDFlag::None;
+    std::array<car_state::CarStateManager, 8> car_states_;
+    int switch_threshold_;
 };
 }

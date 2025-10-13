@@ -6,7 +6,6 @@
 #include "util/index.hpp"
 
 namespace world_exe::tongji::identifier {
-
 class IdentifiedArmor final : public interfaces::IArmorInImage, public interfaces::ITimeStamped {
 public:
     explicit IdentifiedArmor(const std::vector<data::ArmorImageSpacing>& armors) {
@@ -24,12 +23,8 @@ public:
         return armors_[util::enumeration::GetIndex(armor_id)];
     }
 
-    static IdentifiedArmor DecorateIArmorInImage(const interfaces::IArmorInImage& armor) {
-        throw std::runtime_error("Not implemented");
-    }
-
 private:
-    std::time_t time_stamp_ { std::time(nullptr) };
+    std::time_t time_stamp_ { 0 };
     std::array<std::vector<data::ArmorImageSpacing>, 8> armors_;
 };
 }

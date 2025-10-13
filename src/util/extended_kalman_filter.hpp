@@ -1,36 +1,23 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <deque>
 #include <functional>
 #include <map>
 #include <numeric>
 
-#include <Eigen/Dense>
-
-namespace world_exe::tongji::predictor {
-template <int xn, int zn> //
+namespace world_exe::util {
 class ExtendedKalmanFilter {
 public:
-    using XVec = Eigen::Matrix<double, xn, 1>;
-    using ZVec = Eigen::Matrix<double, zn, 1>;
-    using AMat = Eigen::Matrix<double, xn, xn>;
-    using PMat = Eigen::Matrix<double, xn, xn>;
-    using PDig = Eigen::Matrix<double, xn, 1>;
-    using RMat = Eigen::Matrix<double, zn, zn>;
-    using RDig = Eigen::Matrix<double, zn, 1>;
-    using QMat = Eigen::Matrix<double, xn, xn>;
-    using HMat = Eigen::Matrix<double, zn, xn>;
-
-    XVec x;
-    PMat P;
+    Eigen::VectorXd x;
+    Eigen::MatrixXd P;
 
     ExtendedKalmanFilter() = default;
 
     ExtendedKalmanFilter(
-        const XVec& x0, const PMat& P0,
-        std::function<XVec(const XVec&, const XVec&)> x_add = [](const XVec& a, const XVec& b) {
-            return a + b;
-        }) {
+        const Eigen::VectorXd& x0, const Eigen::MatrixXd& P0,
+        std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> x_add =
+            [](const Eigen::VectorXd& a, const Eigen::VectorXd& b) { return a + b; }) {
         data["residual_yaw"]        = 0.0;
         data["residual_pitch"]      = 0.0;
         data["residual_distance"]   = 0.0;
@@ -42,12 +29,13 @@ public:
         data["recent_nis_failures"] = 0.0;
     }
 
-    XVec Update(
-        const double& dt, const AMat& A, const QMat& Q,
-        std::function<XVec(const XVec&, const double&)> f, const ZVec& z, const HMat& H,
-        const RMat& R, std::function<ZVec(const XVec&)> h,
-        std::function<ZVec(const ZVec&, const ZVec&)> z_subtract =
-            [](const ZVec& a, const ZVec& b) { return a - b; }) {
+    Eigen::VectorXd Update(
+        const double& dt, const Eigen::MatrixXd& A, const Eigen::MatrixXd& Q,
+        std::function<Eigen::VectorXd(const Eigen::VectorXd&, const double&)> f,
+        const Eigen::VectorXd& z, const Eigen::MatrixXd& H, const Eigen::MatrixXd& R,
+        std::function<Eigen::VectorXd(const Eigen::VectorXd&)> h,
+        std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> z_subtract =
+            [](const Eigen::VectorXd& a, const Eigen::VectorXd& b) { return a - b; }) {
 
         auto x_n = f(x, dt);
 
@@ -102,8 +90,8 @@ public:
     double last_nis;
 
 private:
-    Eigen::Matrix<double, xn, xn> I;
-    std::function<XVec(const XVec&, const XVec&)> x_add;
+    Eigen::MatrixXd I;
+    std::function<Eigen::VectorXd(const Eigen::VectorXd&, const Eigen::VectorXd&)> x_add;
 
     int nees_count_  = 0;
     int nis_count_   = 0;
