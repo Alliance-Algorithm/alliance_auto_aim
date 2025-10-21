@@ -11,9 +11,12 @@ namespace world_exe::tongji::predictor {
 
 class TargetSnapshot {
 public:
+    using PredictorModel = EKFModel<11, 4>;
+    using EKF            = ExtendedKalmanFilter<PredictorModel>;
+
     TargetSnapshot(const LiveTarget& target)
         : model_(target.GetModel())
-        , ekf_(target.GetEkfX(), target.GetP0Dig().asDiagonal(), model_.x_add)
+        , ekf_(target.GetEkfX(), target.GetP0Dig().asDiagonal(), model_)
         , time_stamp_(target.LastSeen()) { }
 
     // std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() const {
@@ -46,8 +49,8 @@ public:
     }
 
 private:
-    PredictModel model_;
-    ExtendedKalmanFilter<11, 4> ekf_;
+    PredictorModel model_;
+    ExtendedKalmanFilter<PredictorModel> ekf_;
     time_stamp::TimeStamp time_stamp_;
 };
 

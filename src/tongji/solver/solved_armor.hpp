@@ -27,7 +27,7 @@ public:
     }
 
 private:
-    std::time_t time_stamp_ { 0 };
+    std::time_t time_stamp_ { std::time(nullptr) };
     std::array<std::vector<data::ArmorCameraSpacing>, 8> armors_;
 };
 }
