@@ -8,10 +8,10 @@
 void world_exe::core::SystemFactory::Build(const enumeration::SystemVersion& version) {
     switch (version) {
     case enumeration::SystemVersion::V1:
-        world_exe::v1::SystemV1::Build(); // 构建正常运行的V1版本
+        world_exe::v1::SystemV1::build(false); // 构建正常运行的V1版本
         break;
-    case enumeration::SystemVersion::V1_TraceFlow:
-        world_exe::v1::SystemV1::Build_1(); // 构建跟踪流的V1版本
+    case world_exe::enumeration::SystemVersion::V1Debug:
+        world_exe::v1::SystemV1::build(true); // 构建调试运行的V1版本
         break;
     default:
 #if __cplusplus >= 202002L
@@ -19,8 +19,8 @@ void world_exe::core::SystemFactory::Build(const enumeration::SystemVersion& ver
                                              "core/system_factory.cpp : Build(SystemVersion) ",
             (int)version));
 #else
-        throw std::runtime_error(std::format("Target version is not impleme \n Factory "
-                                             "core/system_factory.cpp : Build(SystemVersion) "))
+        throw std::runtime_error("Target version is not impleme \n Factory "
+                                             "core/system_factory.cpp : Build(SystemVersion) ");
 
 #endif
         break;

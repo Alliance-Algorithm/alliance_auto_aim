@@ -1,81 +1,82 @@
 cmake_minimum_required(VERSION 3.22)
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE "Release")
-
 project(alliance_auto_aim VERSION 0.0.1 LANGUAGES CXX)
 
+# 编译选项
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# 构建类型
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# 源码与头文件
 include_directories(./include ./src)
-
-### Target lib ===
-add_library(${PROJECT_NAME} SHARED)
-file(GLOB_RECURSE sources_v1 CONFIGURE_DEPENDS 
-# src/v1/*.cpp 
-# src/v1/*.cc
-src/tongji/*.cpp 
-src/tongji/*.cc
-src/tongji/*.cpp 
-src/playground/*.cpp
-src/playground/*.cc
-src/core/*.cpp
-src/util/*.cpp)
-target_sources(
-    ${PROJECT_NAME}  PUBLIC
-    ${sources_v1}
-    )
-### Target lib End ===
-
-### OpenCV ===
-# set(OpenCV_DIR /path/to/opencv/build) # 如果需要这个可以方便你设置
-find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}  ${OpenCV_LIBS})
-### OpenCV End ===
-
-### Eigen ===
-find_package(Eigen3 REQUIRED)
-INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
-### Eigen End ===
-
-### TBB ===
-find_package(TBB REQUIRED)
-include_directories(${TBB_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${TBB_LIBRARIES})
-### TBB End ===
-
-### OpenVINO ===
-find_package(OpenVINO REQUIRED)
-target_link_libraries(${PROJECT_NAME} openvino::runtime)
-### OpenVINO End ===
-
-### ceres ===
-find_package(Ceres REQUIRED)
-include_directories(${CERES_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} ${CERES_LIBRARIES})
-### ceres End ===
-
-### libspdlog-dev ===
-find_package(spdlog REQUIRED)
-target_link_libraries(${PROJECT_NAME}  ${fmt_LIBRARIES})
-### libspdlog-dev End ===
-
-### libfmt-dev ===
-find_package(fmt REQUIRED)
-target_link_libraries(${PROJECT_NAME}  ${fmt_LIBRARIES})
-### libfmt-dev End ===
-
-# 安装库文件
-target_include_directories(${PROJECT_NAME} PUBLIC
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.cc)
+add_library(alliance_auto_aim SHARED ${SOURCES})
+target_include_directories(alliance_auto_aim PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+  $<INSTALL_INTERFACE:include>
 )
 
-install(TARGETS ${PROJECT_NAME}
-EXPORT ${PROJECT_NAME}
-  ARCHIVE DESTINATION lib/${PROJECT_NAME}
-  LIBRARY DESTINATION lib/${PROJECT_NAME}
-  RUNTIME DESTINATION bin
+# 第三方依赖
+find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(TBB REQUIRED)
+find_package(OpenVINO REQUIRED)
+find_package(Ceres REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(fmt REQUIRED)
+
+# 链接依赖（使用目标名，自动传递）
+target_link_libraries(alliance_auto_aim PUBLIC
+  fmt::fmt
+  spdlog::spdlog
+  ${OpenCV_LIBS}
+  Eigen3::Eigen
+  TBB::tbb
+  openvino::runtime
+  Ceres::ceres
 )
 
+# 安装规则
+include(GNUInstallDirs)
+install(TARGETS alliance_auto_aim
+  EXPORT alliance_auto_aimTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+# 导出配置
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/alliance_auto_aimConfig.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alliance_auto_aim
+)
+
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/alliance_auto_aimConfig.cmake"
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alliance_auto_aim
+)
+
+install(EXPORT alliance_auto_aimTargets
+  FILE alliance_auto_aimTargets.cmake
+  NAMESPACE alliance_auto_aim::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/alliance_auto_aim
+)
+
+
+if(ENABLE_TESTS)
+    message(STATUS "Tests are enabled")
+    enable_testing()  # 启用 CTest
+    add_subdirectory(tests)
+else()
+    message(STATUS "Tests are disabled. Use -DENABLE_TESTS=ON to enable.")
+endif()

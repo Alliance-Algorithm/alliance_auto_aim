@@ -100,7 +100,7 @@ world_exe::v1::fire_control::TracingFireControl::TracingFireControl(
     double t, double velocity_begin, double gravity)
     : pimpl_(std::make_unique<Impl>(t, velocity_begin, gravity)) { }
 
-void world_exe::v1::fire_control::TracingFireControl::SetArmorsInGimbalControl(
+void world_exe::v1::fire_control::TracingFireControl::set_armor(
     const std::shared_ptr<interfaces::IArmorInGimbalControl>& armors) {
     pimpl_->SetArmorsInGimbalControl(armors);
 }

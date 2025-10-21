@@ -11,7 +11,7 @@ sudo gpg --output /etc/apt/trusted.gpg.d/intel.gpg --dearmor GPG-PUB-KEY-INTEL-S
 rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
 
 echo "deb https://apt.repos.intel.com/openvino ubuntu22 main" | sudo tee /etc/apt/sources.list.d/intel-openvino.list
-
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BAC6F0C353D04109
 sudo apt-get update
 sudo apt-get install -y libtbb-dev  libeigen3-dev libopencv-dev openvino gcc-13 g++-13 libceres-dev libdwarf-dev libbackward-cpp-dev  binutils-dev libdw-dev  libunwind-dev libfmt-dev libspdlog-dev
 

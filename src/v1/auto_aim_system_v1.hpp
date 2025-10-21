@@ -1,18 +1,19 @@
 #pragma once
 
+#include <memory>
 namespace world_exe::v1 {
-class SystemV1 {
+class SystemV1 final{
 public:
-    static void Build();
-    static void Build_1();
+    static std::unique_ptr<SystemV1> build(const bool& debug);
 
-    class SystemV1Impl;
-
+    SystemV1(const bool& debug);
+    ~SystemV1();
 private:
-    static SystemV1Impl* instance_;
+    class Impl;
 
-    SystemV1()                = default;
+    SystemV1()                = delete;
     SystemV1(const SystemV1&) = delete;
-    ~SystemV1()               = delete;
+    std::unique_ptr<Impl> instance_;
+
 };
 }

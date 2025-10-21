@@ -6,15 +6,8 @@
 #include "fire_controller/fire_controller.hpp"
 #include "identifier/identifier.hpp"
 #include "interfaces/armor_in_camera.hpp"
-#include "interfaces/armor_in_gimbal_control.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "interfaces/car_state.hpp"
-#include "interfaces/fire_controller.hpp"
-#include "interfaces/identifier.hpp"
-#include "interfaces/pnp_solver.hpp"
 #include "interfaces/predictor_update_package.hpp"
-#include "interfaces/sync_block.hpp"
-#include "interfaces/target_predictor.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
@@ -32,190 +25,118 @@
 
 #include <cassert>
 #include <chrono>
-class world_exe::v1::SystemV1::SystemV1Impl { };
 /// 这玩意全生命周期活跃，直接分配然后丢一边，反正有回调
-template <int i> class SystemV1ImplTemp : public world_exe::v1::SystemV1::SystemV1Impl {
+
+using namespace world_exe;
+using namespace v1;
+using namespace parameters;
+using namespace std::chrono;
+
+class world_exe::v1::SystemV1::Impl{
 public:
-    SystemV1ImplTemp() {
-        using namespace world_exe;
-        using namespace v1;
-        using namespace parameters;
+    Impl(const bool& debug) : debug(debug) {
+        time_point_     = std::chrono::steady_clock::now();
+        predictor       = std::make_shared<predictor::PredictorManager>(); 
+        sync            = std::make_shared<world_exe::v1::Syncer>();
+        state_machine   = std::make_shared<world_exe::v1::state_machine::StateMachine>();
+        identifier      = std::make_shared<identifier::Identifier>(
+                            ParamsForSystemV1::szu_model_path(),
+                            ParamsForSystemV1::device(),
+                            HikCameraProfile::get_width(),
+                            HikCameraProfile::get_height());
+        fire_control    = std::make_shared<fire_control::TracingFireControl>(
+                            ParamsForSystemV1::control_delay_in_second(),
+                            ParamsForSystemV1::velocity_begin(),
+                            ParamsForSystemV1::gravity());
+        armor_pnp       = std::make_shared<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver>(
+                            Robomaster::LargeArmorObjectPointsOpencv,
+                            Robomaster::NormalArmorObjectPointsOpencv);
 
-#define FLOW_IN(x, y)                                                                              \
-    if constexpr (i == 1) {                                                                        \
-        std::cerr << #x << " flow in " << #y << std::endl;                                         \
-    }
-#define FLOW_OUT(x, y)                                                                             \
-    if constexpr (i == 1) {                                                                        \
-        std::cerr << #x << " flow out " << #y << std::endl;                                        \
-    }
 
-        fire_control->SetTargetCarID(enumeration::CarIDFlag::Base);
-        identifier->SetTargetColor(false);
-        state_machine->SetSwitchFrameCount(4);
+        fire_control    ->SetTargetCarID(enumeration::CarIDFlag::Base);
+        identifier      ->SetTargetColor(false);
+        state_machine   ->SetSwitchFrameCount(4);
 
-        car_state_    = state_machine;
-        pnp_solver_   = armor_pnp;
-        fire_control_ = fire_control;
-        tracker_      = predictor;
-        identifier_   = identifier;
-        sync_         = sync;
 
-        assert(identifier_ != nullptr);
-        assert(pnp_solver_ != nullptr);
-        assert(car_state_ != nullptr);
-        assert(tracker_ != nullptr);
-        assert(fire_control_ != nullptr);
-        assert(sync_ != nullptr);
-
-        core::EventBus::Subscript<cv::Mat>(ParamsForSystemV1::raw_image_event, //
-            [this](const auto& data) {
-                FLOW_IN(ParamsForSystemV1::raw_image_event, cv::Mat)
-                const auto& [armors, flag] = identifier->identify(data);
-                if (flag != enumeration::ArmorIdFlag::None)
-                    core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInImage>>( //
-                        ParamsForSystemV1::armors_in_image_identify_event, armors);
-                core::EventBus::Publish<enumeration::CarIDFlag>( //
-                    ParamsForSystemV1::car_id_identify_event, flag);
-                FLOW_OUT(ParamsForSystemV1::raw_image_event, cv::Mat)
-            });
-        core::EventBus::Subscript<std::shared_ptr<interfaces::IArmorInImage>>(
-            ParamsForSystemV1::armors_in_image_identify_event, //
-            [this](const std::shared_ptr<interfaces::IArmorInImage>& data) {
-                FLOW_IN(
-                    ParamsForSystemV1::armors_in_image_identify_event, interfaces::IArmorInImage)
-                core::EventBus::Publish<std::shared_ptr<world_exe::interfaces::IArmorInCamera>>( //
-                    ParamsForSystemV1::armors_in_camera_pnp_event, pnp_solver_->SolvePnp(data));
-                FLOW_OUT(
-                    ParamsForSystemV1::armors_in_image_identify_event, interfaces::IArmorInImage)
-            });
-        core::EventBus::Subscript<enumeration::CarIDFlag>(
-            ParamsForSystemV1::car_id_identify_event, //
-            [this](const auto& data) {
-                FLOW_IN(ParamsForSystemV1::car_id_identify_event, enumeration::CarIDFlag)
-                state_machine->Update(data);
-                core::EventBus::Publish<enumeration::CarIDFlag>( //
-                    ParamsForSystemV1::car_tracing_event, car_state_->GetAllowdToFires());
-                FLOW_OUT(ParamsForSystemV1::car_id_identify_event, enumeration::CarIDFlag)
-            });
-        core::EventBus::Subscript<enumeration::CarIDFlag>(ParamsForSystemV1::car_tracing_event, //
-            [this](const auto& data) {
-                FLOW_IN(ParamsForSystemV1::car_tracing_event, enumeration::CarIDFlag)
-                fire_control->SetTargetCarID(data);
-                core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
-                    ParamsForSystemV1::tracker_current_armors_event,
-                    tracker_->Predict(data, time_point_.time_since_epoch().count()));
-
-                FLOW_OUT(ParamsForSystemV1::car_tracing_event, enumeration::CarIDFlag)
-            });
-        core::EventBus::Subscript<std::shared_ptr<interfaces::IArmorInCamera>>(
-            ParamsForSystemV1::armors_in_camera_pnp_event, //
-            [this](const auto& data) {
-                FLOW_IN(ParamsForSystemV1::armors_in_camera_pnp_event, interfaces::IArmorInCamera)
-                sync->set_armor_pnp(data);
-                const auto& [predictor, flag] = sync->await(0.1);
-                if (flag)
-                    core::EventBus::Publish<
-                        std::shared_ptr<interfaces::IPreDictorUpdatePackage>>( //
-                        ParamsForSystemV1::tracker_update_event, predictor);
-                FLOW_OUT(ParamsForSystemV1::armors_in_camera_pnp_event, interfaces::IArmorInCamera)
-            });
-        core::EventBus::Subscript<data::CameraGimbalMuzzleSyncData>(
-            ParamsForSystemV1::camera_capture_transforms, //
-            [this](const data::CameraGimbalMuzzleSyncData& data) {
-                FLOW_IN(
-                    ParamsForSystemV1::camera_capture_transforms, data::CameraGimbalMuzzleSyncData)
-                time_point_ = std::chrono::steady_clock::now();
-                sync->set_camera_sync_data(data);
-                FLOW_OUT(
-                    ParamsForSystemV1::camera_capture_transforms, data::CameraGimbalMuzzleSyncData)
-            });
-        core::EventBus::Subscript<std::shared_ptr<interfaces::IPreDictorUpdatePackage>>(
-            ParamsForSystemV1::tracker_update_event, //
-            [this](const std::shared_ptr<interfaces::IPreDictorUpdatePackage>& data) {
-                FLOW_IN(
-                    ParamsForSystemV1::tracker_update_event, interfaces::IPreDictorUpdatePackage)
-                fire_control->SetTimeStamp(data->GetTimeStamped().GetTimeStamp());
-                predictor->Update(data);
-                FLOW_OUT(
-                    ParamsForSystemV1::tracker_update_event, interfaces::IPreDictorUpdatePackage)
-            });
-        core::EventBus::Subscript<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
-            ParamsForSystemV1::tracker_current_armors_event, //
-            [this](const auto& data) {
-                FLOW_IN(ParamsForSystemV1::tracker_current_armors_event,
-                    interfaces::IArmorInGimbalControl)
-                fire_control->SetArmorsInGimbalControl(data);
-                core::EventBus::Publish<enumeration::CarIDFlag>(
-                    ParamsForSystemV1::get_lastest_predictor_event,
-                    fire_control_->GetAttackCarId());
-                FLOW_OUT(ParamsForSystemV1::tracker_current_armors_event,
-                    interfaces::IArmorInGimbalControl)
-            });
-        core::EventBus::Subscript<enumeration::CarIDFlag>(
-            ParamsForSystemV1::get_lastest_predictor_event, //
-            [this](const auto& data) {
-                FLOW_IN(ParamsForSystemV1::get_lastest_predictor_event, enumeration::CarIDFlag)
-                if (data != enumeration::CarIDFlag::None)
-                    core::EventBus::Publish<std::shared_ptr<interfaces::IPredictor>>(
-                        ParamsForSystemV1::get_lastest_predictor_event,
-                        tracker_->GetPredictor(data));
-                FLOW_OUT(ParamsForSystemV1::get_lastest_predictor_event, enumeration::CarIDFlag)
-            });
-        core::EventBus::Subscript<std::shared_ptr<interfaces::IPredictor>>(
-            ParamsForSystemV1::get_lastest_predictor_event, //
-            [this](const auto& data) {
-                FLOW_IN(ParamsForSystemV1::get_lastest_predictor_event, interfaces::IPredictor)
-                fire_control->SetPredictor(data);
-                core::EventBus::Publish<data::FireControl>(ParamsForSystemV1::fire_control_event,
-                    fire_control_->CalculateTarget(
-                        (std::chrono::steady_clock::now() - time_point_).count()));
-                FLOW_OUT(ParamsForSystemV1::get_lastest_predictor_event, interfaces::IPredictor)
-            });
+       core::EventBus::Subscript<cv::Mat>
+       (ParamsForSystemV1::raw_image_event,             [this](const auto& mat){solve(mat);});
+       core::EventBus::Subscript<data::CameraGimbalMuzzleSyncData>
+       (ParamsForSystemV1::camera_capture_transforms,   [this](const auto& pkg){set_transfroms(pkg);});
     }
 
-    std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> time_point_ = {};
-    std::shared_ptr<world_exe::interfaces::IIdentifier> identifier_;
-    std::shared_ptr<world_exe::interfaces::IPnpSolver> pnp_solver_;
-    std::shared_ptr<world_exe::interfaces::ICarState> car_state_;
-    std::shared_ptr<world_exe::interfaces::ITargetPredictor> tracker_;
-    std::shared_ptr<world_exe::interfaces::IFireControl> fire_control_;
-    std::shared_ptr<
-        world_exe::interfaces::ISyncBlock<world_exe::interfaces::IPreDictorUpdatePackage>>
-        sync_;
 
-    SystemV1ImplTemp(const SystemV1ImplTemp&) = delete;
-    ~SystemV1ImplTemp()                       = delete;
+    
+    void solve(const cv::Mat& raw){
+        
+        const auto& [armors, flag]  = identifier->identify(raw);
+
+        if(flag == enumeration::ArmorIdFlag::Unknow) return;
+
+        const auto& solved          = armor_pnp->SolvePnp(armors);
+
+        sync                        ->set_armor_pnp(solved);
+        const auto& [pack, check]   = sync->await(0.1);
+
+        if(!check) [[unlikely]]     return;
+
+        time_point_                 = std::chrono::steady_clock::now();
+        state_machine               ->Update(flag);
+        const auto& fire_targets    = state_machine->GetAllowdToFires();
+        
+        predictor                   ->Update(pack);
+        const auto& time            = pack->GetTimeStamped().GetTimeStamp();
+        const auto& armor3d         = predictor->Predict(fire_targets,time);
+        fire_control                ->set_armor(armor3d);
+
+        if(!debug) [[likely]]       return;
+        
+        const auto& target_id       = fire_control->GetAttackCarId();
+        const auto& target          = predictor->GetPredictor(target_id);
+
+        core::EventBus::Publish<enumeration::CarIDFlag>(
+            parameters::ParamsForSystemV1::car_id_identify_event, 
+            flag);
+        core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInImage>>(
+            parameters::ParamsForSystemV1::armors_in_image_identify_event, 
+            armors);
+        core::EventBus::Publish<std::shared_ptr<world_exe::interfaces::IArmorInCamera>>(
+            parameters::ParamsForSystemV1::armors_in_camera_pnp_event, 
+            solved);
+        core::EventBus::Publish<std::shared_ptr<interfaces::IPreDictorUpdatePackage>>(
+            parameters::ParamsForSystemV1::tracker_update_event, 
+            pack);
+        core::EventBus::Publish<enumeration::CarIDFlag>(
+            parameters::ParamsForSystemV1::car_tracing_event, 
+            state_machine->GetAllowdToFires());
+    }
+
+    void set_transfroms(const data::CameraGimbalMuzzleSyncData& data){
+        sync->set_camera_sync_data(data);
+    }
+
+    data::FireControl control(){
+        return fire_control->CalculateTarget((std::chrono::steady_clock::now() - time_point_).count());
+    }
+
+    Impl(const Impl&)       = delete;
+    ~Impl()                         = default;
 
 private:
-    std::shared_ptr<world_exe::v1::predictor::PredictorManager> predictor =
-        std::make_shared<world_exe::v1::predictor::PredictorManager>();
-    std::shared_ptr<world_exe::v1::identifier::Identifier> identifier =
-        std::make_shared<world_exe::v1::identifier::Identifier>(
-            world_exe::parameters::ParamsForSystemV1::szu_model_path(),
-            world_exe::parameters::ParamsForSystemV1::device(),
-            world_exe::parameters::HikCameraProfile::get_width(),
-            world_exe::parameters::HikCameraProfile::get_height());
-    std::shared_ptr<world_exe::v1::fire_control::TracingFireControl> fire_control =
-        std::make_shared<world_exe::v1::fire_control::TracingFireControl>(
-            world_exe::parameters::ParamsForSystemV1::control_delay_in_second(),
-            world_exe::parameters::ParamsForSystemV1::velocity_begin(),
-            world_exe::parameters::ParamsForSystemV1::gravity());
-    std::shared_ptr<world_exe::v1::state_machine::StateMachine> state_machine =
-        std::make_shared<world_exe::v1::state_machine::StateMachine>();
-    std::shared_ptr<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver> armor_pnp =
-        std::make_shared<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver>(
-            world_exe::parameters::Robomaster::LargeArmorObjectPointsOpencv,
-            world_exe::parameters::Robomaster::NormalArmorObjectPointsOpencv);
-    std::shared_ptr<world_exe::v1::Syncer> sync = std::make_shared<world_exe::v1::Syncer>();
+    std::shared_ptr<predictor::PredictorManager>                    predictor;
+    std::shared_ptr<identifier::Identifier>                         identifier;
+    std::shared_ptr<fire_control::TracingFireControl>               fire_control;
+    std::shared_ptr<world_exe::v1::state_machine::StateMachine>     state_machine;
+    std::shared_ptr<world_exe::v1::pnpsolver::ArmorIPPEPnPSolver>   armor_pnp;
+    std::shared_ptr<world_exe::v1::Syncer>                          sync;
+    time_point<steady_clock, nanoseconds>                           time_point_;
+    const bool debug = false;
 };
 
-void world_exe::v1::SystemV1::Build() {
-    if (SystemV1::instance_ != nullptr) return;
-    instance_ = new SystemV1ImplTemp<0>();
+std::unique_ptr<SystemV1> world_exe::v1::SystemV1::build(const bool& debug) {
+    return std::make_unique<SystemV1>(debug);
 }
-void world_exe::v1::SystemV1::Build_1() {
-    if (SystemV1::instance_ != nullptr) return;
-    instance_ = new SystemV1ImplTemp<1>();
+SystemV1::SystemV1(const bool& debug){
+    instance_ = std::make_unique<Impl>(debug);
 }
-world_exe::v1::SystemV1::SystemV1Impl* world_exe::v1::SystemV1::instance_ = nullptr;
+
+SystemV1::~SystemV1(){};
