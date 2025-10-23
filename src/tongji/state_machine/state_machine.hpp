@@ -8,6 +8,7 @@
 #include "interfaces/target_predictor.hpp"
 
 namespace world_exe::tongji::state_machine {
+    class StateMachineImpl;
 class StateMachine final : public interfaces::ICarState {
 public:
     StateMachine();
@@ -17,7 +18,7 @@ public:
     StateMachine(std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager);
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+    
+    std::unique_ptr<StateMachineImpl> pimpl_;
 };
 }

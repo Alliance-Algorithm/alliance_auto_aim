@@ -21,10 +21,10 @@ using CarIDFlag             = enumeration::CarIDFlag;
 using LiveTargetManager     = predictor::LiveTargetManager;
 using TimeStamp             = time_stamp::TimeStamp;
 
-class FireController::Impl {
+class FireControllerImpl {
 public:
-    Impl(bool auto_fire, const double& control_delay_in_second, const double& bullet_speed,
-        double yaw_offset, double pitch_offset,
+    FireControllerImpl(bool auto_fire, const double& control_delay_in_second,
+        const double& bullet_speed, double yaw_offset, double pitch_offset,
         std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
         : control_delay_(control_delay_in_second)
@@ -104,8 +104,8 @@ private:
 FireController::FireController(std::shared_ptr<interfaces::ICarState> state_machine, bool auto_fire,
     const double& control_delay_in_second, const double& bullet_speed, double yaw_offset,
     double pitch_offset, std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
-    : pimpl_(std::make_unique<Impl>(auto_fire, control_delay_in_second, bullet_speed, yaw_offset,
-          pitch_offset, state_machine, live_target_manager)) { }
+    : pimpl_(std::make_unique<FireControllerImpl>(auto_fire, control_delay_in_second, bullet_speed,
+          yaw_offset, pitch_offset, state_machine, live_target_manager)) { }
 
 const data ::FireControl FireController::CalculateTarget(const std ::time_t& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);

@@ -12,9 +12,9 @@
 
 namespace world_exe::tongji::predictor {
 
-class TargetSnapshotManager::Impl {
+class TargetSnapshotManagerImpl {
 public:
-    Impl(const enumeration::ArmorIdFlag& id,
+    TargetSnapshotManagerImpl(const enumeration::ArmorIdFlag& id,
         const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
             live_target_map,
         const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
@@ -82,7 +82,7 @@ TargetSnapshotManager::TargetSnapshotManager(const enumeration::ArmorIdFlag& id,
         live_target_map,
     const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
     const double& pitch_offset)
-    : pimpl_(std::make_unique<Impl>(
+    : pimpl_(std::make_unique<TargetSnapshotManagerImpl>(
           id, live_target_map, now, bullet_speed, yaw_offset, pitch_offset)) { }
 TargetSnapshotManager::~TargetSnapshotManager() = default;
 

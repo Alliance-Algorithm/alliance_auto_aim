@@ -37,6 +37,8 @@ struct Lightbar {
         this->ratio       = length / width;
     }
 };
+
+class IdentifierImpl;
 class Identifier final : public interfaces::IIdentifier {
 public:
     Identifier(const std::string& model_path, int model_image_width, int model_image_height);
@@ -48,8 +50,7 @@ public:
     void SetTargetColor(Color target_color);
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+    std::unique_ptr<IdentifierImpl> pimpl_;
 };
 
 }

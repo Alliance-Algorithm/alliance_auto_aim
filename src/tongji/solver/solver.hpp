@@ -4,7 +4,7 @@
 #include "interfaces/time_stamped.hpp"
 
 namespace world_exe::tongji::solver {
-
+ class SolverImpl;
 class Solver final : public interfaces::IPnpSolver, public interfaces::ITimeStamped {
 public:
     explicit Solver(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
@@ -17,8 +17,8 @@ public:
     const std::time_t& GetTimeStamp() const override;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+   
+    std::unique_ptr<SolverImpl> pimpl_;
 };
 
 }

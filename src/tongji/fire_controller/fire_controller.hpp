@@ -10,6 +10,7 @@
 
 namespace world_exe::tongji::fire_control {
 
+class FireControllerImpl;
 class FireController final : public interfaces::IFireControl {
 public:
     FireController(std::shared_ptr<interfaces::ICarState> state_machine, bool auto_fire,
@@ -24,8 +25,7 @@ public:
     time_stamp::TimeStamp GetTimeStamp() const;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+    std::unique_ptr<FireControllerImpl> pimpl_;
 };
 
 }

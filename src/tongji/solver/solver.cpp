@@ -14,9 +14,9 @@
 #include "util/math.hpp"
 namespace world_exe::tongji::solver {
 
-class Solver::Impl {
+class SolverImpl {
 public:
-    Impl(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
+    SolverImpl(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
         Eigen::Vector3d t_camera2gimbal)
         : R_camera2gimbal_(R_camera2gimbal)
         , R_gimbal2world_(R_gimbal2world)
@@ -300,7 +300,7 @@ private:
 
 Solver::Solver(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
     Eigen::Vector3d t_camera2gimbal)
-    : pimpl_(std::make_unique<Impl>(R_camera2gimbal, R_gimbal2world, t_camera2gimbal)) { }
+    : pimpl_(std::make_unique<SolverImpl>(R_camera2gimbal, R_gimbal2world, t_camera2gimbal)) { }
 Solver::~Solver() = default;
 
 const std::time_t& Solver::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }

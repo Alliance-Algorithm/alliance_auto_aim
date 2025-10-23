@@ -17,9 +17,9 @@
 
 namespace world_exe::tongji::predictor {
 
-class LiveTargetManager::Impl {
+class LiveTargetManagerImpl {
 public:
-    Impl(const double& time_delay, const double& yaw_offset, const double& pitch_offset,
+    LiveTargetManagerImpl(const double& time_delay, const double& yaw_offset, const double& pitch_offset,
         double timeout_sec = 0.1)
         : targets_map_()
         , tracker_(std::make_unique<predictor::Tracker>())
@@ -127,7 +127,7 @@ private:
 
 LiveTargetManager::LiveTargetManager(const double& time_delay, const double& yaw_offset,
     const double& pitch_offset, double timeout_sec)
-    : pimpl_(std::make_unique<Impl>(time_delay, yaw_offset, pitch_offset, timeout_sec)) { }
+    : pimpl_(std::make_unique<LiveTargetManagerImpl>(time_delay, yaw_offset, pitch_offset, timeout_sec)) { }
 LiveTargetManager::~LiveTargetManager() = default;
 
 std ::shared_ptr<interfaces ::IArmorInGimbalControl> LiveTargetManager::Predict(

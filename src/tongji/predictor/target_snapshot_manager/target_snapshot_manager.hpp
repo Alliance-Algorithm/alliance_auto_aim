@@ -8,7 +8,7 @@
 #include "interfaces/predictor.hpp"
 
 namespace world_exe::tongji::predictor {
-
+   class TargetSnapshotManagerImpl;
 struct GimbalCommand {
     double yaw;
     double pitch;
@@ -30,7 +30,7 @@ public:
     auto GetGimbalCommand() const -> GimbalCommand const;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+ 
+    std::unique_ptr<TargetSnapshotManagerImpl> pimpl_;
 };
 }

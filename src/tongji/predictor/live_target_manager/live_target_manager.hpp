@@ -9,6 +9,7 @@
 
 namespace world_exe::tongji::predictor {
 
+      class LiveTargetManagerImpl;
 class LiveTargetManager final : public interfaces::ITargetPredictor {
 public:
     LiveTargetManager(const double& time_delay, const double& yaw_offset,
@@ -27,8 +28,8 @@ public:
     auto GetAllowedTargetID() const -> enumeration::ArmorIdFlag const;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+  
+    std::unique_ptr<LiveTargetManagerImpl> pimpl_;
 };
 
 }

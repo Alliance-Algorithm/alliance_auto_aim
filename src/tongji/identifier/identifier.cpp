@@ -25,9 +25,9 @@
 
 namespace world_exe::tongji::identifier {
 
-class Identifier::Impl {
+class IdentifierImpl {
 public:
-    explicit Impl(const std::string& model_path, const int& model_image_width,
+    explicit IdentifierImpl(const std::string& model_path, const int& model_image_width,
         const int& model_image_height, const double& threshold, const double& max_angle_error,
         const double& min_lightbar_ratio, const double& max_lightbar_ratio,
         const double& min_lightbar_length, const double& max_armor_ratio,
