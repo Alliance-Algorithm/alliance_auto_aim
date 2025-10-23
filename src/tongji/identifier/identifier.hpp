@@ -41,7 +41,8 @@ struct Lightbar {
 class IdentifierImpl;
 class Identifier final : public interfaces::IIdentifier {
 public:
-    Identifier(const std::string& model_path, int model_image_width, int model_image_height);
+    explicit Identifier(const std::string& config_path, const std::string& save_path,
+        const bool& debug = true, const bool& record = false);
     ~Identifier();
 
     const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>

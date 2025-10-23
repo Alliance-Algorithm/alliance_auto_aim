@@ -1,0 +1,16 @@
+#####-----classfier parameters-----#####
+classify_model:
+model_image_width:
+model_image_height:
+
+#####-----identifier parameters-----#####
+threshold: 150
+max_angle_error: 45 #degree
+min_lightbar_ratio: 1.5
+max_lightbar_ratio: 20
+min_lightbar_length: 8
+max_armor_ratio: 5
+min_armor_ratio: 1
+max_side_ratio: 1.5
+min_confidence: 0.8
+max_rectangular_error: 25 #degree

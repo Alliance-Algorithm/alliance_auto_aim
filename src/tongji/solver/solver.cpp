@@ -69,7 +69,7 @@ public:
         armor_in_camera.orientation = orientation_ros;
 
         if (armor_in_camera.position.norm() > MaxArmorDistance) {
-            return {};
+            return { };
         }
         return armor_in_camera;
     }
