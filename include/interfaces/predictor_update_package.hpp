@@ -30,5 +30,7 @@ public:
      * @return Eigen::Affine3d
      */
     virtual Eigen::Affine3d GetTransform() const = 0;
+
+    virtual ~IPreDictorUpdatePackage() = default;
 };
 }

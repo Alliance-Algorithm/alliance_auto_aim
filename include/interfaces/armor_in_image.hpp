@@ -31,5 +31,7 @@ public:
      */
     virtual const std::vector<data::ArmorImageSpacing>& GetArmors(
         const enumeration::ArmorIdFlag& armor_id) const = 0;
+
+    virtual ~IArmorInImage() = default;
 };
 }

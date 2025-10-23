@@ -1,7 +1,7 @@
 #pragma once
 
+#include "enum/car_id.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "interfaces/car_state.hpp"
 #include <memory>
 #include <opencv2/core/mat.hpp>
 
@@ -20,5 +20,7 @@ public:
      */
     virtual const std::tuple<const std::shared_ptr<IArmorInImage>, enumeration::CarIDFlag> identify(
         const cv::Mat& input_image) = 0;
+
+    virtual ~IIdentifier() = default;
 };
 }

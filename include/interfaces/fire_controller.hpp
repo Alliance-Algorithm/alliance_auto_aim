@@ -1,7 +1,7 @@
 #pragma once
 
 #include "data/fire_control.hpp"
-#include "interfaces/car_state.hpp"
+#include "enum/car_id.hpp"
 #include <ctime>
 
 namespace world_exe::interfaces {
@@ -25,5 +25,7 @@ public:
      * @return const enumeration::CarIDFlag : 火控系统锁定的车辆ID
      */
     virtual const enumeration::CarIDFlag GetAttackCarId() const = 0;
+
+    virtual ~IFireControl() = default;
 };
 }

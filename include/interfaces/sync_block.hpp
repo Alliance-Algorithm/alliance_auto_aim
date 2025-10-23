@@ -12,5 +12,7 @@ template <class T> class ISyncBlock {
 
 public:
     virtual std::tuple<std::shared_ptr<T>, bool> await(double t_second) = 0;
+
+    virtual ~ISyncBlock() = default;
 };
 }
