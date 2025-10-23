@@ -5,6 +5,8 @@
 #include <memory>
 #include <optional>
 
+#include <yaml-cpp/yaml.h>
+
 #include "aim_point_chooser.hpp"
 #include "target_snapshot.hpp"
 #include "trajectory.hpp"
@@ -23,12 +25,14 @@ struct AimSolution {
 
 class AimingSolver {
 public:
-    AimingSolver(
-        const double& yaw_offset, const double& pitch_offset, const double& gravity = 9.7833)
-        : aim_point_chooser_(std::make_unique<predictor::AimPointChooser>())
-        , yaw_offset_(yaw_offset / 57.3)     // degree to rad
-        , pitch_offset_(pitch_offset / 57.3) // degree to rad
-        , g_(gravity) { }
+    AimingSolver(const std::string& config_path, const double& gravity = 9.7833)
+        : aim_point_chooser_(std::make_unique<predictor::AimPointChooser>(config_path))
+        , g_(gravity) {
+
+        auto yaml     = YAML::LoadFile(config_path);
+        yaw_offset_   = yaml["yaw_offset"].as<double>() / 57.3;   // degree to rad
+        pitch_offset_ = yaml["pitch_offset"].as<double>() / 57.3; // degree to rad
+    }
 
     AimSolution SolveAimSolution(const std::shared_ptr<TargetSnapshot>& snapshot,
         const double& bullet_speed, const double& time_delay) {

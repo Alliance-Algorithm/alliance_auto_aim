@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <yaml-cpp/yaml.h>
+
 #include "../in_gimbal_control_armor.hpp"
 #include "../live_target_manager/live_target.hpp"
 #include "aim_solver.hpp"
@@ -14,18 +16,24 @@ namespace world_exe::tongji::predictor {
 
 class TargetSnapshotManagerImpl {
 public:
-    TargetSnapshotManagerImpl(const enumeration::ArmorIdFlag& id,
+    TargetSnapshotManagerImpl(const std::string& config_path, const enumeration::ArmorIdFlag& id,
         const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
             live_target_map,
-        const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
-        const double& pitch_offset)
-        : aim_solver_(std::make_unique<predictor::AimingSolver>(yaw_offset, pitch_offset))
+        const std::time_t& now, const double& bullet_speed)
+        : aim_solver_(std::make_unique<predictor::AimingSolver>(config_path))
         , snapshots_(BuildSnapshots(live_target_map))
         , now_(now)
         , ids_(id)
         , bullet_speed_(bullet_speed)
         , gimbal_command_({ std::numeric_limits<double>::quiet_NaN(),
-              std::numeric_limits<double>::quiet_NaN() }) { }
+              std::numeric_limits<double>::quiet_NaN() }) {
+
+        auto yaml = YAML::LoadFile(config_path);
+
+        decision_speed_        = yaml["decision_speed"].as<double>();
+        high_speed_delay_time_ = yaml["high_speed_delay_time"].as<double>();
+        low_speed_delay_time_  = yaml["low_speed_delay_time"].as<double>();
+    }
 
     const enumeration::ArmorIdFlag& GetId() const { return ids_; }
 
@@ -34,11 +42,15 @@ public:
 
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
-
+        // TODO:time_delay
         for (const auto& [id, snapshot] : snapshots_) {
-            auto aim_solution =
-                aim_solver_->SolveAimSolution(std::make_unique<TargetSnapshot>(snapshot),
-                    bullet_speed_, snapshot.GetTimeStamp().GetTimeStamp());
+            auto ekf_x = snapshot.GetEkfX();
+            const auto delay_time =
+                ekf_x[7] > decision_speed_ ? high_speed_delay_time_ : low_speed_delay_time_;
+            const auto dt = control_delay_time_ + delay_time; // TODO:add delta(now)?
+
+            auto aim_solution = aim_solver_->SolveAimSolution(
+                std::make_unique<TargetSnapshot>(snapshot), bullet_speed_, dt);
 
             if (!aim_solution.valid) continue;
 
@@ -75,15 +87,19 @@ private:
     const enumeration::ArmorIdFlag ids_;
     const double bullet_speed_;
     mutable GimbalCommand gimbal_command_;
+    double decision_speed_;
+    double high_speed_delay_time_;
+    double low_speed_delay_time_;
+    double control_delay_time_;
 };
 
-TargetSnapshotManager::TargetSnapshotManager(const enumeration::ArmorIdFlag& id,
+TargetSnapshotManager::TargetSnapshotManager(const std::string& config_path,
+    const enumeration::ArmorIdFlag& id,
     const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
         live_target_map,
-    const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
-    const double& pitch_offset)
+    const std::time_t& now, const double& bullet_speed)
     : pimpl_(std::make_unique<TargetSnapshotManagerImpl>(
-          id, live_target_map, now, bullet_speed, yaw_offset, pitch_offset)) { }
+          config_path, id, live_target_map, now, bullet_speed)) { }
 TargetSnapshotManager::~TargetSnapshotManager() = default;
 
 const enumeration ::ArmorIdFlag& TargetSnapshotManager::GetId() const { return pimpl_->GetId(); }

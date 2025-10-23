@@ -5,6 +5,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include <yaml-cpp/yaml.h>
+
 #include "../in_gimbal_control_armor.hpp"
 #include "../target_snapshot_manager/target_snapshot_manager.hpp"
 #include "enum/armor_id.hpp"
@@ -19,15 +21,14 @@ namespace world_exe::tongji::predictor {
 
 class LiveTargetManagerImpl {
 public:
-    LiveTargetManagerImpl(const double& time_delay, const double& yaw_offset, const double& pitch_offset,
-        double timeout_sec = 0.1)
+    LiveTargetManagerImpl(
+        const std::string& config_path, const double& time_delay, const double& timeout_sec)
         : targets_map_()
         , tracker_(std::make_unique<predictor::Tracker>())
         , last_update_timestamp_(std::time(nullptr))
         , tracking_id_(enumeration::CarIDFlag::None)
         , time_delay_(time_delay)
-        , yaw_offset_(yaw_offset)
-        , pitch_offset_(pitch_offset) { }
+        , config_path_(config_path) { }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& flag, const std::time_t& time_stamp) {
@@ -51,7 +52,7 @@ public:
         if (targets_map_.empty()) return nullptr; // TODO
 
         return std::make_shared<TargetSnapshotManager>(
-            flag, targets_map_, last_update_timestamp_, bullet_speed_, yaw_offset_, pitch_offset_);
+            config_path_, flag, targets_map_, last_update_timestamp_, bullet_speed_);
     }
 
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
@@ -121,13 +122,12 @@ private:
 
     double bullet_speed_;
     const double time_delay_;
-    const double yaw_offset_;
-    const double pitch_offset_;
+    const std::string config_path_;
 };
 
-LiveTargetManager::LiveTargetManager(const double& time_delay, const double& yaw_offset,
-    const double& pitch_offset, double timeout_sec)
-    : pimpl_(std::make_unique<LiveTargetManagerImpl>(time_delay, yaw_offset, pitch_offset, timeout_sec)) { }
+LiveTargetManager::LiveTargetManager(
+    const std::string& config_path, const double& time_delay, const double& timeout_sec)
+    : pimpl_(std::make_unique<LiveTargetManagerImpl>(config_path, time_delay, timeout_sec)) { }
 LiveTargetManager::~LiveTargetManager() = default;
 
 std ::shared_ptr<interfaces ::IArmorInGimbalControl> LiveTargetManager::Predict(

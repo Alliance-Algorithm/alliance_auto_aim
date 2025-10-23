@@ -12,8 +12,8 @@ namespace world_exe::tongji::predictor {
 class LiveTargetManagerImpl;
 class LiveTargetManager final : public interfaces::ITargetPredictor {
 public:
-    LiveTargetManager(const double& time_delay, const double& yaw_offset,
-        const double& pitch_offset, double timeout_sec = 0.1);
+   LiveTargetManager(
+    const std::string& config_path, const double& time_delay, const double& timeout_sec=0.1);
     ~LiveTargetManager();
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> Predict(

@@ -3,16 +3,19 @@
 #include "enum/car_id.hpp"
 #include "util/math.hpp"
 
+#include <yaml-cpp/yaml.h>
+
 namespace world_exe::tongji::predictor {
 
 using CarIDFlag = enumeration::CarIDFlag;
 
 class AimPointChooser {
 public:
-    AimPointChooser(
-        const double& comming_angle = 60 / 57.3, const double& leaving_angle = 20 / 57.3)
-        : comming_angle_(comming_angle)
-        , leaving_angle_(leaving_angle) { }
+    AimPointChooser(const std::string& config_path) {
+        auto yaml      = YAML::LoadFile(config_path);
+        comming_angle_ = yaml["comming_angle"].as<double>() / 57.3; // degree to rad
+        leaving_angle_ = yaml["leaving_angle"].as<double>() / 57.3; // degree to rad
+    }
 
     std::pair<bool, Eigen::Vector4d> ChooseAimArmor(const Eigen::Vector<double, 11>& ekf_x,
         const std::vector<Eigen::Vector4d>& xyza_list, const CarIDFlag& single_id) {
@@ -54,10 +57,8 @@ public:
             }
         } else {
             // 小陀螺
-            double coming_angle =
-                (single_id == CarIDFlag::Outpost) ? 70 / 57.3 : comming_angle_;
-            double leaving_angle =
-                (single_id == CarIDFlag::Outpost) ? 30 / 57.3 : leaving_angle_;
+            double coming_angle  = (single_id == CarIDFlag::Outpost) ? 70 / 57.3 : comming_angle_;
+            double leaving_angle = (single_id == CarIDFlag::Outpost) ? 30 / 57.3 : leaving_angle_;
 
             // 在小陀螺时，一侧的装甲板不断出现，另一侧的装甲板不断消失，显然前者被打中的概率更高
             for (int i = 0; i < armor_num; i++) {

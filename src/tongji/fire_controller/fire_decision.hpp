@@ -3,21 +3,24 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <yaml-cpp/yaml.h>
+
 #include "tongji/predictor/target_snapshot_manager/target_snapshot_manager.hpp"
 
 namespace world_exe::tongji::fire_control {
 
 class FireDecision {
 public:
-    explicit FireDecision(const bool& auto_fire, const double& first_tolerance = 5,
-        const double& second_tolerance = 2, const double& judge_distance = 3)
-        : auto_fire_(auto_fire)
-        , last_gimbal_command_({ std::numeric_limits<double>::quiet_NaN(),
+    explicit FireDecision(const std::string& config_path)
+        : last_gimbal_command_({ std::numeric_limits<double>::quiet_NaN(),
               std::numeric_limits<double>::quiet_NaN() })
-        , gimbal_yaw_(std::numeric_limits<double>::quiet_NaN())
-        , first_tolerance_(first_tolerance)
-        , second_tolerance_(second_tolerance)
-        , judge_distance_(judge_distance) { }
+        , gimbal_yaw_(std::numeric_limits<double>::quiet_NaN()) {
+        auto yaml         = YAML::LoadFile(config_path);
+        auto_fire_        = yaml["auto_fire"].as<bool>();
+        first_tolerance_  = yaml["first_tolerance"].as<double>() / 57.3;  // degree to rad
+        second_tolerance_ = yaml["second_tolerance"].as<double>() / 57.3; // degree to rad
+        judge_distance_   = yaml["judge_distance"].as<double>();
+    }
 
     bool ShouldFire(
         predictor::GimbalCommand gimbal_command, const Eigen::Vector3d& valid_target_pos) {

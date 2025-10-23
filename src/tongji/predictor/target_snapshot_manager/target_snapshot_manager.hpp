@@ -16,11 +16,10 @@ struct GimbalCommand {
 
 class TargetSnapshotManager final : public interfaces::IPredictor {
 public:
-    TargetSnapshotManager(const enumeration::ArmorIdFlag& id,
+    TargetSnapshotManager(const std::string& config_path, const enumeration::ArmorIdFlag& id,
         const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
             live_target_map,
-        const std::time_t& now, const double& bullet_speed, const double& yaw_offset,
-        const double& pitch_offset);
+        const std::time_t& now, const double& bullet_speed);
     ~TargetSnapshotManager();
 
     const enumeration ::ArmorIdFlag& GetId() const override;

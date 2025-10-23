@@ -1,7 +1,8 @@
 #include "fire_controller.hpp"
 
 #include <memory>
-#include <utility>
+
+#include <yaml-cpp/yaml.h>
 
 #include "../identifier/identified_armor.hpp"
 #include "../predictor/live_target_manager/live_target_manager.hpp"
@@ -23,8 +24,8 @@ using TimeStamp             = time_stamp::TimeStamp;
 
 class FireControllerImpl {
 public:
-    FireControllerImpl(bool auto_fire, const double& control_delay_in_second,
-        const double& bullet_speed, double yaw_offset, double pitch_offset,
+    FireControllerImpl(const std::string& config_path, const double& control_delay_in_second,
+        const double& bullet_speed, const double& yaw_offset, const double& pitch_offset,
         std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
         : control_delay_(control_delay_in_second)
@@ -32,9 +33,12 @@ public:
         , allowed_target_id_(CarIDFlag::None)
         , firable_(false)
         , time_stamp_(std::time(nullptr))
-        , fire_decision_(std::make_unique<FireDecision>(auto_fire))
+        , fire_decision_(std::make_unique<FireDecision>(config_path))
         , state_machine_(state_machine)
-        , live_target_manager_(std::move(live_target_manager)) { }
+        , live_target_manager_(live_target_manager) {
+
+        auto yaml = YAML::LoadFile(config_path);
+    }
 
     // TODO:std::time_t
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const {
@@ -101,11 +105,12 @@ private:
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
 };
 
-FireController::FireController(std::shared_ptr<interfaces::ICarState> state_machine, bool auto_fire,
-    const double& control_delay_in_second, const double& bullet_speed, double yaw_offset,
-    double pitch_offset, std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
-    : pimpl_(std::make_unique<FireControllerImpl>(auto_fire, control_delay_in_second, bullet_speed,
-          yaw_offset, pitch_offset, state_machine, live_target_manager)) { }
+FireController::FireController(const std::string& config_path,
+    const double& control_delay_in_second, const double& bullet_speed, const double& yaw_offset,
+    const double& pitch_offset, std::shared_ptr<interfaces::ICarState> state_machine,
+    std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
+    : pimpl_(std::make_unique<FireControllerImpl>(config_path, control_delay_in_second,
+          bullet_speed, yaw_offset, pitch_offset, state_machine, live_target_manager)) { }
 
 const data ::FireControl FireController::CalculateTarget(const std ::time_t& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);

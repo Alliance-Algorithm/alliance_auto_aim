@@ -13,9 +13,10 @@ namespace world_exe::tongji::fire_control {
 class FireControllerImpl;
 class FireController final : public interfaces::IFireControl {
 public:
-    FireController(std::shared_ptr<interfaces::ICarState> state_machine, bool auto_fire,
-        const double& control_delay_in_second, const double& bullet_speed, double yaw_offset,
-        double pitch_offset, std::shared_ptr<interfaces::ITargetPredictor> live_target_manager);
+    FireController(const std::string& config_path, const double& control_delay_in_second,
+        const double& bullet_speed, const double& yaw_offset, const double& pitch_offset,
+        std::shared_ptr<interfaces::ICarState> state_machine,
+        std::shared_ptr<interfaces::ITargetPredictor> live_target_manager);
 
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const override;
     const enumeration ::CarIDFlag GetAttackCarId() const override;
