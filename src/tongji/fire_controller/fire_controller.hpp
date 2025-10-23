@@ -24,6 +24,11 @@ public:
 
     time_stamp::TimeStamp GetTimeStamp() const;
 
+    FireController(const FireController&)                = delete;
+    FireController& operator=(const FireController&)     = delete;
+    FireController(FireController&&) noexcept            = default;
+    FireController& operator=(FireController&&) noexcept = default;
+
 private:
     std::unique_ptr<FireControllerImpl> pimpl_;
 };

@@ -49,6 +49,11 @@ public:
 
     void SetTargetColor(Color target_color);
 
+    Identifier(const Identifier&)                = delete;
+    Identifier& operator=(const Identifier&)     = delete;
+    Identifier(Identifier&&) noexcept            = default;
+    Identifier& operator=(Identifier&&) noexcept = default;
+
 private:
     std::unique_ptr<IdentifierImpl> pimpl_;
 };
