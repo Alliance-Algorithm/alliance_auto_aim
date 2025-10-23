@@ -25,5 +25,7 @@ public:
      */
     virtual std::shared_ptr<IArmorInGimbalControl> Predictor(
         const std::time_t& time_stamp) const = 0;
+
+    virtual ~IPredictor() = default;
 };
 }

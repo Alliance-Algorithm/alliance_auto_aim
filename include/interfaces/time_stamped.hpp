@@ -11,5 +11,7 @@ namespace world_exe::interfaces {
 class ITimeStamped {
 public:
     virtual const std::time_t& GetTimeStamp() const = 0;
+
+    virtual ~ITimeStamped() = default;
 };
 }

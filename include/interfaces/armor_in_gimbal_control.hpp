@@ -22,5 +22,7 @@ public:
     /// 获取某个车辆ID的装甲板集合
     virtual const std::vector<data::ArmorGimbalControlSpacing>& GetArmors(
         const enumeration::ArmorIdFlag& armor_id) const = 0;
+
+    virtual ~IArmorInGimbalControl() = default;
 };
 }

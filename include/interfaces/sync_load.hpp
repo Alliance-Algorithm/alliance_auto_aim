@@ -16,5 +16,7 @@ template <class T> class ISyncLoad {
 public:
     virtual void Store(const T& data) = 0;
     virtual std::optional<T> Load()   = 0;
+
+    virtual ~ISyncLoad() = default;
 };
 }

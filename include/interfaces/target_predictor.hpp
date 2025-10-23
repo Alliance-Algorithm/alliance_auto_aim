@@ -31,5 +31,7 @@ public:
      * @return const IPredictor&
      */
     virtual std::shared_ptr<IPredictor> GetPredictor(const enumeration::ArmorIdFlag& id) const = 0;
+
+    virtual ~ITargetPredictor() = default;
 };
 }

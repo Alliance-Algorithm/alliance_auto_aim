@@ -17,5 +17,7 @@ public:
      */
     virtual std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(
         std::shared_ptr<interfaces::IArmorInImage>) = 0;
+
+    virtual ~IPnpSolver() = default;
 };
 }

@@ -12,5 +12,7 @@ class IDrawable {
 public:
     virtual void Draw(cv::InputArray, cv::OutputArray) = 0;
     virtual void Draw(cv::InputOutputArray)            = 0;
+
+    virtual ~IDrawable() = default;
 };
 }

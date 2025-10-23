@@ -88,6 +88,9 @@ public:
         const auto& armor3d         = predictor->Predict(fire_targets,time);
         fire_control                ->set_armor(armor3d);
 
+        
+       core::EventBus::Publish<data::FireControl>(ParamsForSystemV1::fire_control_event, control());
+
         if(!debug) [[likely]]       return;
         
         const auto& target_id       = fire_control->GetAttackCarId();

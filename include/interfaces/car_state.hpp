@@ -19,5 +19,7 @@ public:
         示例： 某辆车在镜头中出现的时间够长，确定已经被自瞄系统追踪上
      */
     virtual const enumeration::CarIDFlag& GetAllowdToFires() const = 0;
+
+    virtual ~ICarState() = default;
 };
 }
