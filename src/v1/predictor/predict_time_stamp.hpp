@@ -11,7 +11,7 @@ public:
 
     inline void SetTimeStamp(const time_t& time_stamp) { time_stamp_ = time_stamp; }
 
-    const std::time_t& GetTimeStamp() const override { return time_stamp_; };
+    const std::time_t GetTimeStamp() const override { return time_stamp_; };
 
 private:
     std::time_t time_stamp_;

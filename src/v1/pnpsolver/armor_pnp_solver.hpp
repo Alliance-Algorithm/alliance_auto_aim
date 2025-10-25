@@ -16,7 +16,7 @@ public:
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(
         std::shared_ptr<interfaces::IArmorInImage> armor) override;
-    const std::time_t& GetTimeStamp() const override;
+    const std::time_t GetTimeStamp() const override;
 
 private:
     class Impl;

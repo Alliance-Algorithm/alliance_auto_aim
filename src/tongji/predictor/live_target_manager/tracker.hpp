@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <ctime>
 #include <memory>
 #include <opencv2/core/types.hpp>
@@ -8,13 +9,13 @@
 
 #include "../../identifier/armor_filter.hpp"
 #include "../../identifier/identified_armor.hpp"
-#include "../../time_stamp/time_stamp.hpp"
 #include "../target_snapshot_manager/target_snapshot.hpp"
 #include "../target_snapshot_manager/target_snapshot_manager.hpp"
 #include "decider.hpp"
 #include "enum/armor_id.hpp"
 
 namespace world_exe::tongji::predictor {
+using namespace std::chrono_literals;
 
 enum class TrackState {
     Lost,      //
@@ -33,14 +34,14 @@ public:
     Tracker()
         : armor_filter_(std::make_unique<identifier::ArmorFilter>())
         , decider_(std::make_unique<Decider>())
-        , last_track_timestamp_(std::time(nullptr)) { }
+        , last_track_timestamp_(std::chrono::steady_clock::now()) { }
 
     ~Tracker() = default;
 
     auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image,
         const std::time_t& now) noexcept -> enumeration::ArmorIdFlag const {
-        CheckCameraOffline(now);
-        last_track_timestamp_.SetTimeStamp(now);
+        CheckCameraOffline();
+        last_track_timestamp_ = std::chrono::steady_clock::now();
 
         auto filtered_ids = enumeration::ArmorIdFlag::None;
         auto detected_ids = enumeration::ArmorIdFlag::None;
@@ -136,11 +137,9 @@ public:
     TrackState GetState() const { return state_; }
 
 private:
-    void CheckCameraOffline(const std::time_t& now) {
-        // TODO:If the underlying timestamp is std::time_t, then this if branch will never be
-        // entered
+    void CheckCameraOffline() {
         if (state_ != TrackState::Lost
-            && static_cast<double>(now - last_track_timestamp_.GetTimeStamp()) < timeout_sec_)
+            && (std::chrono::steady_clock::now() - last_track_timestamp_) < timeout_sec_)
             SetState(TrackState::Lost);
     }
 
@@ -165,9 +164,9 @@ private:
     const int outpost_max_temp_lost_count_ = 75;
     const int normal_max_temp_lost_count_  = max_temp_lost_count_;
     const int max_switch_count_            = 200;
-    const double timeout_sec_              = 0.1;
+    static constexpr auto timeout_sec_     = 100ms;
 
-    time_stamp::TimeStamp last_track_timestamp_;
+    std::chrono::steady_clock::time_point last_track_timestamp_;
 };
 
 }

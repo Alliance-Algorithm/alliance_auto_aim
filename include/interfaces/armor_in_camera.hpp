@@ -16,7 +16,7 @@ namespace world_exe::interfaces {
 class IArmorInCamera {
 public:
     /// 获取时间戳，标志其内容装甲板的准确时间点
-    COMBINE_TIME_STAMPED;
+    virtual const ITimeStamped& GetTimeStamped() const = 0;
 
     /// 获取某个车辆ID的装甲板集合
     virtual const std::vector<data::ArmorCameraSpacing>& GetArmors(

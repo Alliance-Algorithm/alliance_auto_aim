@@ -16,7 +16,7 @@ struct Syncer::Impl final : public interfaces::IPreDictorUpdatePackage,
 
     const ITimeStamped& GetTimeStamped() const override { return *this; }
 
-    const std::time_t& GetTimeStamp() const override { return last_update_time_; }
+    const std::time_t GetTimeStamp() const override { return last_update_time_; }
 
     std::shared_ptr<interfaces::IArmorInCamera> GetArmors() const override {
         if (armors_loaded_ == nullptr) return std::make_shared<Impl>();

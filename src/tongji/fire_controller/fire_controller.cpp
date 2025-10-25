@@ -1,5 +1,6 @@
 #include "fire_controller.hpp"
 
+#include <chrono>
 #include <memory>
 
 #include <yaml-cpp/yaml.h>
@@ -24,20 +25,18 @@ using TimeStamp             = time_stamp::TimeStamp;
 
 class FireControllerImpl {
 public:
-    FireControllerImpl(const std::string& config_path, const double& control_delay_in_second,
-        const double& bullet_speed, const double& yaw_offset, const double& pitch_offset,
+    FireControllerImpl(const std::string& config_path,
         std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
-        : control_delay_(control_delay_in_second)
-        , bullet_speed_(bullet_speed)
-        , allowed_target_id_(CarIDFlag::None)
+        : allowed_target_id_(CarIDFlag::None)
         , firable_(false)
-        , time_stamp_(std::time(nullptr))
         , fire_decision_(std::make_unique<FireDecision>(config_path))
         , state_machine_(state_machine)
         , live_target_manager_(live_target_manager) {
 
-        auto yaml = YAML::LoadFile(config_path);
+        auto yaml      = YAML::LoadFile(config_path);
+        control_delay_ = yaml["control_delay"].as<double>();
+        bullet_speed_  = yaml["bullet_speed"].as<double>();
     }
 
     // TODO:std::time_t
@@ -49,9 +48,11 @@ public:
         auto converged_cars   = state_machine_->GetAllowdToFires();
         auto snapshot_manager = live_target_manager_->GetPredictor(converged_cars);
         if (!snapshot_manager)
-            return data::FireControl { .time_stamp = time_stamp_.GetTimeStamp(),
+            return data::FireControl {
+                .time_stamp = TimeStamp(std::chrono::steady_clock::now()).GetTimeStamp(),
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
-                .fire_allowance = false };
+                .fire_allowance = false
+            };
 
         auto armors_in_gimbal_control = snapshot_manager->Predictor(control_delay_);
         allowed_target_id_            = state_machine_->GetAllowdToFires();
@@ -69,7 +70,7 @@ public:
         data::FireControl result;
         result.fire_allowance = fire_command;
         result.gimbal_dir << gimbal_command.yaw, gimbal_command.pitch, 0;
-        result.time_stamp = time_stamp_.GetTimeStamp();
+        result.time_stamp = TimeStamp(std::chrono::steady_clock::now()).GetTimeStamp();
         return result;
     }
 
@@ -79,7 +80,6 @@ public:
     }
 
     void Update(std::shared_ptr<interfaces::IArmorInImage> armors, const double& gimbal_yaw) {
-        time_stamp_.SetTimeStamp(std::time(nullptr));
         UpdateIdentifiedArmor(armors);
         UpdateGimbalPosition(gimbal_yaw);
     }
@@ -89,7 +89,6 @@ private:
         identified_armors_ = armors;
     }
     void UpdateGimbalPosition(const double& gimbal_yaw) { gimbal_yaw_ = gimbal_yaw; };
-    TimeStamp GetTimeStamp() const { return time_stamp_; }
 
     double gimbal_yaw_;
     double control_delay_;
@@ -99,18 +98,16 @@ private:
     mutable CarIDFlag allowed_target_id_;
     mutable double firable_;
 
-    time_stamp::TimeStamp time_stamp_;
     std::unique_ptr<FireDecision> fire_decision_;
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
 };
 
 FireController::FireController(const std::string& config_path,
-    const double& control_delay_in_second, const double& bullet_speed, const double& yaw_offset,
-    const double& pitch_offset, std::shared_ptr<interfaces::ICarState> state_machine,
+    std::shared_ptr<interfaces::ICarState> state_machine,
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
-    : pimpl_(std::make_unique<FireControllerImpl>(config_path, control_delay_in_second,
-          bullet_speed, yaw_offset, pitch_offset, state_machine, live_target_manager)) { }
+    : pimpl_(
+          std::make_unique<FireControllerImpl>(config_path, state_machine, live_target_manager)) { }
 
 const data ::FireControl FireController::CalculateTarget(const std ::time_t& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);

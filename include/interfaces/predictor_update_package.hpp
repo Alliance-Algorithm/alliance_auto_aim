@@ -16,7 +16,7 @@ public:
     /**
      * @brief 传感器数据获取时的时间戳
      */
-    COMBINE_TIME_STAMPED;
+    virtual const ITimeStamped& GetTimeStamped() const = 0;
     /**
      * @brief 求解好的装甲板三维信息
      *

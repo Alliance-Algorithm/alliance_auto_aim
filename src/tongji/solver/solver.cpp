@@ -303,7 +303,7 @@ Solver::Solver(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
     : pimpl_(std::make_unique<SolverImpl>(R_camera2gimbal, R_gimbal2world, t_camera2gimbal)) { }
 Solver::~Solver() = default;
 
-const std::time_t& Solver::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }
+const std::time_t Solver::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }
 
 std::shared_ptr<world_exe::interfaces::IArmorInCamera> Solver::SolvePnp(
     std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {

@@ -21,7 +21,7 @@ class IArmorInImage {
 
 public:
     /// 获取时间戳，标志其内容装甲板的准确时间点
-    COMBINE_TIME_STAMPED;
+    virtual const ITimeStamped& GetTimeStamped() const = 0;
 
     /**
      * @brief 获取某个车辆ID的装甲板集合

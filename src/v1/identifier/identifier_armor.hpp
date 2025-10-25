@@ -15,7 +15,7 @@ public:
 
     const interfaces::ITimeStamped& GetTimeStamped() const override { return *this; }
 
-    const std::time_t& GetTimeStamp() const override { return time_stamp_; };
+    const std::time_t GetTimeStamp() const override { return time_stamp_; };
 
     void SetArmors(const std::vector<data::ArmorImageSpacing>& armors) {
         for (auto& armors : armors_)

@@ -63,7 +63,7 @@ public:
         const world_exe::enumeration::ArmorIdFlag& armor_id) const override {
         return armors[world_exe::util::enumeration::GetIndex(armor_id)];
     }
-    const std::time_t& GetTimeStamp() const override { return time_stampe; }
+    const std::time_t GetTimeStamp() const override { return time_stampe; }
 
     std::time_t time_stampe = 0;
     std::vector<world_exe::data::ArmorCameraSpacing>
@@ -86,7 +86,7 @@ std::shared_ptr<world_exe::interfaces::IArmorInCamera> ArmorIPPEPnPSolver::Solve
     return armors_;
 }
 
-const std::time_t& ArmorIPPEPnPSolver::GetTimeStamp() const { return time_point_; }
+const std::time_t ArmorIPPEPnPSolver::GetTimeStamp() const { return time_point_; }
 
 ArmorIPPEPnPSolver::ArmorIPPEPnPSolver(const std::vector<cv::Point3d>& LargeArmorObjectPoints,
     const std::vector<cv::Point3d>& NormalArmorObjectPoints)
