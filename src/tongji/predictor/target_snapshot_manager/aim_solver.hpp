@@ -46,15 +46,16 @@ public:
 
         // 预测目标在未来 dt时间后的位置
         for (int i = 0; i < 10; ++i) {
-            double dt      = time_delay + prev_fly_time;
-            const auto aim = SelectPredictedAim(snapshot, dt);
-            if (!aim.has_value()) return { false, 0, 0, { }, 0 }; // failed: no valid aim point
+            double dt            = time_delay + prev_fly_time;
+            const auto aim_point = SelectPredictedAim(snapshot, dt);
+            if (!aim_point.has_value())
+                return { false, 0, 0, { }, 0 }; // failed: no valid aim point
 
-            const auto traj = SolveTrajectory(aim->head(3), bullet_speed);
+            const auto traj = SolveTrajectory(aim_point->head<3>(), bullet_speed);
             if (!traj.has_value()) return { false, 0, 0, { }, 0 }; // failed: trajectory unsolvable
 
             if (i > 0 && std::abs(traj->fly_time - prev_fly_time) < 0.001) {
-                final_aim_point  = *aim;
+                final_aim_point  = *aim_point;
                 final_trajectory = *traj;
                 converged        = true;
                 break;
@@ -63,7 +64,7 @@ public:
         }
         if (!converged) return { false, 0, 0, { }, 0 }; // failed: trajectory did not converge
 
-        const auto xyz     = final_aim_point.head(3);
+        const auto xyz     = final_aim_point.head<3>();
         const double yaw   = std::atan2(xyz.y(), xyz.x()) + yaw_offset_;
         const double pitch = -(final_trajectory.pitch + pitch_offset_);
         return { true, yaw, pitch, final_aim_point };
@@ -72,9 +73,11 @@ public:
 private:
     std::optional<Eigen::Vector4d> SelectPredictedAim(
         const std::shared_ptr<TargetSnapshot>& snapshot, const double& dt) const {
-        const auto& [selectable, aim_point] = aim_point_chooser_->ChooseAimArmor(
+        const auto& [selectable, aim_point_in_gimbal] = aim_point_chooser_->ChooseAimArmor(
             snapshot->Predict(dt), snapshot->GetPredictedXYZAList(dt), snapshot->GetID());
-        return selectable ? std::optional { aim_point } : std::nullopt;
+
+        if (!selectable) return std::nullopt;
+        return aim_point_in_gimbal;
     }
 
     std::optional<TrajectoryResult> SolveTrajectory(

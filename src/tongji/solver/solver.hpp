@@ -7,8 +7,7 @@ namespace world_exe::tongji::solver {
 class SolverImpl;
 class Solver final : public interfaces::IPnpSolver, public interfaces::ITimeStamped {
 public:
-    explicit Solver(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
-        Eigen::Vector3d t_camera2gimbal);
+    explicit Solver(const std::string& config_path);
     ~Solver();
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(

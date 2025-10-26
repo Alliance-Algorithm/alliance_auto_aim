@@ -19,8 +19,8 @@ public:
     using PredictorModel = EKFModel<11, 4>;
     using EKF            = ExtendedKalmanFilter<PredictorModel>;
 
-    LiveTarget(const Eigen::Vector3d& armor_xyz_in_world, const Eigen::Vector3d& armor_ypr_in_world,
-        const enumeration::CarIDFlag& car_id)
+    LiveTarget(const Eigen::Vector3d& armor_xyz_in_gimbal,
+        const Eigen::Vector3d& armor_ypr_in_gimbal, const enumeration::CarIDFlag& car_id)
         : last_see_time_stamp_(std::time(nullptr))
         , model_(car_id) {
         // x vx y vy z vz a w r l h
@@ -29,12 +29,12 @@ public:
         // l: r2 - r1
         // h: z2 - z1
         auto center_x =
-            armor_xyz_in_world[0] + model_.GetRadius() * std::cos(armor_ypr_in_world[0]);
+            armor_xyz_in_gimbal[0] + model_.GetRadius() * std::cos(armor_ypr_in_gimbal[0]);
         auto center_y =
-            armor_xyz_in_world[1] + model_.GetRadius() * std::sin(armor_ypr_in_world[0]);
-        auto center_z = armor_xyz_in_world[2];
+            armor_xyz_in_gimbal[1] + model_.GetRadius() * std::sin(armor_ypr_in_gimbal[0]);
+        auto center_z = armor_xyz_in_gimbal[2];
 
-        EKF::XVec x0 { center_x, 0, center_y, 0, center_z, 0, armor_ypr_in_world[0], 0,
+        EKF::XVec x0 { center_x, 0, center_y, 0, center_z, 0, armor_ypr_in_gimbal[0], 0,
             model_.GetRadius(), 0, 0 };
 
         EKF::PMat P0 = model_.GetP0Dig().asDiagonal();
@@ -62,15 +62,15 @@ public:
         return armors;
     }
 
-    void Update(const double& dt, const Eigen::Vector3d& armor_xyz_in_world,
-        const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world) {
+    void Update(const double& dt, const Eigen::Vector3d& armor_xyz_in_gimbal,
+        const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal) {
         // 装甲板匹配
-        int id =
-            model_.MatchArmor(ekf_->x, armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world);
+        int id = model_.MatchArmor(
+            ekf_->x, armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal);
         last_id_ = id;
         update_count_++;
 
-        Update_ypda(armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world, id, dt);
+        Update_ypda(armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal, id, dt);
 
         last_see_time_stamp_ = std::time(nullptr);
     }
@@ -93,15 +93,15 @@ private:
         return true;
     }
     // TODO:need to update correctly
-    void Update_ypda(const Eigen::Vector3d& armor_xyz_in_world,
-        const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world,
+    void Update_ypda(const Eigen::Vector3d& armor_xyz_in_gimbal,
+        const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal,
         const int& id, const double& dt) {
         // 观测jacobi
         auto H = model_.H(ekf_->x, id);
-        auto R = model_.R(armor_xyz_in_world, armor_ypr_in_world, armor_ypd_in_world, id);
+        auto R = model_.R(armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal, id);
 
-        const Eigen::Vector3d& ypd = armor_ypd_in_world;
-        const Eigen::Vector3d& ypr = armor_ypr_in_world;
+        const Eigen::Vector3d& ypd = armor_ypd_in_gimbal;
+        const Eigen::Vector3d& ypr = armor_ypr_in_gimbal;
 
         // 获得观测量
         EKF::ZVec z(4);

@@ -54,17 +54,16 @@ public:
                 .fire_allowance = false
             };
 
-        auto armors_in_gimbal_control = snapshot_manager->Predictor(control_delay_);
-        allowed_target_id_            = state_machine_->GetAllowdToFires();
+        auto armors_in_gimbal = snapshot_manager->Predictor(control_delay_);
+        allowed_target_id_    = state_machine_->GetAllowdToFires();
 
-        auto target_gimbal_spacing =
-            armors_in_gimbal_control->GetArmors(allowed_target_id_).front();
+        auto target_gimbal_spacing = armors_in_gimbal->GetArmors(allowed_target_id_).front();
 
         auto gimbal_command =
             std::dynamic_pointer_cast<TargetSnapshotManager>(snapshot_manager)->GetGimbalCommand();
 
         auto fire_command =
-            fire_decision_->ShouldFire(gimbal_command, target_gimbal_spacing.position);
+            fire_decision_->ShouldFire(gimbal_yaw_,gimbal_command, target_gimbal_spacing.position);
         firable_ = fire_command;
 
         data::FireControl result;

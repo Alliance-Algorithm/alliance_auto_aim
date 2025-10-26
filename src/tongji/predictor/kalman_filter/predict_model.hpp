@@ -116,8 +116,8 @@ public:
     };
 
 
-    auto MatchArmor(const XVec& x, const Eigen::Vector3d& armor_xyz_in_world,
-        const Eigen::Vector3d& armor_ypr_in_world, const Eigen::Vector3d& armor_ypd_in_world) const
+    auto MatchArmor(const XVec& x, const Eigen::Vector3d& armor_xyz_in_gimbal,
+        const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal) const
         ->const int {
 
         const auto& xyza_list = GetArmorXYZAList(x);
@@ -139,8 +139,8 @@ public:
         for (int i = 0; i < std::min(3, armor_num_); ++i) {
             const auto& xyza = xyza_i_list[i].first;
             auto ypd         = util::math::xyz2ypd(xyza.head(3));
-            double error     = std::abs(util::math::clamp_pm_pi(armor_ypr_in_world(0) - xyza(3)))
-                + std::abs(util::math::clamp_pm_pi(armor_ypd_in_world(0) - ypd(0)));
+            double error     = std::abs(util::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - xyza(3)))
+                + std::abs(util::math::clamp_pm_pi(armor_ypd_in_gimbal(0) - ypd(0)));
 
             if (error < min_error) {
                 min_error = error;
@@ -204,14 +204,14 @@ public:
         return H_armor_ypda * H_armor_xyza;
     }
 
-    auto R(const Eigen::Vector3d& armor_xyz_in_world, const Eigen::Vector3d& armor_ypr_in_world,
-        const Eigen::Vector3d& armor_ypd_in_world, int id) const -> RMat const {
+    auto R(const Eigen::Vector3d& armor_xyz_in_gimbal, const Eigen::Vector3d& armor_ypr_in_gimbal,
+        const Eigen::Vector3d& armor_ypd_in_gimbal, int id) const -> RMat const {
         // Eigen::VectorXd R_dig{{4e-3, 4e-3, 1, 9e-2}};
-        auto center_yaw  = std::atan2(armor_xyz_in_world(1), armor_xyz_in_world(0));
-        auto delta_angle = util::math::clamp_pm_pi(armor_ypr_in_world(0) - center_yaw);
+        auto center_yaw  = std::atan2(armor_xyz_in_gimbal(1), armor_xyz_in_gimbal(0));
+        auto delta_angle = util::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - center_yaw);
         RDig R_dig(4);
         R_dig << 4e-3, 4e-3, log(std::abs(delta_angle) + 1) + 1,
-            log(std::abs(armor_ypd_in_world(2)) + 1) / 200 + 9e-2;
+            log(std::abs(armor_ypd_in_gimbal(2)) + 1) / 200 + 9e-2;
 
         // 测量过程噪声偏差的方差
         return R_dig.asDiagonal();

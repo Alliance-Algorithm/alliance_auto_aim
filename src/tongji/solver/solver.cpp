@@ -1,14 +1,21 @@
 #include "solver.hpp"
 
+#include <chrono>
 #include <memory>
+
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/eigen.hpp>
+#include <opencv2/core/mat.hpp>
+#include <vector>
+#include <yaml-cpp/yaml.h>
 
 #include "data/armor_camera_spacing.hpp"
-#include "data/armor_gimbal_control_spacing.hpp"
+#include "data/armor_image_spaceing.hpp"
+#include "enum/armor_id.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
 #include "solved_armor.hpp"
+
 #include "util/coordinate.hpp"
 #include "util/index.hpp"
 #include "util/math.hpp"
@@ -16,11 +23,14 @@ namespace world_exe::tongji::solver {
 
 class SolverImpl {
 public:
-    SolverImpl(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
-        Eigen::Vector3d t_camera2gimbal)
-        : R_camera2gimbal_(R_camera2gimbal)
-        , R_gimbal2world_(R_gimbal2world)
-        , t_camera2gimbal_(t_camera2gimbal) { }
+    SolverImpl(const std::string& config_path) {
+        const auto yaml           = YAML::LoadFile(config_path);
+        auto R_gimbalcamera_data  = yaml["R_gimbal2camera"].as<std::vector<double>>();
+        auto t_gimbal2camera_data = yaml["t_gimbal2camera"].as<std::vector<double>>();
+        Eigen::Matrix3d R_muzzle2camera_ =
+            Eigen::Matrix<double, 3, 3, Eigen::RowMajor>(R_gimbalcamera_data.data());
+        t_gimbal2camera_ = Eigen::Matrix<double, 3, 1>(t_gimbal2camera_data.data());
+    }
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(
         std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
@@ -31,15 +41,13 @@ public:
             const auto& armors   = armors_in_image->GetArmors(armor_id);
             for (const auto& armor : armors) {
                 auto solved_armor = Solve(armor);
-                if (solved_armor.has_value()) {
-                    armor_plates.emplace_back(solved_armor.value());
-                }
+                armor_plates.emplace_back(solved_armor);
             }
         }
         return std::make_shared<SolvedArmor>(armor_plates);
     }
 
-    std::optional<world_exe::data::ArmorCameraSpacing> Solve(
+    world_exe::data::ArmorCameraSpacing Solve(
         const world_exe::data::ArmorImageSpacing& armor_in_image) const {
         const auto& object_points = armor_in_image.isLargeArmor
             ? parameters::Robomaster::LargeArmorObjectPointsOpencv
@@ -59,78 +67,39 @@ public:
         Eigen::Matrix3d R_armor2camera;
         cv::cv2eigen(rmat, R_armor2camera);
 
-        Eigen::Quaterniond orientation_in_camera(R_armor2camera);
-
-        world_exe::data::ArmorCameraSpacing armor_in_camera;
-        auto orientation_ros = util::coordinate::opencv2ros_orientation(orientation_in_camera);
-        orientation_ros.normalize();
-        armor_in_camera.id          = armor_in_image.id;
-        armor_in_camera.position    = util::coordinate::opencv2ros_position(xyz_in_camera);
-        armor_in_camera.orientation = orientation_ros;
-
-        if (armor_in_camera.position.norm() > MaxArmorDistance) {
-            return { };
-        }
+        const auto armor_in_camera =
+            convert_to_ros_spacing(armor_in_image.id, xyz_in_camera, R_armor2camera);
         return armor_in_camera;
     }
 
-    world_exe::data::ArmorGimbalControlSpacing OptimizeYaw(
-        const world_exe::data::ArmorImageSpacing& armor_in_image,
-        const world_exe::data::ArmorCameraSpacing& armor_in_camera) const {
-
-        Eigen::Vector3d armor_in_camera_ocv =
-            util::coordinate::ros2opencv_position(armor_in_camera.position);
-        Eigen::Vector3d armor_xyz_in_gimbal =
-            R_camera2gimbal_ * armor_in_camera_ocv + t_camera2gimbal_;
-        Eigen::Vector3d armor_xyz_in_world = R_gimbal2world_ * armor_xyz_in_gimbal; // why no t?
-
-        Eigen::Quaterniond armor_orientation_in_camera_ocv =
-            util::coordinate::ros2opencv_orientation(armor_in_camera.orientation);
-        Eigen::Matrix3d R_armor2camera_ocv    = armor_orientation_in_camera_ocv.toRotationMatrix();
-        Eigen::Matrix3d R_armor2gimbal        = R_camera2gimbal_ * R_armor2camera_ocv;
-        Eigen::Matrix3d R_armor2world_initial = R_gimbal2world_ * R_armor2gimbal;
-
-        Eigen::Vector3d armor_ypr_in_world =
-            util::math::matrix_to_euler(R_armor2world_initial, 2, 1, 0);
-        // double initial_yaw = armor_ypr_in_world[0];
-
-        Eigen::Vector3d gimbal_ypr = util::math::matrix_to_euler(R_gimbal2world_, 2, 1, 0);
+    auto OptimizeYaw(const data::ArmorImageSpacing& armor_in_image, const double& gimbal_yaw,
+        const double& armor_yaw_in_gimbal, const Eigen::Vector3d& armor_xyz_in_gimbal) const
+        -> const double {
 
         constexpr double SEARCH_RANGE = 140; // degree
-        auto yaw0 = util::math::clamp_pm_pi(gimbal_ypr[0] - SEARCH_RANGE / 2 * CV_PI / 180.0);
+
+        const auto yaw0 = util::math::clamp_pm_pi(gimbal_yaw - SEARCH_RANGE / 2 * CV_PI / 180.0);
 
         auto min_error = 1e10;
-        auto best_yaw  = armor_ypr_in_world[0];
-
+        auto best_yaw  = armor_yaw_in_gimbal;
         for (int i = 0; i < SEARCH_RANGE; i++) {
             double yaw = util::math::clamp_pm_pi(yaw0 + i * CV_PI / 180.0);
             auto error = ArmorReprojectionError(
-                armor_in_image, armor_xyz_in_world, yaw, (i - SEARCH_RANGE / 2) * CV_PI / 180.0);
-
+                armor_in_image, armor_xyz_in_gimbal, yaw, (i - SEARCH_RANGE / 2) * CV_PI / 180.0);
             if (error < min_error) {
                 min_error = error;
                 best_yaw  = yaw;
             }
         }
-
-        armor_ypr_in_world[0] = best_yaw;
-
-        Eigen::Matrix3d R_armor2world_optimized = util::math::euler_to_matrix(armor_ypr_in_world);
-
-        Eigen::Quaterniond orientation_in_world(R_armor2world_optimized);
-        orientation_in_world.normalize();
-
-        world_exe::data::ArmorGimbalControlSpacing result;
-        result.id          = armor_in_camera.id;
-        result.position    = armor_xyz_in_world;
-        result.orientation = orientation_in_world;
-        return result;
+        return best_yaw;
     }
 
-    const std::time_t& GetTimeStamp() const { return time_stamp_; }
+    const std::time_t GetTimeStamp() const {
+        return time_stamp::TimeStamp(std::chrono::steady_clock::now()).GetTimeStamp();
+    }
 
 private:
-    std::vector<cv::Point2d> ReprojectArmor(const Eigen::Vector3d& xyz_in_world, const double& yaw,
+    std::vector<cv::Point2d> ReprojectArmor(const Eigen::Vector3d& xyz_in_gimbal, const double& yaw,
         const bool& is_large, const enumeration::ArmorIdFlag& id) const {
         auto sin_yaw = std::sin(yaw);
         auto cos_yaw = std::cos(yaw);
@@ -141,26 +110,24 @@ private:
         auto cos_pitch = std::cos(pitch);
 
         // clang-format off
-  const Eigen::Matrix3d R_armor2world {
-    {cos_yaw * cos_pitch, -sin_yaw, cos_yaw * sin_pitch},
-    {sin_yaw * cos_pitch,  cos_yaw, sin_yaw * sin_pitch},
-    {         -sin_pitch,        0,           cos_pitch}
+        const Eigen::Matrix3d R_armor2gimbal {
+          {cos_yaw * cos_pitch, -sin_yaw, cos_yaw * sin_pitch},
+          {sin_yaw * cos_pitch,  cos_yaw, sin_yaw * sin_pitch},
+          {         -sin_pitch,        0,           cos_pitch}
   };
         // clang-format on
 
         // get R_armor2camera t_armor2camera
-        const Eigen::Vector3d& t_armor2world = xyz_in_world;
-        Eigen::Matrix3d R_armor2camera =
-            R_camera2gimbal_.transpose() * R_gimbal2world_.transpose() * R_armor2world;
-        Eigen::Vector3d t_armor2camera = R_camera2gimbal_.transpose()
-            * (R_gimbal2world_.transpose() * t_armor2world - t_camera2gimbal_);
+        Eigen::Matrix3d R_armor2camera = R_gimbal2camera_ * R_armor2gimbal;
+        Eigen::Vector3d t_armor2camera = (R_gimbal2camera_ * xyz_in_gimbal + t_gimbal2camera_);
 
         // get rvec tvec
         cv::Vec3d rvec;
         cv::Mat R_armor2camera_cv;
-        cv::eigen2cv(R_armor2camera, R_armor2camera_cv);
+        cv::eigen2cv(util::coordinate::ros2opencv_rotation(R_armor2camera), R_armor2camera_cv);
         cv::Rodrigues(R_armor2camera_cv, rvec);
-        cv::Vec3d tvec(t_armor2camera[0], t_armor2camera[1], t_armor2camera[2]);
+        const auto t_armor2camera_cv = util::coordinate::ros2opencv_position(t_armor2camera);
+        cv::Vec3d tvec(t_armor2camera_cv[0], t_armor2camera_cv[1], t_armor2camera_cv[2]);
 
         // reproject
         std::vector<cv::Point2d> image_points;
@@ -174,11 +141,10 @@ private:
     }
 
     double ArmorReprojectionError(const world_exe::data::ArmorImageSpacing& armor_in_image,
-        const Eigen::Vector3d& armor_xyz_in_world, const double& yaw,
+        const Eigen::Vector3d& armor_xyz_in_gimbal, const double& yaw,
         const double& inclined) const {
-
-        auto image_points =
-            ReprojectArmor(armor_xyz_in_world, yaw, armor_in_image.isLargeArmor, armor_in_image.id);
+        const auto image_points = ReprojectArmor(
+            armor_xyz_in_gimbal, yaw, armor_in_image.isLargeArmor, armor_in_image.id);
         auto error = 0.0;
         for (int i = 0; i < 4; i++)
             error += cv::norm(armor_in_image.image_points[i] - image_points[i]);
@@ -187,8 +153,8 @@ private:
         return error;
     }
 
-    double OupostReprojectionError(world_exe::data::ArmorImageSpacing armor_in_image,
-        Eigen::Vector3d armor_xyz_in_world, const double& pitch) const {
+    double OutpostReprojectionError(world_exe::data::ArmorImageSpacing armor_in_image,
+        Eigen::Vector3d armor_xyz_in_gimbal, const double& pitch) const {
 
         // solve
         const auto& object_points = (armor_in_image.isLargeArmor)
@@ -201,21 +167,20 @@ private:
             parameters::HikCameraProfile::get_distortion_parameters(), rvec, tvec, false,
             cv::SOLVEPNP_IPPE);
 
-        Eigen::Vector3d xyz_in_camera;
-        cv::cv2eigen(tvec, xyz_in_camera);
+        Eigen::Vector3d xyz_in_camera_cv;
+        cv::cv2eigen(tvec, xyz_in_camera_cv);
+        auto xyz_in_camera = util::coordinate::opencv2ros_position(xyz_in_camera_cv);
 
         cv::Mat rmat;
         cv::Rodrigues(rvec, rmat);
-        Eigen::Matrix3d R_armor2camera;
-        cv::cv2eigen(rmat, R_armor2camera);
-        Eigen::Matrix3d R_armor2gimbal = R_camera2gimbal_ * R_armor2camera;
-        Eigen::Matrix3d R_armor2world  = R_gimbal2world_ * R_armor2gimbal;
+        Eigen::Matrix3d R_armor2camera_cv;
+        cv::cv2eigen(rmat, R_armor2camera_cv);
+        auto R_armor2camera = util::coordinate::opencv2ros_rotation(R_armor2camera_cv);
+
+        Eigen::Matrix3d R_armor2gimbal = R_gimbal2camera_.transpose() * R_armor2camera;
         auto armor_ypr_in_gimbal       = util::math::matrix_to_euler(R_armor2gimbal, 2, 1, 0);
-        auto armor_ypr_in_world        = util::math::matrix_to_euler(R_armor2world, 2, 1, 0);
 
-        auto yaw          = armor_ypr_in_world[0];
-        auto xyz_in_world = armor_xyz_in_world;
-
+        auto yaw     = armor_ypr_in_gimbal[0];
         auto sin_yaw = std::sin(yaw);
         auto cos_yaw = std::cos(yaw);
 
@@ -223,26 +188,23 @@ private:
         auto cos_pitch = std::cos(pitch);
 
         // clang-format off
-  const Eigen::Matrix3d _R_armor2world {
-    {cos_yaw * cos_pitch, -sin_yaw, cos_yaw * sin_pitch},
-    {sin_yaw * cos_pitch,  cos_yaw, sin_yaw * sin_pitch},
-    {         -sin_pitch,        0,           cos_pitch}
-  };
+        const Eigen::Matrix3d _R_armor2gimbal {
+          {cos_yaw * cos_pitch, -sin_yaw, cos_yaw * sin_pitch},
+          {sin_yaw * cos_pitch,  cos_yaw, sin_yaw * sin_pitch},
+          {         -sin_pitch,        0,           cos_pitch}};
         // clang-format on
 
         // get R_armor2camera t_armor2camera
-        const Eigen::Vector3d& t_armor2world = xyz_in_world;
-        Eigen::Matrix3d _R_armor2camera =
-            R_camera2gimbal_.transpose() * R_gimbal2world_.transpose() * _R_armor2world;
-        Eigen::Vector3d t_armor2camera = R_camera2gimbal_.transpose()
-            * (R_gimbal2world_.transpose() * t_armor2world - t_camera2gimbal_);
+        Eigen::Matrix3d _R_armor2camera = R_gimbal2camera_ * _R_armor2gimbal;
+        Eigen::Vector3d t_armor2camera  = R_gimbal2camera_ * armor_xyz_in_gimbal + t_gimbal2camera_;
 
         // get rvec tvec
         cv::Vec3d _rvec;
-        cv::Mat R_armor2camera_cv;
-        cv::eigen2cv(_R_armor2camera, R_armor2camera_cv);
-        cv::Rodrigues(R_armor2camera_cv, _rvec);
-        cv::Vec3d _tvec(t_armor2camera[0], t_armor2camera[1], t_armor2camera[2]);
+        cv::Mat _R_armor2camera_cv;
+        cv::eigen2cv(util::coordinate::ros2opencv_rotation(_R_armor2camera), _R_armor2camera_cv);
+        cv::Rodrigues(_R_armor2camera_cv, _rvec);
+        const auto t_armor2camera_cv = util::coordinate::ros2opencv_position(t_armor2camera);
+        cv::Vec3d _tvec(t_armor2camera_cv[0], t_armor2camera_cv[1], t_armor2camera_cv[2]);
 
         // reproject
         std::vector<cv::Point2d> image_points;
@@ -289,18 +251,27 @@ private:
         return cost;
     }
 
-private:
-    Eigen::Matrix3d R_camera2gimbal_;
-    Eigen::Matrix3d R_gimbal2world_;
-    Eigen::Vector3d t_camera2gimbal_;
-    inline constexpr static const double MaxArmorDistance = 15.0;
+    data::ArmorCameraSpacing convert_to_ros_spacing(const enumeration::ArmorIdFlag& id,
+        const Eigen::Vector3d& xyz_in_opencv, const Eigen::Matrix3d& R_armor2camera_opencv) const {
+        world_exe::data::ArmorCameraSpacing armor_in_camera;
 
-    std::time_t time_stamp_ { 0 };
+        armor_in_camera.position = util::coordinate::opencv2ros_position(xyz_in_opencv);
+        Eigen::Matrix3d R_in_ros = util::coordinate::opencv2ros_rotation(R_armor2camera_opencv);
+        Eigen::Quaterniond orientation_ros(R_in_ros);
+        orientation_ros.normalize();
+        armor_in_camera.id          = id;
+        armor_in_camera.orientation = orientation_ros;
+
+        return armor_in_camera;
+    }
+
+private:
+    Eigen::Matrix3d R_gimbal2camera_;
+    Eigen::Vector3d t_gimbal2camera_;
 };
 
-Solver::Solver(Eigen::Matrix3d R_camera2gimbal, Eigen::Matrix3d R_gimbal2world,
-    Eigen::Vector3d t_camera2gimbal)
-    : pimpl_(std::make_unique<SolverImpl>(R_camera2gimbal, R_gimbal2world, t_camera2gimbal)) { }
+Solver::Solver(const std::string& config_path)
+    : pimpl_(std::make_unique<SolverImpl>(config_path)) { }
 Solver::~Solver() = default;
 
 const std::time_t Solver::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }

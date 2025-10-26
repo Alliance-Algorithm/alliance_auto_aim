@@ -37,5 +37,7 @@ pitch_offset: -0.5 # degree
 comming_angle: 60 # degree
 leaving_angle: 20 # degree
 
-
+#####-----solver parameters-----#####
+R_muzzle2camera:
+t_muzzle2camera:
 

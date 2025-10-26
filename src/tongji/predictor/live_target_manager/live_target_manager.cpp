@@ -90,10 +90,10 @@ private:
             if (armors_list.empty()) return;
 
             const auto& armor                  = armors_list.front();
-            const Eigen::Vector3d xyz_in_world = transform * armor.position;
-            const Eigen::Vector3d ypr_in_world = rotation_matrix.eulerAngles(2, 1, 0); // ZYX
+            const Eigen::Vector3d xyz_in_gimbal = transform * armor.position;
+            const Eigen::Vector3d ypr_in_gimbal = rotation_matrix.eulerAngles(2, 1, 0); // ZYX
             targets_map_[id] =
-                std::move(std::make_shared<LiveTarget>(xyz_in_world, ypr_in_world, id));
+                std::move(std::make_shared<LiveTarget>(xyz_in_gimbal, ypr_in_gimbal, id));
         }
     }
 
@@ -109,10 +109,10 @@ private:
         if (armors_list.empty()) return;
 
         const auto& armor                  = armors_list.front();
-        const Eigen::Vector3d xyz_in_world = transform * armor.position;
-        const Eigen::Vector3d ypr_in_world = rotation_matrix.eulerAngles(2, 1, 0); // ZYX
+        const Eigen::Vector3d xyz_in_gimbal = transform * armor.position;
+        const Eigen::Vector3d ypr_in_gimbal = rotation_matrix.eulerAngles(2, 1, 0); // ZYX
         targets_map_[tracking_id_]->Update(static_cast<double>(now - last_update_timestamp_),
-            xyz_in_world, ypr_in_world, util::math::xyz2ypd(xyz_in_world));
+            xyz_in_gimbal, ypr_in_gimbal, util::math::xyz2ypd(xyz_in_gimbal));
     }
 
     std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> targets_map_;
