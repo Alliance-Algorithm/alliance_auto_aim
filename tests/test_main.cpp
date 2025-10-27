@@ -6,6 +6,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <parameters/params_system_v1.hpp>
+#include "sync_test.cpp"
 
 using namespace world_exe::v1::pnpsolver;
 using world_exe::parameters::Robomaster;
@@ -17,6 +18,11 @@ TEST_P(PnpsolverTest,AbilityTest)
 {
     ArmorIPPEPnPSolver pnp_solver_test_v1(Robomaster::NormalArmorObjectPointsOpencv,Robomaster::LargeArmorObjectPointsOpencv);
     RunTest();
+}
+
+TEST(V1Test,SyncTest)
+{
+    world_exe::tests::sync::sync_test_main();
 }
 
 

@@ -8,6 +8,7 @@
 #include "interfaces/armor_in_camera.hpp"
 #include "interfaces/armor_in_image.hpp"
 #include "interfaces/predictor_update_package.hpp"
+#include "interfaces/time_stamped.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
@@ -32,12 +33,31 @@ using namespace v1;
 using namespace parameters;
 using namespace std::chrono;
 
+class Combined final : public interfaces::IPreDictorUpdatePackage, interfaces::ITimeStamped{
+public:
+    virtual const std::time_t& GetTimeStamp() const{ return data1_.camera_capture_begin_time_stamp; };
+    const world_exe::interfaces::ITimeStamped& GetTimeStamped() const {return *this;}
+    std::shared_ptr<world_exe::interfaces::IArmorInCamera> GetArmors() const{return data2_;};
+    Eigen::Affine3d GetTransform() const {return data1_.camera_to_gimbal;};
+
+    // but why?
+    Combined(const data::CameraGimbalMuzzleSyncData& data1, std::shared_ptr<world_exe::interfaces::IArmorInCamera> data2)
+        : data1_(data1)
+        , data2_(data2){
+    }
+    Combined()  = delete;
+    ~Combined() = default;
+private:
+    const data::CameraGimbalMuzzleSyncData& data1_;
+    const std::shared_ptr<world_exe::interfaces::IArmorInCamera> data2_;
+};
+
 class world_exe::v1::SystemV1::Impl{
 public:
     Impl(const bool& debug) : debug(debug) {
         time_point_     = std::chrono::steady_clock::now();
         predictor       = std::make_shared<predictor::PredictorManager>(); 
-        sync            = std::make_shared<world_exe::v1::Syncer>();
+        sync            = std::make_shared<world_exe::v1::Syncer>(seconds(2),6e-6);
         state_machine   = std::make_shared<world_exe::v1::state_machine::StateMachine>();
         identifier      = std::make_shared<identifier::Identifier>(
                             ParamsForSystemV1::szu_model_path(),
@@ -74,17 +94,16 @@ public:
 
         const auto& solved          = armor_pnp->SolvePnp(armors);
 
-        sync                        ->set_armor_pnp(solved);
-        const auto& [pack, check]   = sync->await(0.1);
-
+        const auto& [pack, check]   = sync->get_data(solved->GetTimeStamped().GetTimeStamp());
+        
         if(!check) [[unlikely]]     return;
 
         time_point_                 = std::chrono::steady_clock::now();
         state_machine               ->Update(flag);
         const auto& fire_targets    = state_machine->GetAllowdToFires();
-        
-        predictor                   ->Update(pack);
-        const auto& time            = pack->GetTimeStamped().GetTimeStamp();
+        auto combined               = std::make_shared<Combined>(pack, solved);
+        predictor                   ->Update(combined);
+        const auto& time            = combined->GetTimeStamped().GetTimeStamp();
         const auto& armor3d         = predictor->Predict(fire_targets,time);
         fire_control                ->set_armor(armor3d);
 
@@ -107,14 +126,14 @@ public:
             solved);
         core::EventBus::Publish<std::shared_ptr<interfaces::IPreDictorUpdatePackage>>(
             parameters::ParamsForSystemV1::tracker_update_event, 
-            pack);
+            combined);
         core::EventBus::Publish<enumeration::CarIDFlag>(
             parameters::ParamsForSystemV1::car_tracing_event, 
             state_machine->GetAllowdToFires());
     }
 
     void set_transfroms(const data::CameraGimbalMuzzleSyncData& data){
-        sync->set_camera_sync_data(data);
+        sync->set_data(data);
     }
 
     data::FireControl control(){

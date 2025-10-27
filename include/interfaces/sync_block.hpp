@@ -11,7 +11,10 @@ namespace world_exe::interfaces {
 template <class T> class ISyncBlock {
 
 public:
-    virtual std::tuple<std::shared_ptr<T>, bool> await(double t_second) = 0;
+
+    virtual void set_data(const T& camera_data);
+
+    virtual std::tuple<T, bool> get_data(time_t timestamp);
 
     virtual ~ISyncBlock() = default;
 };
