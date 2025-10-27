@@ -21,9 +21,9 @@
 #include "util/math.hpp"
 namespace world_exe::tongji::solver {
 
-class SolverImpl {
+class Solver::Impl {
 public:
-    SolverImpl(const std::string& config_path) {
+    Impl(const std::string& config_path) {
         const auto yaml           = YAML::LoadFile(config_path);
         auto R_gimbalcamera_data  = yaml["R_gimbal2camera"].as<std::vector<double>>();
         auto t_gimbal2camera_data = yaml["t_gimbal2camera"].as<std::vector<double>>();
@@ -31,9 +31,7 @@ public:
             Eigen::Matrix<double, 3, 3, Eigen::RowMajor>(R_gimbalcamera_data.data());
         t_gimbal2camera_ = Eigen::Matrix<double, 3, 1>(t_gimbal2camera_data.data());
 
-        reprojection_util_ = std::make_unique<ReprojectionUtil>(R_gimbal2camera_, t_gimbal2camera_,
-            parameters::HikCameraProfile::get_intrinsic_parameters(),
-            parameters::HikCameraProfile::get_distortion_parameters());
+        reprojection_util_ = std::make_unique<ReprojectionUtil>(R_gimbal2camera_, t_gimbal2camera_);
     }
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> EstimateAllArmorPoses(
@@ -132,7 +130,7 @@ private:
 };
 
 Solver::Solver(const std::string& config_path)
-    : pimpl_(std::make_unique<SolverImpl>(config_path)) { }
+    : pimpl_(std::make_unique<Impl>(config_path)) { }
 Solver::~Solver() = default;
 
 const std::time_t Solver::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }

@@ -4,7 +4,6 @@
 #include "interfaces/time_stamped.hpp"
 
 namespace world_exe::tongji::solver {
-class SolverImpl;
 
 struct PnPResultInGimbal {
     Eigen::Vector3d xyz_in_gimbal;
@@ -32,7 +31,9 @@ public:
     Solver& operator=(Solver&&) noexcept = default;
 
 private:
-    std::unique_ptr<SolverImpl> pimpl_;
+    class Impl;
+
+    std::unique_ptr<Impl> pimpl_;
 };
 
 }

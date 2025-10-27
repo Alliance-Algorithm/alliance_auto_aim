@@ -9,11 +9,9 @@
 
 namespace world_exe::tongji::predictor {
 
-class LiveTargetManagerImpl;
 class LiveTargetManager final : public interfaces::ITargetPredictor {
 public:
-   LiveTargetManager(
-    const std::string& config_path, const double& time_delay, const double& timeout_sec=0.1);
+    LiveTargetManager(const std::string& config_path, const double& timeout_sec = 0.1);
     ~LiveTargetManager();
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> Predict(
@@ -22,8 +20,7 @@ public:
         const enumeration ::ArmorIdFlag& id) const override;
 
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
-        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now,
-        const double& bullet_speed);
+        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now);
 
     auto GetAllowedTargetID() const -> enumeration::ArmorIdFlag const;
 
@@ -33,7 +30,8 @@ public:
     LiveTargetManager& operator=(LiveTargetManager&&) noexcept = default;
 
 private:
-    std::unique_ptr<LiveTargetManagerImpl> pimpl_;
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 };
 
 }

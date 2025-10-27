@@ -19,13 +19,10 @@ namespace world_exe::tongji::solver {
 
 class ReprojectionUtil {
 public:
-    explicit ReprojectionUtil(const Eigen::Matrix3d& R_gimbal2camera,
-        const Eigen::Vector3d& t_gimbal2camera, const cv::Mat& camera_matrix,
-        const cv::Mat& distort_coeffs)
+    explicit ReprojectionUtil(
+        const Eigen::Matrix3d& R_gimbal2camera, const Eigen::Vector3d& t_gimbal2camera)
         : R_gimbal2camera_(R_gimbal2camera)
-        , t_gimbal2camera_(t_gimbal2camera)
-        , camera_matrix_(camera_matrix)
-        , distort_coeffs_(distort_coeffs) { }
+        , t_gimbal2camera_(t_gimbal2camera) { }
 
     std::vector<cv::Point2d> ReprojectWithYpr(const Eigen::Vector3d& xyz_in_gimbal,
         const double& yaw, const double& pitch, const bool& is_large) const {
@@ -150,7 +147,5 @@ private:
 
     Eigen::Matrix3d R_gimbal2camera_;
     Eigen::Vector3d t_gimbal2camera_;
-    const cv::Mat camera_matrix_;
-    const cv::Mat distort_coeffs_;
 };
 }

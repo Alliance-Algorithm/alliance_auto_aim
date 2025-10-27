@@ -8,14 +8,14 @@
 
 namespace world_exe::tongji::state_machine {
 
-class StateMachineImpl {
+class StateMachine::Impl {
 public:
-    StateMachineImpl(std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager)
+    Impl(std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager)
         : live_target_manager_(std::move(live_target_manager)) { }
 
     const enumeration::CarIDFlag& GetAllowdToFires() const { return target_ids_; }
 
-    void Update() {
+    auto Update() -> void {
         auto live_target_manager =
             std::dynamic_pointer_cast<predictor::LiveTargetManager>(live_target_manager_);
         target_ids_ = live_target_manager->GetAllowedTargetID();
@@ -28,11 +28,12 @@ private:
 
 StateMachine::StateMachine(
     std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager)
-    : pimpl_(std::make_unique<StateMachineImpl>(live_target_manager)) { }
+    : pimpl_(std::make_unique<Impl>(live_target_manager)) { }
 StateMachine::~StateMachine() = default;
 
 const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const {
     return pimpl_->GetAllowdToFires();
 }
 
+auto StateMachine::Update() const -> void { return pimpl_->Update(); }
 }

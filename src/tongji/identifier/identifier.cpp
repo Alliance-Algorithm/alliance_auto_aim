@@ -26,11 +26,11 @@
 #include "util/stringifier.hpp"
 
 namespace world_exe::tongji::identifier {
-
-class IdentifierImpl {
+// TODO:need to refact
+class Identifier::Impl {
 public:
-    explicit IdentifierImpl(const std::string& config_path, const std::string& save_path,
-        const bool& debug, const bool& record)
+    explicit Impl(const std::string& config_path, const std::string& save_path, const bool& debug,
+        const bool& record)
         : classifier_(std::make_unique<Classifier>(config_path))
         , save_path_(save_path)
         , debug_(debug)
@@ -341,7 +341,7 @@ private:
 
 Identifier::Identifier(const std::string& config_path, const std::string& save_path,
     const bool& debug, const bool& record)
-    : pimpl_(std::make_unique<IdentifierImpl>(config_path, save_path, debug, record)) { }
+    : pimpl_(std::make_unique<Impl>(config_path, save_path, debug, record)) { }
 Identifier::~Identifier() = default;
 
 const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>

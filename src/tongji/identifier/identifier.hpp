@@ -38,7 +38,6 @@ struct Lightbar {
     }
 };
 
-class IdentifierImpl;
 class Identifier final : public interfaces::IIdentifier {
 public:
     explicit Identifier(const std::string& config_path, const std::string& save_path,
@@ -56,7 +55,8 @@ public:
     Identifier& operator=(Identifier&&) noexcept = default;
 
 private:
-    std::unique_ptr<IdentifierImpl> pimpl_;
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 };
 
 }

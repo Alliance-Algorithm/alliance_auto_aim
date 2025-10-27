@@ -8,7 +8,6 @@
 #include "interfaces/predictor.hpp"
 
 namespace world_exe::tongji::predictor {
-class TargetSnapshotManagerImpl;
 struct GimbalCommand {
     double yaw;
     double pitch;
@@ -19,7 +18,7 @@ public:
     TargetSnapshotManager(const std::string& config_path, const enumeration::ArmorIdFlag& id,
         const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
             live_target_map,
-        const std::time_t& now, const double& bullet_speed);
+        const std::time_t& now);
     ~TargetSnapshotManager();
 
     const enumeration ::ArmorIdFlag& GetId() const override;
@@ -34,6 +33,7 @@ public:
     TargetSnapshotManager& operator=(TargetSnapshotManager&&) noexcept = default;
 
 private:
-    std::unique_ptr<TargetSnapshotManagerImpl> pimpl_;
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 };
 }

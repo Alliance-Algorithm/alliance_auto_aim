@@ -23,9 +23,9 @@ using CarIDFlag             = enumeration::CarIDFlag;
 using LiveTargetManager     = predictor::LiveTargetManager;
 using TimeStamp             = time_stamp::TimeStamp;
 
-class FireControllerImpl {
+class FireController::Impl {
 public:
-    FireControllerImpl(const std::string& config_path,
+    Impl(const std::string& config_path,
         std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
         : allowed_target_id_(CarIDFlag::None)
@@ -63,7 +63,7 @@ public:
             std::dynamic_pointer_cast<TargetSnapshotManager>(snapshot_manager)->GetGimbalCommand();
 
         auto fire_command =
-            fire_decision_->ShouldFire(gimbal_yaw_,gimbal_command, target_gimbal_spacing.position);
+            fire_decision_->ShouldFire(gimbal_yaw_, gimbal_command, target_gimbal_spacing.position);
         firable_ = fire_command;
 
         data::FireControl result;
@@ -105,9 +105,8 @@ private:
 FireController::FireController(const std::string& config_path,
     std::shared_ptr<interfaces::ICarState> state_machine,
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
-    : pimpl_(
-          std::make_unique<FireControllerImpl>(config_path, state_machine, live_target_manager)) { }
-
+    : pimpl_(std::make_unique<Impl>(config_path, state_machine, live_target_manager)) { }
+FireController::~FireController() = default;
 const data ::FireControl FireController::CalculateTarget(const std ::time_t& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);
 }

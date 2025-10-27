@@ -10,12 +10,12 @@
 
 namespace world_exe::tongji::fire_control {
 
-class FireControllerImpl;
 class FireController final : public interfaces::IFireControl {
 public:
     FireController(const std::string& config_path,
         std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager);
+    ~FireController();
 
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const override;
     const enumeration ::CarIDFlag GetAttackCarId() const override;
@@ -30,7 +30,8 @@ public:
     FireController& operator=(FireController&&) noexcept = default;
 
 private:
-    std::unique_ptr<FireControllerImpl> pimpl_;
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 };
 
 }

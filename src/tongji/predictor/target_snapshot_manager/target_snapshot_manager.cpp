@@ -14,17 +14,16 @@
 
 namespace world_exe::tongji::predictor {
 
-class TargetSnapshotManagerImpl {
+class TargetSnapshotManager::Impl {
 public:
-    TargetSnapshotManagerImpl(const std::string& config_path, const enumeration::ArmorIdFlag& id,
+    Impl(const std::string& config_path, const enumeration::ArmorIdFlag& id,
         const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
             live_target_map,
-        const std::time_t& now, const double& bullet_speed)
+        const std::time_t& now)
         : aim_solver_(std::make_unique<predictor::AimingSolver>(config_path))
         , snapshots_(BuildSnapshots(live_target_map))
         , now_(now)
         , ids_(id)
-        , bullet_speed_(bullet_speed)
         , gimbal_command_({ std::numeric_limits<double>::quiet_NaN(),
               std::numeric_limits<double>::quiet_NaN() }) {
 
@@ -33,6 +32,7 @@ public:
         decision_speed_        = yaml["decision_speed"].as<double>();
         high_speed_delay_time_ = yaml["high_speed_delay_time"].as<double>();
         low_speed_delay_time_  = yaml["low_speed_delay_time"].as<double>();
+        bullet_speed_          = yaml["bullet_spped"].as<double>();
     }
 
     const enumeration::ArmorIdFlag& GetId() const { return ids_; }
@@ -85,7 +85,7 @@ private:
     const std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> snapshots_;
     const std::time_t& now_;
     const enumeration::ArmorIdFlag ids_;
-    const double bullet_speed_;
+    double bullet_speed_;
     mutable GimbalCommand gimbal_command_;
     double decision_speed_;
     double high_speed_delay_time_;
@@ -97,9 +97,8 @@ TargetSnapshotManager::TargetSnapshotManager(const std::string& config_path,
     const enumeration::ArmorIdFlag& id,
     const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
         live_target_map,
-    const std::time_t& now, const double& bullet_speed)
-    : pimpl_(std::make_unique<TargetSnapshotManagerImpl>(
-          config_path, id, live_target_map, now, bullet_speed)) { }
+    const std::time_t& now)
+    : pimpl_(std::make_unique<Impl>(config_path, id, live_target_map, now)) { }
 TargetSnapshotManager::~TargetSnapshotManager() = default;
 
 const enumeration ::ArmorIdFlag& TargetSnapshotManager::GetId() const { return pimpl_->GetId(); }
