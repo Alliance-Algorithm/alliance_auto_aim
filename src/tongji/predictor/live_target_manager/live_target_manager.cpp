@@ -26,6 +26,17 @@ public:
         , tracking_id_(enumeration::CarIDFlag::None)
         , config_path_(config_path) { }
 
+    /*
+    不懂为什么要实现这个接口，不需要这个返回值
+    std::shared_ptr<interfaces::IArmorInGimbalControl>，吧？
+
+    原因是：卡尔曼滤波器 更改状态变量x的值 的操纵
+    写在了update函数中，这里的predict是没有副作用的预测，
+    但是又没考虑飞行时间，理论上来说，误差更大了，
+    需要得到的是考虑飞行时间得到的  std::shared_ptr<interfaces::IArmorInGimbalControl>
+    所以目前认为它是多余的
+    */
+
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& flag, const std::time_t& time_stamp) {
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
@@ -40,23 +51,30 @@ public:
         }
 
         return std::make_shared<InGimbalControlArmor>(result, time_stamp);
-    } // TODO: ** 目前 ** 我认为这个函数是多余的
+    }
 
+    /*
+    猜测接口的意思是通过外界传入id来 获得对应的预测器（副本），
+    而从外界传入的id是从  const CarIDFlag GetAttackCarId() const这类接口中传入的，
+    但是我具体的id已经存在了targets_map_中，无需从外部传入
+
+    哦，原来是这样，怪不得不知道传啥参数进去
+    */
     std::shared_ptr<interfaces::IPredictor> GetPredictor(
         const enumeration::ArmorIdFlag& flag) const {
 
-        if (targets_map_.empty()) return nullptr; // TODO
+        if (targets_map_.empty()) return nullptr;
 
         return std::make_shared<TargetSnapshotManager>(
             config_path_, flag, targets_map_, last_update_timestamp_);
     }
 
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
-        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now) {
+        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const double& dt) {
 
         UpdateTimeStamp(data->GetTimeStamped().GetTimeStamp());
         UpdateTargetMap(data);
-        UpdateTarget(data, armors_in_image, now);
+        UpdateTarget(data, armors_in_image, dt);
     }
 
     auto GetAllowedTargetID() const -> enumeration::CarIDFlag const {
@@ -70,7 +88,7 @@ private:
     void UpdateTimeStamp(const time_t& time_stamp) { last_update_timestamp_ = time_stamp; }
     void UpdateTargetMap(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
         const Eigen::Affine3d transform       = data->GetTransform();
-        const Eigen::Matrix3d rotation_matrix = transform.linear();
+        const Eigen::Matrix3d rotation_matrix = transform.rotation();
         const auto armors_interface           = data->GetArmors();
 
         targets_map_.clear();
@@ -131,7 +149,7 @@ void LiveTargetManager::Update(std::shared_ptr<interfaces::IPreDictorUpdatePacka
     const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now) {
     return pimpl_->Update(data, armors_in_image, now);
 }
-auto LiveTargetManager::GetAllowedTargetID() const -> enumeration::ArmorIdFlag const {
-    return pimpl_->GetAllowedTargetID();
-}
+// auto LiveTargetManager::GetAllowedTargetID() const -> enumeration::ArmorIdFlag const {
+//     return pimpl_->GetAllowedTargetID();
+// }
 }

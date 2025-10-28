@@ -15,7 +15,6 @@ public:
 
     const enumeration ::CarIDFlag& GetAllowdToFires() const override;
     StateMachine(std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager);
-    auto Update() const -> void;
 
     StateMachine(const StateMachine&)                = delete;
     StateMachine& operator=(const StateMachine&)     = delete;

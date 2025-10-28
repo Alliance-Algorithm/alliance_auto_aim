@@ -26,7 +26,6 @@
 #include "util/stringifier.hpp"
 
 namespace world_exe::tongji::identifier {
-// TODO:need to refact
 class Identifier::Impl {
 public:
     explicit Impl(const std::string& config_path, const std::string& save_path, const bool& debug,

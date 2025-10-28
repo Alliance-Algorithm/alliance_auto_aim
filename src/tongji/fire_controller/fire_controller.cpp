@@ -37,7 +37,21 @@ public:
         control_delay_ = yaml["control_delay"].as<double>();
     }
 
-    //  TODO:time_duration 没有使用
+    //  TODO:time_duration 没有使用，详见std::shared_ptr<interfaces::IArmorInGimbalControl>
+    //  Predictor(conststd::time_t&time_stamp) const这个接口的注释
+
+    /*
+    从这个接口：std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(const
+    std::time_t&time_stamp) const 已经可以得到std::shared_ptr<interfaces::IArmorInGimbalControl>了
+    接下来是要 据此得到最终的控制指令data ::FireControl
+
+    为了得到最终的控制指令，data ::FireControl，需要对GimbalCommand进行判断，
+    当GimbalCommand不突变 且 云台位于合适位置时，返回有效指令
+
+    因为在这个函数中，从std::shared_ptr<interfaces::IArmorInGimbalControl>中选出了开火的对象，
+    需要保存用于作为这个接口const CarIDFlag GetAttackCarId() const的返回值，所以只好破坏const约束了
+    */
+
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const {
 
         if (!fire_decision_ || !state_machine_ || !live_target_manager_)
@@ -52,7 +66,7 @@ public:
                 .fire_allowance = false
             };
 
-        // TODO:接口语义不明
+        // TODO:接口语义不明，此函数传入的参数有待修正
         auto armors_in_gimbal = snapshot_manager->Predictor(
             std::chrono::steady_clock::now().time_since_epoch().count());
         allowed_target_id_ = state_machine_->GetAllowdToFires();
@@ -73,18 +87,17 @@ public:
         return result;
     }
 
+    /*
+    感觉这个和状态机那边的GetAllowdToFires()有点重复了
+    */
     const CarIDFlag GetAttackCarId() const {
         if (firable_) return allowed_target_id_;
         return CarIDFlag::None;
     }
 
-    void Update(std::shared_ptr<interfaces::IArmorInImage> armors, const double& gimbal_yaw) {
-        UpdateGimbalPosition(gimbal_yaw);
-    }
-
-private:
     void UpdateGimbalPosition(const double& gimbal_yaw) { gimbal_yaw_ = gimbal_yaw; };
 
+private:
     double gimbal_yaw_;
     double control_delay_;
 
@@ -106,5 +119,8 @@ const data ::FireControl FireController::CalculateTarget(const std ::time_t& tim
 }
 
 const CarIDFlag FireController::GetAttackCarId() const { return pimpl_->GetAttackCarId(); }
+void FireController::UpdateGimbalPosition(const double& gimbal_yaw) {
+    return pimpl_->UpdateGimbalPosition(gimbal_yaw);
+};
 
 }

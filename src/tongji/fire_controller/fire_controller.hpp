@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "../time_stamp/time_stamp.hpp"
-#include "interfaces/armor_in_image.hpp"
 #include "interfaces/car_state.hpp"
 #include "interfaces/fire_controller.hpp"
 #include "interfaces/target_predictor.hpp"
@@ -19,10 +18,9 @@ public:
 
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const override;
     const enumeration ::CarIDFlag GetAttackCarId() const override;
-
-    void Update(std::shared_ptr<interfaces::IArmorInImage> armors, const double& gimbal_yaw);
-
     time_stamp::TimeStamp GetTimeStamp() const;
+
+    void UpdateGimbalPosition(const double& gimbal_yaw);
 
     FireController(const FireController&)                = delete;
     FireController& operator=(const FireController&)     = delete;

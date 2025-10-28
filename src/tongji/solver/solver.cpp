@@ -43,17 +43,6 @@ public:
         return std::make_shared<SolvedArmor>(armor_plates);
     }
 
-    data::ArmorCameraSpacing EstimatePose(
-        const world_exe::data::ArmorImageSpacing& armor_in_image) const {
-        const auto& [xyz_in_camera, R_armor2camera] = EstimatePnp(armor_in_image);
-
-        data::ArmorCameraSpacing pose;
-        pose.id          = armor_in_image.id;
-        pose.orientation = Eigen::Quaterniond(R_armor2camera).normalized();
-        pose.position    = xyz_in_camera;
-        return pose;
-    }
-
     auto SetCamera2Gimbal(
         const Eigen::Matrix3d& R_camera2gimbal, const Eigen::Vector3d& t_camera2gimbal) -> void {
         R_camera2gimbal_ = R_camera2gimbal;
@@ -98,6 +87,17 @@ public:
     }
 
 private:
+    data::ArmorCameraSpacing EstimatePose(
+        const world_exe::data::ArmorImageSpacing& armor_in_image) const {
+        const auto& [xyz_in_camera, R_armor2camera] = EstimatePnp(armor_in_image);
+
+        data::ArmorCameraSpacing pose;
+        pose.id          = armor_in_image.id;
+        pose.orientation = Eigen::Quaterniond(R_armor2camera).normalized();
+        pose.position    = xyz_in_camera;
+        return pose;
+    }
+
     auto EstimatePnp(const world_exe::data::ArmorImageSpacing& armor_in_image) const
         -> const std::tuple<Eigen::Vector3d, Eigen::Matrix3d> {
         const auto& object_points = armor_in_image.isLargeArmor
@@ -142,12 +142,15 @@ std::shared_ptr<world_exe::interfaces::IArmorInCamera> Solver::SolvePnp(
     std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
     return pimpl_->EstimateAllArmorPoses(armors_in_image);
 }
-
-auto Solver::OptimizeYawByReprojection(const data::ArmorImageSpacing& armor_in_image,
-    const Eigen::Vector3d& armor_xyz_in_gimbal, const double& gimbal_yaw,
-    const double& initial_armor_yaw_in_gimbal) const -> const double {
-    return OptimizeYawByReprojection(
-        armor_in_image, armor_xyz_in_gimbal, gimbal_yaw, initial_armor_yaw_in_gimbal);
+void Solver::SetCamera2Gimbal(
+    const Eigen::Matrix3d& R_camera2gimbal, const Eigen::Vector3d& t_camera2gimbal) {
+    pimpl_->SetCamera2Gimbal(R_camera2gimbal, t_camera2gimbal);
 }
 
+auto Solver::CalculateOptimizeYaw(const data::ArmorImageSpacing& armor_in_image,
+    const Eigen::Vector3d& armor_xyz_in_gimbal, const double& gimbal_yaw,
+    const double& initial_armor_yaw_in_gimbal) const -> const double {
+    return pimpl_->CalculateOptimizeYaw(
+        armor_in_image, armor_xyz_in_gimbal, gimbal_yaw, initial_armor_yaw_in_gimbal);
+}
 }

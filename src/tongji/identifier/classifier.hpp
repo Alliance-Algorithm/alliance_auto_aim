@@ -12,6 +12,8 @@
 #include "enum/armor_id.hpp"
 
 namespace world_exe::tongji::identifier {
+
+// TODO:早期代码，和深大模型不适配，需要TODOTODO
 class Classifier final {
 public:
     explicit Classifier(const std::string& config_path) {
@@ -24,8 +26,6 @@ public:
         auto ovmodel    = core_.read_model(model_path);
         compiled_model_ = core_.compile_model(
             ovmodel, "AUTO", ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY));
-
-        // TODO:需要对模型做适配
     }
 
     void Classify(const cv::Mat& armor_pattern, enumeration::ArmorIdFlag& armor_id,

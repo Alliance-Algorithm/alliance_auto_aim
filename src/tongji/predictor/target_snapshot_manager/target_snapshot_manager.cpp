@@ -37,6 +37,23 @@ public:
 
     const enumeration::ArmorIdFlag& GetId() const { return ids_; }
 
+    /*
+    通过aim_solver_->SolveAimSolution()来解算瞄准击打点
+    aim_solution.aim_point，从而得到返回值std::shared_ptr<interfaces::IArmorInGimbalControl>
+    所以此处进行飞行时间的迭代
+    但飞行时间的迭代需要考虑到时间延迟（图像传输这些等），这个参数在这个接口中体现：
+    data::FireControl CalculateTarget(const std::time_t& time_duration)
+
+    很显然为了实现这个接口，得到返回值std::shared_ptr<interfaces::IArmorInGimbalControl>，
+    我需要进行飞行时间的迭代，但在这个接口中我没法把实际的时间延迟传入（我认为这个值是动态的，从上层调用它的地方传入）
+    v1的版本，传入的是 时间间隔（延迟），但这个接口的含义是传入
+    某个时间点返回装甲板信息，而非时间间隔
+
+    如果是在data::FireControl CalculateTarget(const std::time_t&
+    time_duration)这里进行飞行时间的迭代，那么已经得到了data::FireControl，也就是最后的命令，
+    那就不需要这个接口来得到中间量std::shared_ptr<interfaces::IArmorInGimbalControl>
+
+    */
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
         const std::time_t& time_stamp) const {
 
@@ -67,6 +84,10 @@ public:
         return std::make_shared<InGimbalControlArmor>(result, time_stamp);
     }
 
+    /*
+    飞行时间的迭代得到一些有用的信息，比如说，云台控制指令GimbalCommand，
+    需要保存一下，后续需要和当前云台yaw来分析这个指令有没有突变，但是有const约束，虽然好像问题不大
+    */
     auto GetGimbalCommand() const -> GimbalCommand const { return gimbal_command_; }
 
 private:

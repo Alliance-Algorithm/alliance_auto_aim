@@ -35,7 +35,7 @@ using namespace std::chrono;
 
 class Combined final : public interfaces::IPreDictorUpdatePackage, interfaces::ITimeStamped{
 public:
-    virtual const std::time_t& GetTimeStamp() const{ return data1_.camera_capture_begin_time_stamp; };
+    virtual const std::time_t GetTimeStamp() const{ return data1_.camera_capture_begin_time_stamp; };
     const world_exe::interfaces::ITimeStamped& GetTimeStamped() const {return *this;}
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> GetArmors() const{return data2_;};
     Eigen::Affine3d GetTransform() const {return data1_.camera_to_gimbal;};

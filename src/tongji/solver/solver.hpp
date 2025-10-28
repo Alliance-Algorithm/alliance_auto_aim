@@ -12,10 +12,11 @@ public:
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(
         std::shared_ptr<interfaces::IArmorInImage> armor) override;
-
     const std::time_t GetTimeStamp() const override;
 
-    auto OptimizeYawByReprojection(const data::ArmorImageSpacing& armor_in_image,
+    void SetCamera2Gimbal(
+        const Eigen::Matrix3d& R_camera2gimbal, const Eigen::Vector3d& t_camera2gimbal);
+    auto CalculateOptimizeYaw(const data::ArmorImageSpacing& armor_in_image,
         const Eigen::Vector3d& armor_xyz_in_gimbal, const double& gimbal_yaw,
         const double& initial_armor_yaw_in_gimbal) const -> const double;
 
