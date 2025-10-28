@@ -73,8 +73,9 @@ public:
 private:
     std::optional<Eigen::Vector4d> SelectPredictedAim(
         const std::shared_ptr<TargetSnapshot>& snapshot, const double& dt) const {
+
         const auto& [selectable, aim_point_in_gimbal] = aim_point_chooser_->ChooseAimArmor(
-            snapshot->Predict(dt), snapshot->GetPredictedXYZAList(dt), snapshot->GetID());
+            snapshot->GetPredictedX(dt), snapshot->GetPredictedXYZAList(dt), snapshot->GetID());
 
         if (!selectable) return std::nullopt;
         return aim_point_in_gimbal;

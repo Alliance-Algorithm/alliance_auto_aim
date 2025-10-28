@@ -9,7 +9,6 @@
 #include <opencv2/core/types.hpp>
 
 #include "data/armor_image_spaceing.hpp"
-#include "enum/armor_id.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
 #include "util/coordinate.hpp"
@@ -19,39 +18,17 @@ namespace world_exe::tongji::solver {
 
 class ReprojectionUtil {
 public:
-    explicit ReprojectionUtil(
-        const Eigen::Matrix3d& R_gimbal2camera, const Eigen::Vector3d& t_gimbal2camera)
-        : R_gimbal2camera_(R_gimbal2camera)
-        , t_gimbal2camera_(t_gimbal2camera) { }
+    ReprojectionUtil()  = default;
+    ~ReprojectionUtil() = default;
 
-    std::vector<cv::Point2d> ReprojectWithYpr(const Eigen::Vector3d& xyz_in_gimbal,
-        const double& yaw, const double& pitch, const bool& is_large) const {
+    double CalculateReprojectionError(const Eigen::Matrix3d& R_camera2gimbal,
+        const Eigen::Vector3d& t_gimbal2camera,
+        const world_exe::data::ArmorImageSpacing& armor_in_image,
+        const Eigen::Vector3d& armor_xyz_in_gimbal, const double& armor_yaw,
+        const double& armor_pitch, const double& inclined) const {
 
-        double sin_yaw = std::sin(yaw);
-        double cos_yaw = std::cos(yaw);
-
-        double sin_pitch = std::sin(pitch);
-        double cos_pitch = std::cos(pitch);
-
-        // clang-format off
-        const Eigen::Matrix3d R_armor2gimbal {
-          {cos_yaw * cos_pitch, -sin_yaw, cos_yaw * sin_pitch},
-          {sin_yaw * cos_pitch,  cos_yaw, sin_yaw * sin_pitch},
-          {         -sin_pitch,        0,           cos_pitch}
-        };
-        // clang-format on
-
-        return ReprojectWithR_gimbal(xyz_in_gimbal, R_armor2gimbal, is_large);
-    }
-
-    double CalculateYawError(const world_exe::data::ArmorImageSpacing& armor_in_image,
-        const Eigen::Vector3d& armor_xyz_in_gimbal, const double& armor_yaw_in_gimbal,
-        const double& inclined) const {
-        auto pitch =
-            (armor_in_image.id == enumeration::ArmorIdFlag::Outpost) ? -15.0 * CV_PI / 180.0 : 15.0;
-
-        auto image_points = ReprojectWithYpr(
-            armor_xyz_in_gimbal, armor_yaw_in_gimbal, pitch, armor_in_image.isLargeArmor);
+        auto image_points = ReprojectArmor(R_camera2gimbal, t_gimbal2camera, armor_xyz_in_gimbal,
+            armor_yaw, armor_pitch, armor_in_image.isLargeArmor);
 
         auto error = 0.0;
         for (int i = 0; i < 4; i++) {
@@ -63,44 +40,39 @@ public:
         return error;
     }
 
-    double CalculatePitchError(const world_exe::data::ArmorImageSpacing& armor_in_image,
-        const double& armor_yaw_in_gimbal, const Eigen::Vector3d& armor_xyz_in_gimbal,
-        const double& pitch) const {
-
-        auto image_points = ReprojectWithYpr(
-            armor_xyz_in_gimbal, armor_yaw_in_gimbal, pitch, armor_in_image.isLargeArmor);
-
-        auto error = 0.0;
-        for (int i = 0; i < 4; i++) {
-            error += cv::norm(armor_in_image.image_points[i] - image_points[i]);
-        }
-
-        return error;
-    }
-
 private:
-    auto TransformGimbalToCamera(const Eigen::Matrix3d& R_armor2gimbal,
-        const Eigen::Vector3d& xyz_in_gimbal, cv::Vec3d& rvec_out, cv::Vec3d& tvec_out) const
-        -> void {
+    std::vector<cv::Point2d> ReprojectArmor(const Eigen::Matrix3d& R_camera2gimbal,
+        const Eigen::Vector3d& t_gimbal2camera, const Eigen::Vector3d& armor_xyz_in_gimbal,
+        const double& armor_yaw, const double& armor_pitch, const bool& is_large) const {
 
-        // R_A->C = R_G->C * R_A->G
-        Eigen::Matrix3d R_armor2camera = R_gimbal2camera_ * R_armor2gimbal;
-        // t_A->C = R_G->C * P_G + t_G->C
-        Eigen::Vector3d t_armor2camera = R_gimbal2camera_ * xyz_in_gimbal + t_gimbal2camera_;
+        auto sin_yaw   = std::sin(armor_yaw);
+        auto cos_yaw   = std::cos(armor_yaw);
+        auto sin_pitch = std::sin(armor_pitch);
+        auto cos_pitch = std::cos(armor_pitch);
 
-        cv::Mat R_armor2camera_cv;
-        cv::eigen2cv(util::coordinate::ros2opencv_rotation(R_armor2camera), R_armor2camera_cv);
-        cv::Rodrigues(R_armor2camera_cv, rvec_out);
+        // clang-format off
+        const Eigen::Matrix3d R_armor2gimbal {
+          {cos_yaw * cos_pitch, -sin_yaw, cos_yaw * sin_pitch},
+          {sin_yaw * cos_pitch,  cos_yaw, sin_yaw * sin_pitch},
+          {         -sin_pitch,        0,           cos_pitch}
+        };
+        // clang-format on
 
-        const auto t_armor2camera_cv = util::coordinate::ros2opencv_position(t_armor2camera);
-        tvec_out = cv::Vec3d(t_armor2camera_cv[0], t_armor2camera_cv[1], t_armor2camera_cv[2]);
-    }
+        // get R_armor2camera t_armor2camera
+        const Eigen::Vector3d& t_armor2gimbal = armor_xyz_in_gimbal;
+        Eigen::Matrix3d R_armor2camera        = R_camera2gimbal.transpose() * R_armor2gimbal;
+        Eigen::Matrix3d R_armor2camera_cv = util::coordinate::ros2opencv_rotation(R_armor2camera);
 
-    std::vector<cv::Point2d> ReprojectWithR_gimbal(const Eigen::Vector3d& armor_xyz_in_gimbal,
-        const Eigen::Matrix3d& R_armor2gimbal, const bool& is_large) const {
+        Eigen::Vector3d t_armor2camera =
+            R_camera2gimbal.transpose() * (armor_xyz_in_gimbal) + t_gimbal2camera;
+        Eigen::Vector3d t_armor2camera_cv = util::coordinate::ros2opencv_position(t_armor2camera);
 
-        cv::Vec3d rvec, tvec;
-        TransformGimbalToCamera(R_armor2gimbal, armor_xyz_in_gimbal, rvec, tvec);
+        // get rvec tvec
+        cv::Vec3d rvec;
+        cv::Mat _R_armor2camera_cv;
+        cv::eigen2cv(R_armor2camera_cv, _R_armor2camera_cv);
+        cv::Rodrigues(_R_armor2camera_cv, rvec);
+        cv::Vec3d tvec(t_armor2camera_cv[0], t_armor2camera_cv[1], t_armor2camera_cv[2]);
 
         std::vector<cv::Point2d> image_points;
         const auto& object_points = (is_large)
@@ -144,8 +116,5 @@ private:
         }
         return cost;
     }
-
-    Eigen::Matrix3d R_gimbal2camera_;
-    Eigen::Vector3d t_gimbal2camera_;
 };
 }

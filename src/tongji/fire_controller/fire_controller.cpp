@@ -25,8 +25,7 @@ using TimeStamp             = time_stamp::TimeStamp;
 
 class FireController::Impl {
 public:
-    Impl(const std::string& config_path,
-        std::shared_ptr<interfaces::ICarState> state_machine,
+    Impl(const std::string& config_path, std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
         : allowed_target_id_(CarIDFlag::None)
         , firable_(false)
@@ -36,13 +35,12 @@ public:
 
         auto yaml      = YAML::LoadFile(config_path);
         control_delay_ = yaml["control_delay"].as<double>();
-        bullet_speed_  = yaml["bullet_speed"].as<double>();
     }
 
-    // TODO:std::time_t
+    //  TODO:time_duration 没有使用
     const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const {
 
-        if (!identified_armors_ || !fire_decision_ || !state_machine_ || !live_target_manager_)
+        if (!fire_decision_ || !state_machine_ || !live_target_manager_)
             return { .fire_allowance = false };
 
         auto converged_cars   = state_machine_->GetAllowdToFires();
@@ -54,8 +52,10 @@ public:
                 .fire_allowance = false
             };
 
-        auto armors_in_gimbal = snapshot_manager->Predictor(control_delay_);
-        allowed_target_id_    = state_machine_->GetAllowdToFires();
+        // TODO:接口语义不明
+        auto armors_in_gimbal = snapshot_manager->Predictor(
+            std::chrono::steady_clock::now().time_since_epoch().count());
+        allowed_target_id_ = state_machine_->GetAllowdToFires();
 
         auto target_gimbal_spacing = armors_in_gimbal->GetArmors(allowed_target_id_).front();
 
@@ -79,20 +79,14 @@ public:
     }
 
     void Update(std::shared_ptr<interfaces::IArmorInImage> armors, const double& gimbal_yaw) {
-        UpdateIdentifiedArmor(armors);
         UpdateGimbalPosition(gimbal_yaw);
     }
 
 private:
-    void UpdateIdentifiedArmor(std::shared_ptr<interfaces::IArmorInImage> armors) {
-        identified_armors_ = armors;
-    }
     void UpdateGimbalPosition(const double& gimbal_yaw) { gimbal_yaw_ = gimbal_yaw; };
 
     double gimbal_yaw_;
     double control_delay_;
-    double bullet_speed_;
-    std::shared_ptr<interfaces::IArmorInImage> identified_armors_;
 
     mutable CarIDFlag allowed_target_id_;
     mutable double firable_;

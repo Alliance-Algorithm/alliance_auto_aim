@@ -20,7 +20,8 @@ public:
         const enumeration ::ArmorIdFlag& id) const override;
 
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
-        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now);
+        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image,
+        const std::time_t& time_stamp);
 
     auto GetAllowedTargetID() const -> enumeration::ArmorIdFlag const;
 

@@ -5,15 +5,9 @@
 
 namespace world_exe::tongji::solver {
 
-struct PnPResultInGimbal {
-    Eigen::Vector3d xyz_in_gimbal;
-    Eigen::Matrix3d R_armor2gimbal;
-    Eigen::Vector3d xyz_in_camera;
-    Eigen::Matrix3d R_armor2camera;
-};
 class Solver final : public interfaces::IPnpSolver, public interfaces::ITimeStamped {
 public:
-    explicit Solver(const std::string& config_path);
+    explicit Solver();
     ~Solver();
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(

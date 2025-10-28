@@ -38,8 +38,7 @@ public:
 
     ~Tracker() = default;
 
-    auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image,
-        const std::time_t& now) noexcept -> enumeration::ArmorIdFlag const {
+    auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image) noexcept -> enumeration::ArmorIdFlag const {
         CheckCameraOffline();
         last_track_timestamp_ = std::chrono::steady_clock::now();
 

@@ -36,17 +36,18 @@ public:
     // }
     // TODO：
     auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> const {
-        return model_.GetArmorXYZAList(this->Predict(dt));
+        const auto [x_n, P_n] = ekf_.PredictOnce(dt);
+        return model_.GetArmorXYZAList(x_n);
     }
 
-    auto GetTimeStamp() const { return time_stamp_; }
-    auto GetID() const { return model_.GetID(); }
+    auto GetPredictedX(const double& dt) const -> const auto {
+        const auto& [x_n, P_n] = ekf_.PredictOnce(dt);
+        return x_n;
+    }
+
+    auto GetTimeStamp() const -> const auto { return time_stamp_; }
+    auto GetID() const -> const auto { return model_.GetID(); }
     auto GetEkfX() const { return ekf_.x; }
-
-    auto Predict(const double& dt) -> Eigen::Vector<double, 11> const {
-        auto predicted_x = model_.f(ekf_.x, dt);
-        return predicted_x;
-    }
 
 private:
     PredictorModel model_;

@@ -55,7 +55,7 @@ public:
         const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now) {
 
         UpdateTimeStamp(data->GetTimeStamped().GetTimeStamp());
-        UpdateTargetMap(data, now);
+        UpdateTargetMap(data);
         UpdateTarget(data, armors_in_image, now);
     }
 
@@ -68,8 +68,7 @@ public:
 
 private:
     void UpdateTimeStamp(const time_t& time_stamp) { last_update_timestamp_ = time_stamp; }
-    void UpdateTargetMap(
-        std::shared_ptr<interfaces::IPreDictorUpdatePackage> data, const std::time_t& now) {
+    void UpdateTargetMap(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
         const Eigen::Affine3d transform       = data->GetTransform();
         const Eigen::Matrix3d rotation_matrix = transform.linear();
         const auto armors_interface           = data->GetArmors();
@@ -85,18 +84,17 @@ private:
             const auto& armor                   = armors_list.front();
             const Eigen::Vector3d xyz_in_gimbal = transform * armor.position;
             const Eigen::Vector3d ypr_in_gimbal = rotation_matrix.eulerAngles(2, 1, 0); // ZYX
-            targets_map_[id] =
-                std::move(std::make_shared<LiveTarget>(xyz_in_gimbal, ypr_in_gimbal, id));
+            targets_map_[id] = std::make_shared<LiveTarget>(xyz_in_gimbal, ypr_in_gimbal, id);
         }
     }
 
     void UpdateTarget(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
-        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now) {
+        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const double& dt) {
         const Eigen::Affine3d transform       = data->GetTransform();
         const Eigen::Matrix3d rotation_matrix = transform.linear();
         const auto armors_interface           = data->GetArmors();
 
-        tracking_id_ = tracker_->SelectTrackingTargetID(armors_in_image, now);
+        tracking_id_ = tracker_->SelectTrackingTargetID(armors_in_image);
 
         const auto& armors_list = armors_interface->GetArmors(tracking_id_);
         if (armors_list.empty()) return;
@@ -104,8 +102,8 @@ private:
         const auto& armor                   = armors_list.front();
         const Eigen::Vector3d xyz_in_gimbal = transform * armor.position;
         const Eigen::Vector3d ypr_in_gimbal = rotation_matrix.eulerAngles(2, 1, 0); // ZYX
-        targets_map_[tracking_id_]->Update(static_cast<double>(now - last_update_timestamp_),
-            xyz_in_gimbal, ypr_in_gimbal, util::math::xyz2ypd(xyz_in_gimbal));
+        targets_map_[tracking_id_]->Update(
+            dt, xyz_in_gimbal, ypr_in_gimbal, util::math::xyz2ypd(xyz_in_gimbal));
     }
 
     std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> targets_map_;

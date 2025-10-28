@@ -32,7 +32,7 @@ public:
         decision_speed_        = yaml["decision_speed"].as<double>();
         high_speed_delay_time_ = yaml["high_speed_delay_time"].as<double>();
         low_speed_delay_time_  = yaml["low_speed_delay_time"].as<double>();
-        bullet_speed_          = yaml["bullet_spped"].as<double>();
+        bullet_speed_          = yaml["bullet_speed"].as<double>();
     }
 
     const enumeration::ArmorIdFlag& GetId() const { return ids_; }
@@ -47,7 +47,7 @@ public:
             auto ekf_x = snapshot.GetEkfX();
             const auto delay_time =
                 ekf_x[7] > decision_speed_ ? high_speed_delay_time_ : low_speed_delay_time_;
-            const auto dt = control_delay_time_ + delay_time; // TODO:add delta(now)?
+            const auto dt = control_delay_time_ + delay_time;
 
             auto aim_solution = aim_solver_->SolveAimSolution(
                 std::make_unique<TargetSnapshot>(snapshot), bullet_speed_, dt);
