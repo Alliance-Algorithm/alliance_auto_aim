@@ -6,11 +6,13 @@
 #include "../v1/sync/syncer.hpp"
 #include "core/event_bus.hpp"
 #include "parameters/params_system_v1.hpp"
+#include "parameters/profile.hpp"
 #include "tongji/fire_controller/fire_controller.hpp"
-#include "tongji/identifier/identifier.hpp"
+// #include "tongji/identifier/identifier.hpp"
 #include "tongji/predictor/live_target_manager/live_target_manager.hpp"
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
+#include "v1/identifier/identifier.hpp"
 namespace world_exe::tongji {
 using namespace std::chrono;
 
@@ -42,7 +44,11 @@ public:
         : debug(debug)
         , config_path_("")
         , save_path_("") {
-        identifier_          = std::make_unique<identifier::Identifier>(config_path_, save_path_);
+        identifier_          = std::make_unique<v1::identifier::Identifier>(
+                                parameters::ParamsForSystemV1::szu_model_path(),
+                                parameters::ParamsForSystemV1::device(),
+                                parameters::HikCameraProfile::get_width(),
+                                parameters::HikCameraProfile::get_height());
         pnp_solver_          = std::make_unique<solver::Solver>();
         live_target_manager_ = std::make_shared<predictor::LiveTargetManager>(config_path_);
         state_machine_       = std::make_shared<state_machine::StateMachine>();
@@ -62,8 +68,8 @@ public:
         const auto& [armors_in_image, flag] = identifier_->identify(raw);
         if (flag == enumeration::ArmorIdFlag::None) return;
 
-        const auto& [pack, check] =
-            syncer_->get_data(armors_in_image->GetTimeStamped().GetTimeStamp());
+        // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
+        const auto& [pack, check] = syncer_->get_data(armors_in_image->GetTimeStamped().GetTimeStamp());
         if (!check) return;
 
         const auto R_camera2gimbal = pack.camera_to_gimbal.rotation();
@@ -74,13 +80,19 @@ public:
 
         auto combined = std::make_shared<Combined>(pack, armors_in_camera);
 
-        live_target_manager_->Update(combined, armors_in_image, combined->GetTimeStamp());
+        live_target_manager_->Update(combined, armors_in_image);
+        
+        state_machine_ = std::make_shared<state_machine::StateMachine>(live_target_manager_);
 
         const auto target_id = state_machine_->GetAllowdToFires();
 
         const auto gimbal_yaw = R_camera2gimbal.eulerAngles(2, 1, 0)[0];
         fire_controller_->UpdateGimbalPosition(gimbal_yaw);
+
+        /// 这里应该有一个线程进行稳定的输出之类的
+        /// 轨迹规划器没有实现，先不管
         
+        core::EventBus::Publish<data::FireControl>(parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
     }
 
     void SetTransfroms(const data::CameraGimbalMuzzleSyncData& data) { syncer_->set_data(data); }
@@ -97,7 +109,7 @@ private:
     const std::string save_path_;
 
     std::chrono::steady_clock::time_point time_stamp_;
-    std::unique_ptr<identifier::Identifier> identifier_;
+    std::unique_ptr<v1::identifier::Identifier> identifier_;
     std::unique_ptr<solver::Solver> pnp_solver_;
     std::shared_ptr<state_machine::StateMachine> state_machine_;
     std::shared_ptr<predictor::LiveTargetManager> live_target_manager_;
