@@ -14,8 +14,8 @@ public:
 
     void RunableTest()
     {
-    auto mockarmor = MockArmorInImage::createMockArmorInImage();
-    pnp_solver_test->SolvePnp(mockarmor);
+        auto mockarmor = MockArmorInImage::createMockArmorInImage();
+        pnp_solver_test->SolvePnp(mockarmor);
     }
     void RunTest() {
         RunableTest();

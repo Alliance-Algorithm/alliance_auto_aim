@@ -1,24 +1,21 @@
 #pragma once
 
 #include "data/sync_data.hpp"
-#include "interfaces/armor_in_camera.hpp"
 #include "interfaces/predictor_update_package.hpp"
+#include <chrono>
 #include <interfaces/sync_block.hpp>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 
 namespace world_exe::v1 {
-class Syncer final
-    : public world_exe::interfaces::ISyncBlock<world_exe::interfaces::IPreDictorUpdatePackage> {
+class Syncer final : interfaces::ISyncBlock<data::CameraGimbalMuzzleSyncData> {
 public:
-    Syncer();
+    Syncer(std::chrono::seconds time_to_hold,long tolerable_ns = 4e6);
     ~Syncer();
 
-    void set_armor_pnp(const std::shared_ptr<interfaces::IArmorInCamera>& armor_pnp);
-    void set_camera_sync_data(const data::CameraGimbalMuzzleSyncData& camera_data);
+    void set_data(const data::CameraGimbalMuzzleSyncData& camera_data);
 
-    std::tuple<std::shared_ptr<world_exe::interfaces::IPreDictorUpdatePackage>, bool> await(
-        double t_second) override;
+    std::tuple<data::CameraGimbalMuzzleSyncData, bool> get_data(time_t timestamp);
 
 private:
     struct Impl;

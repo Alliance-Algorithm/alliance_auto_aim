@@ -1,81 +1,66 @@
 
 #include "v1/sync/syncer.hpp"
 #include "data/sync_data.hpp"
-#include "interfaces/armor_in_camera.hpp"
-#include "interfaces/predictor_update_package.hpp"
-#include "interfaces/time_stamped.hpp"
 #include <chrono>
 #include <interfaces/sync_block.hpp>
 #include <memory>
 
 namespace world_exe::v1 {
 
-struct Syncer::Impl final : public interfaces::IPreDictorUpdatePackage,
-                            public interfaces::ITimeStamped,
-                            public interfaces::IArmorInCamera {
+struct Syncer::Impl {
 
-    const ITimeStamped& GetTimeStamped() const override { return *this; }
+public:
+    Impl(std::chrono::seconds time_to_hold ,long tolerable_ns) 
+        :time_to_hold_(time_to_hold) 
+        ,tolerable_ns_(tolerable_ns) {}
 
-    const std::time_t GetTimeStamp() const override { return last_update_time_; }
+    void set_data(const data::CameraGimbalMuzzleSyncData& armor_pnp) {
+        
+        data_queue_.emplace_back(armor_pnp);
+        
+        long now_time = 
+            armor_pnp.camera_capture_begin_time_stamp 
+           -std::chrono::duration_cast<std::chrono::nanoseconds>(time_to_hold_).count(); 
 
-    std::shared_ptr<interfaces::IArmorInCamera> GetArmors() const override {
-        if (armors_loaded_ == nullptr) return std::make_shared<Impl>();
-        return armors_loaded_;
+        while(!data_queue_.empty() 
+            && data_queue_.front().camera_capture_begin_time_stamp < now_time) 
+        data_queue_.pop_front();
     }
 
-    /// Affine form image to gimbal_control
-    Eigen::Affine3d GetTransform() const final { return transform_loaded_; }
+    std::tuple<data::CameraGimbalMuzzleSyncData, bool> get_data(const time_t timestamp) {
 
-    const std::vector<data::ArmorCameraSpacing>& GetArmors(
-        const enumeration::ArmorIdFlag& armor_id) const override {
-        const static std::vector<data::ArmorCameraSpacing> empty {};
-        return empty;
-    };
 
-    std::shared_ptr<interfaces::IPreDictorUpdatePackage> await(std::time_t time) {
-        auto begin = std::chrono::steady_clock::now();
-        while ((std::chrono::steady_clock::now() - begin).count() < time) {
-            if (armors_loaded_ == nullptr) continue;
-            if (camera_sync_data_.camera_capture_begin_time_stamp == last_update_time_) continue;
+        if (data_queue_.empty())
+            return {data::CameraGimbalMuzzleSyncData{}, false};
 
-            return std::make_shared<Impl>(armors_loaded_, camera_sync_data_);
+        for(auto rit = data_queue_.rbegin(); rit != data_queue_.rend(); ++rit) 
+            if (rit->camera_capture_begin_time_stamp <= timestamp) {
+            return {*rit, true};
         }
-        return nullptr;
+        return {data::CameraGimbalMuzzleSyncData{},false};
     }
 
-    std::shared_ptr<interfaces::IArmorInCamera> armors_loaded_ = nullptr;
-    Eigen::Affine3d transform_loaded_                          = {};
-    data::CameraGimbalMuzzleSyncData camera_sync_data_         = {};
-    std::time_t last_update_time_                              = 0;
-
-    Impl()  = default;
     ~Impl() = default;
-    Impl(const std::shared_ptr<interfaces::IArmorInCamera>& armors_loaded,
-        const data::CameraGimbalMuzzleSyncData& camera_sync_data_)
-        : armors_loaded_(armors_loaded)
-        , transform_loaded_(camera_sync_data_.camera_to_gimbal) { }
 
 private:
+
+    std::list<data::CameraGimbalMuzzleSyncData> data_queue_;
+
+    const std::chrono::seconds  time_to_hold_;
+    const long                  tolerable_ns_;
 };
 
-Syncer::Syncer()
-    : pimpl_(std::make_unique<Impl>()) { }
+Syncer::Syncer(std::chrono::seconds time_to_hold, long tolerable_ns)
+    : pimpl_(std::make_unique<Impl>(time_to_hold, tolerable_ns)) { }
 
 Syncer::~Syncer() = default;
 
-void Syncer::set_armor_pnp(const std::shared_ptr<interfaces::IArmorInCamera>& armor_pnp) {
-    pimpl_->armors_loaded_ = armor_pnp;
+void Syncer::set_data(const data::CameraGimbalMuzzleSyncData& armor_pnp) {
+    pimpl_->set_data(armor_pnp);
 }
-void Syncer::set_camera_sync_data(const data::CameraGimbalMuzzleSyncData& camera_data) {
-    pimpl_->camera_sync_data_ = camera_data;
+std::tuple<data::CameraGimbalMuzzleSyncData, bool> Syncer::get_data(time_t timestamp) {
+    return pimpl_->get_data(timestamp);
 }
 
-std::tuple<std::shared_ptr<interfaces::IPreDictorUpdatePackage>, bool> Syncer::await(
-    double t_second) {
-    auto ret = pimpl_->await(static_cast<time_t>(t_second * 1e9));
-    if (ret != nullptr) last_ = ret;
-
-    return { last_, ret != nullptr };
-}
 
 }
