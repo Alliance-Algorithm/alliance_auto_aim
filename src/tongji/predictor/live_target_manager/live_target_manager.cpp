@@ -68,7 +68,7 @@ public:
         return std::make_shared<TargetSnapshotManager>(
             config_path_, flag, targets_map_, last_update_timestamp_);
     }
-
+    // 为何传递了一个time_t 给double
     void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
         const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const double& dt) {
 
@@ -145,9 +145,11 @@ std ::shared_ptr<interfaces::IPredictor> LiveTargetManager::GetPredictor(
     return pimpl_->GetPredictor(id);
 }
 
+static constexpr double cast_nanosec_sec(const long nanosec) {return nanosec * 1e-9;}
+
 void LiveTargetManager::Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
-    const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const std::time_t& now) {
-    return pimpl_->Update(data, armors_in_image, now);
+    const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image) {
+    return pimpl_->Update(data, armors_in_image, cast_nanosec_sec(data->GetTimeStamped().GetTimeStamp()));
 }
 // auto LiveTargetManager::GetAllowedTargetID() const -> enumeration::ArmorIdFlag const {
 //     return pimpl_->GetAllowedTargetID();
