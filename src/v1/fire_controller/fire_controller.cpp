@@ -2,7 +2,6 @@
 #include "./fire_controller.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/armor_in_gimbal_control.hpp"
-#include "interfaces/car_state.hpp"
 #include "interfaces/predictor.hpp"
 #include "trajectory.hpp"
 #include <ctime>

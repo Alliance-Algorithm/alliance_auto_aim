@@ -27,7 +27,7 @@ class FireController::Impl {
 public:
     Impl(const std::string& config_path, std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
-        : allowed_target_id_(CarIDFlag::None)
+        : locked_target(CarIDFlag::None)
         , firable_(false)
         , fire_decision_(std::make_unique<FireDecision>(config_path))
         , state_machine_(state_machine)
@@ -50,9 +50,11 @@ public:
 
     因为在这个函数中，从std::shared_ptr<interfaces::IArmorInGimbalControl>中选出了开火的对象，
     需要保存用于作为这个接口const CarIDFlag GetAttackCarId() const的返回值，所以只好破坏const约束了
+
+    - rep: 也许改个名字就好了
     */
 
-    const data ::FireControl CalculateTarget(const std ::time_t& time_duration) const {
+    const data ::FireControl CalculateTarget(const std ::time_t& time_from_tracker_timepoint) const {
 
         if (!fire_decision_ || !state_machine_ || !live_target_manager_)
             return { .fire_allowance = false };
@@ -66,13 +68,21 @@ public:
                 .fire_allowance = false
             };
 
-        // TODO:接口语义不明，此函数传入的参数有待修正
-        auto armors_in_gimbal = snapshot_manager->Predictor(
-            std::chrono::steady_clock::now().time_since_epoch().count());
-        allowed_target_id_ = state_machine_->GetAllowdToFires();
+        // - TODO:接口语义不明，此函数传入的参数有待修正
+        // - rep: 这里你需要算的不是程序执行时候的时间，而是预计的未来的某个时间的装甲板坐标
+        //      btw, 不计算飞行时间的话，获取这个predictor是为了什么，
+        //           为了击中未来的装甲板，需要使用某种算法去获取击中时候的装甲板位姿，然后反推云台位置
+        // FIXME: 火控系统错误
+        auto armors_in_gimbal = snapshot_manager->Predictor(time_from_tracker_timepoint + control_delay_);
+        auto lockable_target = state_machine_->GetAllowdToFires();
+        
+        // 逻辑真的是选择所有可以击打的装甲板的第一个吗，这里有问题
+        auto target_gimbal_spacing = armors_in_gimbal->GetArmors(lockable_target).front();
 
-        auto target_gimbal_spacing = armors_in_gimbal->GetArmors(allowed_target_id_).front();
+        locked_target =target_gimbal_spacing.id; 
 
+        // FIXME: 不要偷偷的指针转换
+        // 牵连太多，临时不好修
         auto gimbal_command =
             std::dynamic_pointer_cast<TargetSnapshotManager>(snapshot_manager)->GetGimbalCommand();
 
@@ -88,10 +98,11 @@ public:
     }
 
     /*
-    感觉这个和状态机那边的GetAllowdToFires()有点重复了
+    - 感觉这个和状态机那边的GetAllowdToFires()有点重复了
+    - rep: 不重复的，锁定和可锁定的差别（好名字，用了）
     */
     const CarIDFlag GetAttackCarId() const {
-        if (firable_) return allowed_target_id_;
+        if (firable_) return locked_target;
         return CarIDFlag::None;
     }
 
@@ -101,7 +112,7 @@ private:
     double gimbal_yaw_;
     double control_delay_;
 
-    mutable CarIDFlag allowed_target_id_;
+    mutable CarIDFlag locked_target;
     mutable double firable_;
 
     std::unique_ptr<FireDecision> fire_decision_;
