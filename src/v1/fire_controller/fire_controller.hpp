@@ -1,14 +1,14 @@
 #pragma once
 
 #include "data/fire_control.hpp"
-#include "interfaces/car_state.hpp"
 #include "interfaces/fire_controller.hpp"
 #include "interfaces/predictor.hpp"
+#include <chrono>
 #include <memory>
 namespace world_exe::v1::fire_control {
 class TracingFireControl final : public interfaces::IFireControl {
 public:
-    const data::FireControl CalculateTarget(const std::time_t& time_duration) const override;
+    const data::FireControl CalculateTarget(const std::chrono::seconds& time_duration) const override;
     const enumeration::CarIDFlag GetAttackCarId() const override;
     void set_armor(const std::shared_ptr<interfaces::IArmorInGimbalControl>& armors);
     void SetPredictor(const std::shared_ptr<interfaces::IPredictor>& predictor);

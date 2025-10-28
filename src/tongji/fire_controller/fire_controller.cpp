@@ -12,7 +12,6 @@
 #include "data/fire_control.hpp"
 #include "fire_decision.hpp"
 #include "interfaces/target_predictor.hpp"
-#include "tongji/time_stamp/time_stamp.hpp"
 
 namespace world_exe::tongji::fire_control {
 
@@ -21,7 +20,7 @@ using StateMachine          = state_machine::StateMachine;
 using IdentifiedArmor       = identifier::IdentifiedArmor;
 using CarIDFlag             = enumeration::CarIDFlag;
 using LiveTargetManager     = predictor::LiveTargetManager;
-using TimeStamp             = time_stamp::TimeStamp;
+using TimeStamp             = data::TimeStamp;
 
 class FireController::Impl {
 public:
@@ -34,7 +33,7 @@ public:
         , live_target_manager_(live_target_manager) {
 
         auto yaml      = YAML::LoadFile(config_path);
-        control_delay_ = yaml["control_delay"].as<double>();
+        control_delay_ = std::chrono::seconds{static_cast<long>(yaml["control_delay"].as<double>() * 1e9)};
     }
 
     //  TODO:time_duration 没有使用，详见std::shared_ptr<interfaces::IArmorInGimbalControl>
@@ -54,7 +53,7 @@ public:
     - rep: 也许改个名字就好了
     */
 
-    const data ::FireControl CalculateTarget(const std ::time_t& time_from_tracker_timepoint) const {
+    const data ::FireControl CalculateTarget(const std::chrono::seconds& time_from_tracker_timepoint) const {
 
         if (!fire_decision_ || !state_machine_ || !live_target_manager_)
             return { .fire_allowance = false };
@@ -63,7 +62,7 @@ public:
         auto snapshot_manager = live_target_manager_->GetPredictor(converged_cars);
         if (!snapshot_manager)
             return data::FireControl {
-                .time_stamp = TimeStamp(std::chrono::steady_clock::now()).GetTimeStamp(),
+                .time_stamp = data::TimeStamp{time_from_tracker_timepoint},
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false
             };
@@ -93,7 +92,7 @@ public:
         data::FireControl result;
         result.fire_allowance = fire_command;
         result.gimbal_dir << gimbal_command.yaw, gimbal_command.pitch, 0;
-        result.time_stamp = TimeStamp(std::chrono::steady_clock::now()).GetTimeStamp();
+        result.time_stamp = data::TimeStamp{std::chrono::steady_clock::now().time_since_epoch()};
         return result;
     }
 
@@ -110,7 +109,7 @@ public:
 
 private:
     double gimbal_yaw_;
-    double control_delay_;
+    std::chrono::seconds control_delay_;
 
     mutable CarIDFlag locked_target;
     mutable double firable_;
@@ -125,7 +124,7 @@ FireController::FireController(const std::string& config_path,
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
     : pimpl_(std::make_unique<Impl>(config_path, state_machine, live_target_manager)) { }
 FireController::~FireController() = default;
-const data ::FireControl FireController::CalculateTarget(const std ::time_t& time_duration) const {
+const data ::FireControl FireController::CalculateTarget(const std::chrono::seconds& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);
 }
 

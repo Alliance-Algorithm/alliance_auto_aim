@@ -39,6 +39,7 @@ target_link_libraries(alliance_auto_aim PUBLIC
   TBB::tbb
   openvino::runtime
   Ceres::ceres
+  yaml-cpp
 )
 
 # 安装规则

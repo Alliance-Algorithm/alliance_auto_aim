@@ -2,7 +2,7 @@
 
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
-#include "time_stamped.hpp"
+#include "data/time_stamped.hpp"
 #include <opencv2/core/core.hpp>
 #include <vector>
 
@@ -21,7 +21,7 @@ class IArmorInImage {
 
 public:
     /// 获取时间戳，标志其内容装甲板的准确时间点
-    virtual const ITimeStamped& GetTimeStamped() const = 0;
+    virtual const data::TimeStamp& GetTimeStamp() const = 0;
 
     /**
      * @brief 获取某个车辆ID的装甲板集合

@@ -1,6 +1,6 @@
 #pragma once
 #include "interfaces/armor_in_image.hpp"
-#include "interfaces/time_stamped.hpp"
+#include "data/time_stamped.hpp"
 #include <opencv2/opencv.hpp>
 #include <memory>
 #include <vector>
@@ -8,10 +8,10 @@
 #include <chrono>
 
 namespace world_exe::tests::mock{
-    class MockArmorInImage :public world_exe::interfaces::IArmorInImage,public world_exe::interfaces::ITimeStamped{
+    class MockArmorInImage :public world_exe::interfaces::IArmorInImage{
     public:
         std::vector<world_exe::data::ArmorImageSpacing> armors;
-        std::time_t time_stamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        data::TimeStamp time_stamp = data::TimeStamp(std::chrono::system_clock::now().time_since_epoch());
 
         MockArmorInImage(std::vector<world_exe::data::ArmorImageSpacing> armors):armors(armors){}
         ~MockArmorInImage() = default;
@@ -20,10 +20,9 @@ namespace world_exe::tests::mock{
         {
             return armors;
         }
-        const world_exe::interfaces::ITimeStamped& GetTimeStamped() const override {
-            return *this;
+        const world_exe::data::TimeStamp& GetTimeStamp() const override {
+            return time_stamp;
         }
-        const std::time_t& GetTimeStamp() const override { return time_stamp; }
         //MockArmorInImage工厂函数
         static std::shared_ptr<world_exe::tests::mock::MockArmorInImage> createMockArmorInImage(){  
             //Mock装甲板生成

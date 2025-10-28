@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../time_stamp/time_stamp.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/armor_in_gimbal_control.hpp"
 
@@ -14,8 +14,8 @@ namespace world_exe::tongji::predictor {
 class InGimbalControlArmor final : public interfaces::IArmorInGimbalControl {
 public:
     InGimbalControlArmor(const std::unordered_map<enumeration::ArmorIdFlag,
-                             std::vector<data::ArmorGimbalControlSpacing>>& all_armors,
-        const std::time_t& time_stamp)
+                         std::vector<data::ArmorGimbalControlSpacing>>& all_armors,
+                         const data::TimeStamp& time_stamp)
         : armors_map_(std::move(all_armors))
         , time_stamp_(time_stamp) { }
 
@@ -25,10 +25,10 @@ public:
         return it != armors_map_.end() ? it->second : empty;
     }
 
-    const interfaces::ITimeStamped& GetTimeStamped() const override { return time_stamp_; }
+    const data::TimeStamp& GetTimeStamp() const override { return time_stamp_; }
 
 private:
-    time_stamp::TimeStamp time_stamp_;
+    data::TimeStamp time_stamp_;
     std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
         armors_map_;
     static inline const std::vector<data::ArmorGimbalControlSpacing> empty={};

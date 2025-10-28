@@ -76,13 +76,11 @@ public:
     std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag> Identify(
         const cv::Mat& input_image) {
             
-        time_t time_now = std::chrono::steady_clock::now().time_since_epoch().count();
-        
         // 首先使用深度学习模型进行装甲板检测得到roi区域
         const auto armor_infos = model_infer(input_image);
         // 然后进行灯条匹配验证
         auto [a, b] = matchPlate(input_image, armor_infos);
-        a->time_stamp_ = time_now;
+        a->time_stamp_ = std::chrono::steady_clock::now().time_since_epoch();
         return {a, b};
     }
 

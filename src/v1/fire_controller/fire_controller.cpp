@@ -1,9 +1,11 @@
 
 #include "./fire_controller.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/enum_tools.hpp"
 #include "interfaces/armor_in_gimbal_control.hpp"
 #include "interfaces/predictor.hpp"
 #include "trajectory.hpp"
+#include <chrono>
 #include <ctime>
 #include <memory>
 
@@ -44,8 +46,8 @@ public:
         predictor_ = predictor;
     };
 
-    const world_exe::data::FireControl CalculateTarget(const std::time_t& time_duration) {
-        time_t fly_time        = 0;
+    const world_exe::data::FireControl CalculateTarget(const std::chrono::seconds& time_duration) {
+        std::chrono::seconds fly_time{0};
         const auto& pre1       = predictor_->Predictor(fly_time + time_duration + control_delay_);
         const auto& pre2       = pre1->GetArmors(predictor_->GetId());
         double min_angular_dis = 1e9;
@@ -71,13 +73,13 @@ public:
                 trajectory_solver::gravity_only(armors[index].position, velocity_begin_, gravity_);
         }
 
-        return { .time_stamp = fly_time + time_duration + control_delay_, .fire_allowance = true };
+        return { .time_stamp = data::TimeStamp{std::chrono::nanoseconds(fly_time + time_duration + control_delay_)}, .fire_allowance = true };
     }
 
 private:
     world_exe::enumeration::CarIDFlag tracing_ = enumeration::CarIDFlag::None;
     time_t time_predict_point_;
-    const time_t control_delay_;
+    const std::chrono::seconds control_delay_;
     const double velocity_begin_;
     const double gravity_;
     const world_exe::data::FireControl no_allow_ { .fire_allowance = false };
@@ -87,7 +89,7 @@ private:
 
 const world_exe::data::FireControl //
 world_exe::v1::fire_control::TracingFireControl::CalculateTarget(
-    const std::time_t& time_duration) const {
+    const std::chrono::seconds& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "armor_in_gimbal_control.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/predictor.hpp"
 #include <ctime>
@@ -22,7 +23,7 @@ public:
      * @return std::shared_ptr<interfaces::IArmorInGimbalControl>
      */
     virtual std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
-        const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp) = 0;
+        const enumeration::ArmorIdFlag& id, const data::TimeStamp& time_stamp) = 0;
 
     /**
      * @brief 按照传入的id生成IPredictor

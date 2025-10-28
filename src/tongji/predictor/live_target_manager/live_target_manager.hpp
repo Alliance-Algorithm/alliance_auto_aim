@@ -2,9 +2,10 @@
 
 #include <memory>
 
+#include "data/predictor_update_package.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "interfaces/predictor_update_package.hpp"
 #include "interfaces/target_predictor.hpp"
 
 namespace world_exe::tongji::predictor {
@@ -15,11 +16,11 @@ public:
     ~LiveTargetManager();
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> Predict(
-        const enumeration ::ArmorIdFlag& id, const std ::time_t& time_stamp) override;
+        const enumeration ::ArmorIdFlag& id, const data::TimeStamp& time_stamp) override;
     std ::shared_ptr<interfaces::IPredictor> GetPredictor(
         const enumeration ::ArmorIdFlag& id) const override;
 
-    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
+    void Update(std::shared_ptr<data::PredictorUpdatePackage> data,
         const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image);
 
     auto GetAllowedTargetID() const -> enumeration::ArmorIdFlag const;

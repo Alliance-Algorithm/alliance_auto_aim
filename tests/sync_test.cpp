@@ -1,5 +1,6 @@
 #include "data/sync_data.hpp"
 #include "v1/sync/syncer.hpp"
+#include <data/time_stamped.hpp>
 #include <gtest/gtest.h>
 #include <ctime>
 #include <iostream>
@@ -14,8 +15,8 @@ using ns_t = int64_t; // 纳秒
 
 struct FrameB {
     data::CameraGimbalMuzzleSyncData data; // 纳秒
-    FrameB(ns_t t) : data(t) {
-        data.camera_capture_begin_time_stamp = t;
+    FrameB(ns_t t) {
+        data.camera_capture_begin_time_stamp = data::TimeStamp::from_nanosec(t);
     }
 };
 
@@ -37,7 +38,7 @@ void sync_test_main() {
     const ns_t period_ns = static_cast<ns_t>(NS_PER_SEC / frequency + 0.5);
     const double total_seconds = 2.0;
     const ns_t total_ns = static_cast<ns_t>(total_seconds * NS_PER_SEC + 0.5);
-    const ns_t min_margin_to_next_b = 500'000; // 0.0005s
+    const data::TimeStamp min_margin_to_next_b = data::TimeStamp::from_nanosec(500'000); // 0.0005s
 
     const unsigned seed = 12345;
     std::mt19937 rng(seed);
@@ -49,8 +50,8 @@ void sync_test_main() {
     std::vector<data::CameraGimbalMuzzleSyncData> generatedAs;
 
     // 生成 B 时间点（纳秒）
-    std::vector<ns_t> bTimes;
-    for (ns_t t = 0; t <= total_ns + period_ns; t += period_ns) bTimes.push_back(t);
+    std::vector<data::TimeStamp> bTimes;
+    for (ns_t t = 0; t <= total_ns + period_ns; t += period_ns) bTimes.push_back(data::TimeStamp::from_nanosec(t));
 
     // 第一个 B
     data::CameraGimbalMuzzleSyncData firstB{};
@@ -58,26 +59,28 @@ void sync_test_main() {
     generatedBs.push_back(firstB);
     syncer.set_data(firstB);
     for (size_t i = 0; i + 1 < bTimes.size(); ++i) {
-        ns_t tb = bTimes[i];
-        ns_t tbNext = bTimes[i + 1];
+        auto tb = bTimes[i];
+        auto tbNext = bTimes[i + 1];
 
         data::CameraGimbalMuzzleSyncData b{};
         b.camera_capture_begin_time_stamp = tbNext;
+        ASSERT_EQ(b.camera_capture_begin_time_stamp, tbNext) << "tbNext should be equal to camera_capture_begin_time_stamp";
         generatedBs.push_back(b);
         syncer.set_data(b);
 
         int aCountThisInterval = aCountDist(rng);
         for (int k = 0; k < aCountThisInterval; ++k) {
-            ns_t windowStart = tb + 1;
-            ns_t windowEnd = std::max(windowStart, tbNext - min_margin_to_next_b);
+            auto windowStart = tb + data::TimeStamp::from_nanosec(1);
+            auto windowEnd = std::max(windowStart, tbNext - min_margin_to_next_b);
             if (windowEnd <= windowStart) continue;
             double u = unitDist(rng);
-            ns_t tA = windowStart + static_cast<ns_t>((windowEnd - windowStart) * u + 0.5);
+            data::TimeStamp tA = windowStart + ((windowEnd - windowStart) * u);
 
             data::CameraGimbalMuzzleSyncData a{};
             a.camera_capture_begin_time_stamp = tA;
             generatedAs.push_back(a);
 
+            ASSERT_LT(tb, tA) << "ta should be larger then tb";
             auto [matched, ok] = syncer.get_data(tA);
             ASSERT_TRUE(ok) << "get_data should succeed for A after at least one B";
             ASSERT_LE(matched.camera_capture_begin_time_stamp, tA) << "matched B timestamp <= A timestamp";
@@ -91,7 +94,7 @@ void sync_test_main() {
             if (matchedIndex + 1 < generatedBs.size()) {
                 const auto& nextB = generatedBs[matchedIndex + 1];
                 ASSERT_LT(tA, nextB.camera_capture_begin_time_stamp) << "A must occur before next B";
-                ns_t gapToNextB = nextB.camera_capture_begin_time_stamp - tA;
+                auto gapToNextB = nextB.camera_capture_begin_time_stamp - tA;
                 ASSERT_GE(gapToNextB, min_margin_to_next_b) << "A too close to next B";
             }
         }
@@ -105,14 +108,11 @@ void sync_test_main() {
     size_t limit = std::min<size_t>(generatedAs.size(), 10);
     for (size_t i = 0; i < limit; ++i) {
         const auto& a = generatedAs[i];
-        time_t tA_seconds = static_cast<time_t>(
-            std::chrono::duration_cast<std::chrono::seconds>(std::chrono::nanoseconds(a.camera_capture_begin_time_stamp)).count()
-        );
-        auto [matched, ok] = syncer.get_data(tA_seconds);
+        auto [matched, ok] = syncer.get_data(a.camera_capture_begin_time_stamp);
         std::cout << "A#" << i
-                  << " t(ns)=" << a.camera_capture_begin_time_stamp << " t(s)=" << ns_to_sec(a.camera_capture_begin_time_stamp)
-                  << " -> matched B t(ns)=" << matched.camera_capture_begin_time_stamp
-                  << " t(s)=" << ns_to_sec(matched.camera_capture_begin_time_stamp) << "\n";
+                  << " t(ns)=" << a.camera_capture_begin_time_stamp.to_nanosec() << " t(s)=" << a.camera_capture_begin_time_stamp.to_seconds()
+                  << " -> matched B t(ns)=" << matched.camera_capture_begin_time_stamp.to_nanosec()
+                  << " t(s)=" << matched.camera_capture_begin_time_stamp.to_seconds() << "\n";
     }
 
     std::cout << "All assertions passed.\n";

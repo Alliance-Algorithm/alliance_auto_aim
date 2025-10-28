@@ -5,6 +5,7 @@
 
 #include "../v1/sync/syncer.hpp"
 #include "core/event_bus.hpp"
+#include "data/predictor_update_package.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
 #include "tongji/fire_controller/fire_controller.hpp"
@@ -16,27 +17,6 @@
 namespace world_exe::tongji {
 using namespace std::chrono;
 
-class Combined final : public interfaces::IPreDictorUpdatePackage, interfaces::ITimeStamped {
-public:
-    virtual const std::time_t GetTimeStamp() const {
-        return data1_.camera_capture_begin_time_stamp;
-    };
-    const world_exe::interfaces::ITimeStamped& GetTimeStamped() const { return *this; }
-    std::shared_ptr<world_exe::interfaces::IArmorInCamera> GetArmors() const { return data2_; };
-    Eigen::Affine3d GetTransform() const { return data1_.camera_to_gimbal; };
-
-    // but why?
-    Combined(const data::CameraGimbalMuzzleSyncData& data1,
-        std::shared_ptr<world_exe::interfaces::IArmorInCamera> data2)
-        : data1_(data1)
-        , data2_(data2) { }
-    Combined()  = delete;
-    ~Combined() = default;
-
-private:
-    const data::CameraGimbalMuzzleSyncData& data1_;
-    const std::shared_ptr<interfaces::IArmorInCamera> data2_;
-};
 
 class AutoAimSystem::Impl {
 public:
@@ -69,7 +49,7 @@ public:
         if (flag == enumeration::ArmorIdFlag::None) return;
 
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
-        const auto& [pack, check] = syncer_->get_data(armors_in_image->GetTimeStamped().GetTimeStamp());
+        const auto& [pack, check] = syncer_->get_data(armors_in_image->GetTimeStamp());
         if (!check) return;
 
         const auto R_camera2gimbal = pack.camera_to_gimbal.rotation();
@@ -78,7 +58,7 @@ public:
         pnp_solver_->SetCamera2Gimbal(R_camera2gimbal, t_camera2gimbal);
         const auto& armors_in_camera = pnp_solver_->SolvePnp(armors_in_image);
 
-        auto combined = std::make_shared<Combined>(pack, armors_in_camera);
+        auto combined = std::make_shared<data::PredictorUpdatePackage>(pack, armors_in_camera);
 
         live_target_manager_->Update(combined, armors_in_image);
         
@@ -99,8 +79,7 @@ public:
 
     data::FireControl GetControlCommand() {
         fire_controller_->GetAttackCarId();
-        return fire_controller_->CalculateTarget(
-            (std::chrono::steady_clock::now() - time_stamp_).count());
+        return fire_controller_->CalculateTarget(std::chrono::duration_cast<seconds>(std::chrono::steady_clock::now() - time_stamp_));
     }
 
 private:

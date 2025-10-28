@@ -1,7 +1,7 @@
 #pragma once
 
 #include "data/sync_data.hpp"
-#include "interfaces/predictor_update_package.hpp"
+#include "data/predictor_update_package.hpp"
 #include <chrono>
 #include <interfaces/sync_block.hpp>
 #include <memory>
@@ -15,11 +15,11 @@ public:
 
     void set_data(const data::CameraGimbalMuzzleSyncData& camera_data);
 
-    std::tuple<data::CameraGimbalMuzzleSyncData, bool> get_data(time_t timestamp);
+    std::tuple<data::CameraGimbalMuzzleSyncData, bool> get_data(const data::TimeStamp& timestamp);
 
 private:
     struct Impl;
     std::unique_ptr<Impl> pimpl_;
-    std::shared_ptr<interfaces::IPreDictorUpdatePackage> last_;
+    std::shared_ptr<data::PredictorUpdatePackage> last_;
 };
 }

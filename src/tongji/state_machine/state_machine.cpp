@@ -26,7 +26,9 @@ private:
 
 StateMachine::StateMachine(std::shared_ptr<predictor::LiveTargetManager> live_target_manager)
     : pimpl_(std::make_unique<Impl>(live_target_manager)) { }
-StateMachine::~StateMachine() = default;
+
+StateMachine::~StateMachine() {};
+StateMachine::StateMachine() {};
 
 const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const {
     return pimpl_->GetAllowdToFires();

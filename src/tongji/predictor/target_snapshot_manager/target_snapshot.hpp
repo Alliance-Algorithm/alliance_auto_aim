@@ -2,7 +2,6 @@
 
 #include <ctime>
 
-#include "../../time_stamp/time_stamp.hpp"
 #include "../kalman_filter/extended_kalman_filter.hpp"
 #include "../kalman_filter/predict_model.hpp"
 #include "../live_target_manager/live_target.hpp"
@@ -52,7 +51,7 @@ public:
 private:
     PredictorModel model_;
     ExtendedKalmanFilter<PredictorModel> ekf_;
-    time_stamp::TimeStamp time_stamp_;
+    data::TimeStamp time_stamp_;
 };
 
 }

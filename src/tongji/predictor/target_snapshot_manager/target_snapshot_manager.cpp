@@ -10,6 +10,7 @@
 #include "../live_target_manager/live_target.hpp"
 #include "aim_solver.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/enum_tools.hpp"
 
 namespace world_exe::tongji::predictor {
@@ -19,7 +20,7 @@ public:
     Impl(const std::string& config_path, const enumeration::ArmorIdFlag& id,
         const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
             live_target_map,
-        const std::time_t& now)
+        const data::TimeStamp& now)
         : aim_solver_(std::make_unique<predictor::AimingSolver>(config_path))
         , snapshots_(BuildSnapshots(live_target_map))
         , now_(now)
@@ -55,7 +56,7 @@ public:
 
     */
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
-        const std::time_t& time_stamp) const {
+        const data::TimeStamp& time_stamp) const {
 
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
@@ -104,7 +105,7 @@ private:
 
     std::unique_ptr<predictor::AimingSolver> aim_solver_;
     const std::unordered_map<enumeration::ArmorIdFlag, TargetSnapshot> snapshots_;
-    const std::time_t& now_;
+    const data::TimeStamp& now_;
     const enumeration::ArmorIdFlag ids_;
     double bullet_speed_;
     mutable GimbalCommand gimbal_command_;
@@ -118,13 +119,13 @@ TargetSnapshotManager::TargetSnapshotManager(const std::string& config_path,
     const enumeration::ArmorIdFlag& id,
     const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
         live_target_map,
-    const std::time_t& now)
+    const data::TimeStamp& now)
     : pimpl_(std::make_unique<Impl>(config_path, id, live_target_map, now)) { }
 TargetSnapshotManager::~TargetSnapshotManager() = default;
 
 const enumeration ::ArmorIdFlag& TargetSnapshotManager::GetId() const { return pimpl_->GetId(); }
 std ::shared_ptr<interfaces::IArmorInGimbalControl> TargetSnapshotManager::Predictor(
-    const std ::time_t& time_stamp) const {
+    const data::TimeStamp& time_stamp) const {
     return pimpl_->Predictor(time_stamp);
 }
 

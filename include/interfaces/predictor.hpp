@@ -1,6 +1,7 @@
 #pragma once
 
 #include "armor_in_gimbal_control.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include <ctime>
 
@@ -24,7 +25,7 @@ public:
      * @return const IArmorInGimbalControl&
      */
     virtual std::shared_ptr<IArmorInGimbalControl> Predictor(
-        const std::time_t& time_stamp) const = 0;
+        const data::TimeStamp& time_stamp) const = 0;
 
     virtual ~IPredictor() = default;
 };

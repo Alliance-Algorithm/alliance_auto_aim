@@ -13,6 +13,7 @@
 
 #include "data/armor_camera_spacing.hpp"
 #include "data/armor_image_spaceing.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
@@ -40,7 +41,7 @@ public:
                 armor_plates.emplace_back(solved_armor);
             }
         }
-        return std::make_shared<SolvedArmor>(armor_plates, armors_in_image->GetTimeStamped().GetTimeStamp());
+        return std::make_shared<SolvedArmor>(armor_plates, armors_in_image->GetTimeStamp());
     }
 
     auto SetCamera2Gimbal(
@@ -82,8 +83,8 @@ public:
         return best_yaw;
     }
 
-    const std::time_t GetTimeStamp() const {
-        return time_stamp::TimeStamp(std::chrono::steady_clock::now()).GetTimeStamp();
+    const data::TimeStamp GetTimeStamp() const {
+        return data::TimeStamp(std::chrono::steady_clock::now().time_since_epoch());
     }
 
 private:
@@ -135,8 +136,6 @@ private:
 Solver::Solver()
     : pimpl_(std::make_unique<Impl>()) { }
 Solver::~Solver() = default;
-
-const std::time_t Solver::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }
 
 std::shared_ptr<world_exe::interfaces::IArmorInCamera> Solver::SolvePnp(
     std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {

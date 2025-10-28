@@ -6,10 +6,10 @@
 
 #include <Eigen/Dense>
 
-#include "../../time_stamp/time_stamp.hpp"
 #include "../kalman_filter/extended_kalman_filter.hpp"
 #include "../kalman_filter/predict_model.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/car_id.hpp"
 
 namespace world_exe::tongji::predictor {
@@ -21,7 +21,7 @@ public:
 
     LiveTarget(const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const enumeration::CarIDFlag& car_id)
-        : last_see_time_stamp_(std::time(nullptr))
+        : last_see_time_stamp_()
         , model_(car_id) {
         // x vx y vy z vz a w r l h
         // a: angle
@@ -44,7 +44,7 @@ public:
     EKF::XVec GetEkfX() const { return ekf_->x; }
     EKF::PDig GetP0Dig() const { return model_.GetP0Dig(); }
     const PredictorModel& GetModel() const { return model_; }
-    time_stamp::TimeStamp LastSeen() const { return time_stamp::TimeStamp(last_see_time_stamp_); }
+    data::TimeStamp LastSeen() const { return data::TimeStamp(last_see_time_stamp_); }
 
     std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() const {
         std::vector<data::ArmorGimbalControlSpacing> armors;
@@ -71,8 +71,6 @@ public:
         update_count_++;
 
         Update_ypda(armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal, id, dt);
-
-        last_see_time_stamp_ = std::time(nullptr);
     }
 
     bool IsConverged() const {
@@ -119,9 +117,9 @@ private:
         }
     }
 
-    std::time_t last_see_time_stamp_;
-    PredictorModel model_;
-    std::optional<EKF> ekf_;
+    std::chrono::nanoseconds    last_see_time_stamp_;
+    PredictorModel              model_;
+    std::optional<EKF>          ekf_;
 
     int last_id_                           = -1;
     int update_count_                      = 0;

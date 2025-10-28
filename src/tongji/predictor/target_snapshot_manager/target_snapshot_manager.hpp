@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "../live_target_manager/live_target.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/predictor.hpp"
 
@@ -18,12 +19,12 @@ public:
     TargetSnapshotManager(const std::string& config_path, const enumeration::ArmorIdFlag& id,
         const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
             live_target_map,
-        const std::time_t& now);
+        const data::TimeStamp& now);
     ~TargetSnapshotManager();
 
     const enumeration ::ArmorIdFlag& GetId() const override;
     std ::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
-        const std ::time_t& time_stamp) const override;
+        const data::TimeStamp& time_stamp) const override;
 
     auto GetGimbalCommand() const -> GimbalCommand const;
 

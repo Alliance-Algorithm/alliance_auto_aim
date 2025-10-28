@@ -7,9 +7,10 @@
 
 #include "../in_gimbal_control_armor.hpp"
 #include "../target_snapshot_manager/target_snapshot_manager.hpp"
+#include "data/predictor_update_package.hpp"
+#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
-#include "interfaces/predictor_update_package.hpp"
 #include "live_target.hpp"
 #include "tracker.hpp"
 #include "util/index.hpp"
@@ -22,7 +23,7 @@ public:
     Impl(const std::string& config_path, const double& timeout_sec)
         : targets_map_()
         , tracker_(std::make_unique<predictor::Tracker>())
-        , last_update_timestamp_(std::time(nullptr))
+        , last_update_timestamp_()
         , tracking_id_(enumeration::CarIDFlag::None)
         , config_path_(config_path) { }
 
@@ -38,7 +39,7 @@ public:
     */
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
-        const enumeration::ArmorIdFlag& flag, const std::time_t& time_stamp) {
+        const enumeration::ArmorIdFlag& flag, const data::TimeStamp& time_stamp) {
         std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
             result;
 
@@ -69,10 +70,10 @@ public:
             config_path_, flag, targets_map_, last_update_timestamp_);
     }
     // 为何传递了一个time_t 给double
-    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
+    void Update(std::shared_ptr<data::PredictorUpdatePackage> data,
         const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const double& dt) {
 
-        UpdateTimeStamp(data->GetTimeStamped().GetTimeStamp());
+        UpdateTimeStamp(data->GetTimeStamp());
         UpdateTargetMap(data);
         UpdateTarget(data, armors_in_image, dt);
     }
@@ -85,9 +86,9 @@ public:
     }
 
 private:
-    void UpdateTimeStamp(const time_t& time_stamp) { last_update_timestamp_ = time_stamp; }
-    void UpdateTargetMap(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data) {
-        const Eigen::Affine3d transform       = data->GetTransform();
+    void UpdateTimeStamp(const data::TimeStamp& time_stamp) { last_update_timestamp_ = time_stamp; }
+    void UpdateTargetMap(std::shared_ptr<data::PredictorUpdatePackage> data) {
+        const Eigen::Affine3d transform       = data->GetCameraToWorld();
         const Eigen::Matrix3d rotation_matrix = transform.rotation();
         const auto armors_interface           = data->GetArmors();
 
@@ -106,9 +107,9 @@ private:
         }
     }
 
-    void UpdateTarget(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
+    void UpdateTarget(std::shared_ptr<data::PredictorUpdatePackage> data,
         const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image, const double& dt) {
-        const Eigen::Affine3d transform       = data->GetTransform();
+        const Eigen::Affine3d transform       = data->GetCameraToWorld();
         const Eigen::Matrix3d rotation_matrix = transform.linear();
         const auto armors_interface           = data->GetArmors();
 
@@ -126,7 +127,7 @@ private:
 
     std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>> targets_map_;
     std::unique_ptr<predictor::Tracker> tracker_;
-    std::time_t last_update_timestamp_;
+    data::TimeStamp last_update_timestamp_;
     enumeration::CarIDFlag tracking_id_;
 
     const std::string config_path_;
@@ -137,7 +138,7 @@ LiveTargetManager::LiveTargetManager(const std::string& config_path, const doubl
 LiveTargetManager::~LiveTargetManager() = default;
 
 std ::shared_ptr<interfaces ::IArmorInGimbalControl> LiveTargetManager::Predict(
-    const enumeration ::ArmorIdFlag& id, const std ::time_t& time_stamp) {
+    const enumeration ::ArmorIdFlag& id, const data::TimeStamp& time_stamp) {
     return pimpl_->Predict(id, time_stamp);
 }
 std ::shared_ptr<interfaces::IPredictor> LiveTargetManager::GetPredictor(
@@ -145,13 +146,12 @@ std ::shared_ptr<interfaces::IPredictor> LiveTargetManager::GetPredictor(
     return pimpl_->GetPredictor(id);
 }
 
-static constexpr double cast_nanosec_sec(const long nanosec) {return nanosec * 1e-9;}
 
-void LiveTargetManager::Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data,
+void LiveTargetManager::Update(std::shared_ptr<data::PredictorUpdatePackage> data,
     const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image) {
-    return pimpl_->Update(data, armors_in_image, cast_nanosec_sec(data->GetTimeStamped().GetTimeStamp()));
+    return pimpl_->Update(data, armors_in_image, data->GetTimeStamp().to_seconds());
 }
-// auto LiveTargetManager::GetAllowedTargetID() const -> enumeration::ArmorIdFlag const {
-//     return pimpl_->GetAllowedTargetID();
-// }
+auto LiveTargetManager::GetAllowedTargetID() const -> enumeration::ArmorIdFlag const {
+    return pimpl_->GetAllowedTargetID();
+}
 }
