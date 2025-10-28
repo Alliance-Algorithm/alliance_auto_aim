@@ -40,7 +40,7 @@ public:
                 armor_plates.emplace_back(solved_armor);
             }
         }
-        return std::make_shared<SolvedArmor>(armor_plates);
+        return std::make_shared<SolvedArmor>(armor_plates, armors_in_image->GetTimeStamped().GetTimeStamp());
     }
 
     auto SetCamera2Gimbal(

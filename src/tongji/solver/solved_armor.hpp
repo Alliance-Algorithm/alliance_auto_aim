@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <chrono>
 #include <ctime>
 
 #include "interfaces/armor_in_camera.hpp"
@@ -12,8 +11,8 @@
 namespace world_exe::tongji::solver {
 class SolvedArmor final : public interfaces::IArmorInCamera {
 public:
-    explicit SolvedArmor(const std::vector<data::ArmorCameraSpacing>& armors)
-        : time_stamp_(std::chrono::steady_clock::now()) {
+    explicit SolvedArmor(const std::vector<data::ArmorCameraSpacing>& armors, time_t when_image_come)
+        : time_stamp_(when_image_come) {
         for (const auto& armor : armors) {
             armors_[util::enumeration::GetIndex(armor.id)].emplace_back(armor);
         }
