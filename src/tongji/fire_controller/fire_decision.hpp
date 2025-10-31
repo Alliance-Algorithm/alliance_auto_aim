@@ -1,13 +1,16 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <cmath>
 #include <cstdlib>
 
 #include <yaml-cpp/yaml.h>
 
-#include "tongji/predictor/target_snapshot_manager/target_snapshot_manager.hpp"
-
 namespace world_exe::tongji::fire_control {
+struct GimbalCommand {
+    double yaw;
+    double pitch;
+};
 
 class FireDecision {
 public:
@@ -21,7 +24,7 @@ public:
         judge_distance_   = yaml["judge_distance"].as<double>();
     }
 
-    bool ShouldFire(const double& gimbal_yaw, predictor::GimbalCommand gimbal_command,
+    bool ShouldFire(const double& gimbal_yaw, GimbalCommand gimbal_command,
         const Eigen::Vector3d& valid_target_pos) {
 
         if (!auto_fire_) return false;
@@ -43,7 +46,7 @@ public:
 
 private:
     bool auto_fire_;
-    predictor::GimbalCommand last_gimbal_command_;
+    GimbalCommand last_gimbal_command_;
 
     double first_tolerance_ { 5 };  // 近距离射击容差，degree
     double second_tolerance_ { 2 }; // 远距离射击容差，degree

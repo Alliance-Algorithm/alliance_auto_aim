@@ -20,8 +20,9 @@ public:
     using EKF            = ExtendedKalmanFilter<PredictorModel>;
 
     LiveTarget(const Eigen::Vector3d& armor_xyz_in_gimbal,
-        const Eigen::Vector3d& armor_ypr_in_gimbal, const enumeration::CarIDFlag& car_id)
-        : last_see_time_stamp_()
+        const Eigen::Vector3d& armor_ypr_in_gimbal, const enumeration::CarIDFlag& car_id,
+        const data::TimeStamp time_stamp)
+        : time_stamp_(time_stamp)
         , model_(car_id) {
         // x vx y vy z vz a w r l h
         // a: angle
@@ -44,14 +45,15 @@ public:
     EKF::XVec GetEkfX() const { return ekf_->x; }
     EKF::PDig GetP0Dig() const { return model_.GetP0Dig(); }
     const PredictorModel& GetModel() const { return model_; }
-    data::TimeStamp LastSeen() const { return data::TimeStamp(last_see_time_stamp_); }
+    data::TimeStamp LastSeen() const { return time_stamp_; }
 
-    std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() const {
+    std::vector<data::ArmorGimbalControlSpacing> GetPredictedArmorGimbalControlSpacings(
+        const data::TimeStamp& time_stamp) const {
+        const auto ekf_x = this->GetPredictedX((time_stamp - time_stamp_).to_seconds());
         std::vector<data::ArmorGimbalControlSpacing> armors;
         for (int id = 0; id < model_.GetArmorNum(); id++) {
-            auto angle =
-                util::math::clamp_pm_pi(this->ekf_->x[6] + id * 2 * CV_PI / model_.GetArmorNum());
-            auto xyz = model_.h_armor_xyz(this->ekf_->x, id);
+            auto angle = util::math::clamp_pm_pi(ekf_x[6] + id * 2 * CV_PI / model_.GetArmorNum());
+            auto xyz   = model_.h_armor_xyz(ekf_x, id);
 
             data::ArmorGimbalControlSpacing armor;
             armor.id          = model_.GetID();
@@ -62,27 +64,32 @@ public:
         return armors;
     }
 
-    void Update(const double& dt, const Eigen::Vector3d& armor_xyz_in_gimbal,
+    auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> const {
+        const auto [x_n, P_n] = ekf_->PredictOnce(dt);
+        return model_.GetArmorXYZAList(x_n);
+    }
+
+    auto GetPredictedX(const double& dt) const -> const EKF::XVec {
+        const auto& [x_n, P_n] = ekf_->PredictOnce(dt);
+        return x_n;
+    }
+
+    void Update(const data::TimeStamp time_stamp, const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal) {
+
         // 装甲板匹配
         int id = model_.MatchArmor(
             ekf_->x, armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal);
         last_id_ = id;
         update_count_++;
 
-        Update_ypda(armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal, id, dt);
+        Update_ypda(armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal, id,
+            (time_stamp - time_stamp_).to_seconds());
+
+        time_stamp_ = time_stamp;
     }
 
     bool IsConverged() const {
-        if (!ekf_.has_value()) return false;
-        // 前哨站特殊判断
-        const int required_count = (model_.GetID() == enumeration::CarIDFlag::Outpost) ? 10 : 3;
-        if (update_count_ < required_count || IsDivergened()) return false;
-        return true;
-    }
-
-private:
-    bool IsDivergened() const {
         auto r_ok = ekf_->x[8] > 0.05 && ekf_->x[8] < 0.5;
         auto l_ok = ekf_->x[8] + ekf_->x[9] > 0.05 && ekf_->x[8] + ekf_->x[9] < 0.5;
 
@@ -90,8 +97,12 @@ private:
         // util::logger::logger()->debug("[Target] r={:.3f}, l={:.3f}", ekf_->x[8], ekf_->x[9]);
         return true;
     }
+    auto IsAppeared() -> bool {
+        const int required_count = (model_.GetID() == enumeration::CarIDFlag::Outpost) ? 10 : 3;
+        return update_count_ > required_count;
+    }
 
-    // TODO:need to update correctly
+private:
     void Update_ypda(const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal,
         const int& id, const double& dt) {
@@ -117,9 +128,9 @@ private:
         }
     }
 
-    std::chrono::nanoseconds    last_see_time_stamp_;
-    PredictorModel              model_;
-    std::optional<EKF>          ekf_;
+    data::TimeStamp time_stamp_;
+    PredictorModel model_;
+    std::optional<EKF> ekf_;
 
     int last_id_                           = -1;
     int update_count_                      = 0;

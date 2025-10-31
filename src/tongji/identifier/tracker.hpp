@@ -4,17 +4,16 @@
 #include <ctime>
 #include <memory>
 #include <opencv2/core/types.hpp>
-#include <utility>
 #include <vector>
 
-#include "../../identifier/armor_filter.hpp"
-#include "../../identifier/identified_armor.hpp"
-#include "../target_snapshot_manager/target_snapshot.hpp"
-#include "../target_snapshot_manager/target_snapshot_manager.hpp"
+#include "../predictor/target_snapshot_manager/target_snapshot.hpp"
+#include "../predictor/target_snapshot_manager/target_snapshot_manager.hpp"
+#include "armor_filter.hpp"
 #include "decider.hpp"
 #include "enum/armor_id.hpp"
+#include "identified_armor.hpp"
 
-namespace world_exe::tongji::predictor {
+namespace world_exe::tongji::identifier {
 using namespace std::chrono_literals;
 
 enum class TrackState {
@@ -38,12 +37,14 @@ public:
 
     ~Tracker() = default;
 
-    auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image) noexcept -> enumeration::ArmorIdFlag const {
+    auto SelectTrackingTargetID(
+        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image) noexcept
+        -> enumeration::ArmorIdFlag const {
         CheckCameraOffline();
         last_track_timestamp_ = std::chrono::steady_clock::now();
 
         auto filtered_ids = enumeration::ArmorIdFlag::None;
-        auto detected_ids = enumeration::ArmorIdFlag::None;
+
         std::vector<data::ArmorImageSpacing> filtered_armors;
         for (uint32_t i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); ++i) {
             auto id = static_cast<enumeration::ArmorIdFlag>(
@@ -52,12 +53,9 @@ public:
             if (armors_in_image->GetArmors(id).empty()) continue;
 
             // 图像中出现的装甲板
-            auto armors  = armors_in_image->GetArmors(id);
-            detected_ids = static_cast<enumeration::ArmorIdFlag>(
-                static_cast<uint32_t>(detected_ids) | static_cast<uint32_t>(id));
-
+            auto armors = armors_in_image->GetArmors(id);
             // 对从图像识别到的装甲板进行过滤
-            filtered_armors = std::move(armor_filter_->FilterArmor(std::move(armors)));
+            filtered_armors = armor_filter_->FilterArmor(armors);
             if (!filtered_armors.empty()) {
                 filtered_ids =
                     static_cast<enumeration::ArmorIdFlag>(static_cast<uint32_t>(filtered_ids)
@@ -65,12 +63,15 @@ public:
             }
         }
 
-        UpdateState(!(detected_ids == enumeration::ArmorIdFlag::None));
+        UpdateState(!(filtered_ids == enumeration::ArmorIdFlag::None));
 
         tracking_car_id_ = decider_->GetBestArmor(filtered_armors);
         return tracking_car_id_;
     }
 
+    TrackState GetState() const { return state_; }
+
+private:
     void UpdateState(bool found) {
         switch (state_) {
         case TrackState::Lost: {
@@ -133,9 +134,6 @@ public:
         }
     }
 
-    TrackState GetState() const { return state_; }
-
-private:
     void CheckCameraOffline() {
         if (state_ != TrackState::Lost
             && (std::chrono::steady_clock::now() - last_track_timestamp_) < timeout_sec_)

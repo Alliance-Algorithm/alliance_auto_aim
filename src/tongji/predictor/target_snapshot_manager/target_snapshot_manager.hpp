@@ -9,24 +9,17 @@
 #include "interfaces/predictor.hpp"
 
 namespace world_exe::tongji::predictor {
-struct GimbalCommand {
-    double yaw;
-    double pitch;
-};
-
 class TargetSnapshotManager final : public interfaces::IPredictor {
 public:
-    TargetSnapshotManager(const std::string& config_path, const enumeration::ArmorIdFlag& id,
-        const std::unordered_map<enumeration::ArmorIdFlag, std::shared_ptr<LiveTarget>>&
+    TargetSnapshotManager(const std::string& config_path,
+        const std::unordered_map<enumeration::ArmorIdFlag, std::unique_ptr<LiveTarget>>&
             live_target_map,
-        const data::TimeStamp& now);
+        const data::TimeStamp& time_stamp);
     ~TargetSnapshotManager();
 
     const enumeration ::ArmorIdFlag& GetId() const override;
     std ::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
         const data::TimeStamp& time_stamp) const override;
-
-    auto GetGimbalCommand() const -> GimbalCommand const;
 
     TargetSnapshotManager(const TargetSnapshotManager&)                = delete;
     TargetSnapshotManager& operator=(const TargetSnapshotManager&)     = delete;

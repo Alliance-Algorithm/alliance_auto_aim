@@ -18,28 +18,29 @@ public:
         , ekf_(target.GetEkfX(), target.GetP0Dig().asDiagonal(), model_)
         , time_stamp_(target.LastSeen()) { }
 
-    // std::vector<data::ArmorGimbalControlSpacing> GetArmorGimbalControlSpacings() const {
-    //     std::vector<data::ArmorGimbalControlSpacing> armors;
-    //     for (int id = 0; id < model_.GetArmorNum(); id++) {
-    //         auto angle =
-    //             util::math::clamp_pm_pi(this->ekf_.x[6] + id * 2 * CV_PI / model_.GetArmorNum());
-    //         auto xyz = model_.h_armor_xyz(this->ekf_.x, id);
+    std::vector<data::ArmorGimbalControlSpacing> GetPredictedArmorGimbalControlSpacings(
+        const double& dt) const {
+        const auto ekf_x = this->GetPredictedX(dt);
+        std::vector<data::ArmorGimbalControlSpacing> armors;
+        for (int id = 0; id < model_.GetArmorNum(); id++) {
+            auto angle = util::math::clamp_pm_pi(ekf_x[6] + id * 2 * CV_PI / model_.GetArmorNum());
+            auto xyz   = model_.h_armor_xyz(ekf_x, id);
 
-    //         data::ArmorGimbalControlSpacing armor;
-    //         armor.id          = model_.GetID();
-    //         armor.position    = xyz;
-    //         armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
-    //         armors.emplace_back(std::move(armor));
-    //     }
-    //     return armors;
-    // }
-    // TODO：
+            data::ArmorGimbalControlSpacing armor;
+            armor.id          = model_.GetID();
+            armor.position    = xyz;
+            armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
+            armors.emplace_back(std::move(armor));
+        }
+        return armors;
+    }
+
     auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> const {
         const auto [x_n, P_n] = ekf_.PredictOnce(dt);
         return model_.GetArmorXYZAList(x_n);
     }
 
-    auto GetPredictedX(const double& dt) const -> const auto {
+    auto GetPredictedX(const double& dt) const -> const EKF::XVec {
         const auto& [x_n, P_n] = ekf_.PredictOnce(dt);
         return x_n;
     }

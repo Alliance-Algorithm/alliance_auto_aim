@@ -10,7 +10,7 @@ public:
     ~Solver();
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> SolvePnp(
-        std::shared_ptr<interfaces::IArmorInImage> armor) override;
+        std::shared_ptr<interfaces::IArmorInImage> armors) override;
 
     void SetCamera2Gimbal(
         const Eigen::Matrix3d& R_camera2gimbal, const Eigen::Vector3d& t_camera2gimbal);

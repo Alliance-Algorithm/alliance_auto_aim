@@ -17,18 +17,16 @@
 namespace world_exe::tongji {
 using namespace std::chrono;
 
-
 class AutoAimSystem::Impl {
 public:
     Impl(const bool& debug)
         : debug(debug)
         , config_path_("")
         , save_path_("") {
-        identifier_          = std::make_unique<v1::identifier::Identifier>(
-                                parameters::ParamsForSystemV1::szu_model_path(),
-                                parameters::ParamsForSystemV1::device(),
-                                parameters::HikCameraProfile::get_width(),
-                                parameters::HikCameraProfile::get_height());
+        identifier_ = std::make_unique<v1::identifier::Identifier>(
+            parameters::ParamsForSystemV1::szu_model_path(),
+            parameters::ParamsForSystemV1::device(), parameters::HikCameraProfile::get_width(),
+            parameters::HikCameraProfile::get_height());
         pnp_solver_          = std::make_unique<solver::Solver>();
         live_target_manager_ = std::make_shared<predictor::LiveTargetManager>(config_path_);
         state_machine_       = std::make_shared<state_machine::StateMachine>();
@@ -47,6 +45,7 @@ public:
     auto Solve(const cv::Mat& raw) -> void {
         const auto& [armors_in_image, flag] = identifier_->identify(raw);
         if (flag == enumeration::ArmorIdFlag::None) return;
+        state_machine_->Update(armors_in_image);
 
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         const auto& [pack, check] = syncer_->get_data(armors_in_image->GetTimeStamp());
@@ -60,9 +59,9 @@ public:
 
         auto combined = std::make_shared<data::PredictorUpdatePackage>(pack, armors_in_camera);
 
-        live_target_manager_->Update(combined, armors_in_image);
-        
-        state_machine_ = std::make_shared<state_machine::StateMachine>(live_target_manager_);
+        live_target_manager_->Update(combined);
+
+        state_machine_ = std::make_shared<state_machine::StateMachine>();
 
         const auto target_id = state_machine_->GetAllowdToFires();
 
@@ -71,15 +70,17 @@ public:
 
         /// 这里应该有一个线程进行稳定的输出之类的
         /// 轨迹规划器没有实现，先不管
-        
-        core::EventBus::Publish<data::FireControl>(parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
+
+        core::EventBus::Publish<data::FireControl>(
+            parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
     }
 
     void SetTransfroms(const data::CameraGimbalMuzzleSyncData& data) { syncer_->set_data(data); }
 
     data::FireControl GetControlCommand() {
         fire_controller_->GetAttackCarId();
-        return fire_controller_->CalculateTarget(std::chrono::duration_cast<seconds>(std::chrono::steady_clock::now() - time_stamp_));
+        return fire_controller_->CalculateTarget(
+            std::chrono::duration_cast<seconds>(std::chrono::steady_clock::now() - time_stamp_));
     }
 
 private:

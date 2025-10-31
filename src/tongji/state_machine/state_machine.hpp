@@ -4,10 +4,11 @@
 #include <memory>
 
 #include "enum/car_id.hpp"
+#include "interfaces/armor_in_image.hpp"
 #include "interfaces/car_state.hpp"
 
 namespace world_exe::tongji::predictor {
-    class LiveTargetManager;
+class LiveTargetManager;
 }
 
 namespace world_exe::tongji::state_machine {
@@ -17,7 +18,8 @@ public:
     ~StateMachine();
 
     const enumeration ::CarIDFlag& GetAllowdToFires() const override;
-    StateMachine(std::shared_ptr<predictor::LiveTargetManager> live_target_manager);
+
+    void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image);
 
     StateMachine(const StateMachine&)                = delete;
     StateMachine& operator=(const StateMachine&)     = delete;

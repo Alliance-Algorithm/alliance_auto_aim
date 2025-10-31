@@ -8,7 +8,7 @@
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
 
-namespace world_exe::tongji::predictor {
+namespace world_exe::tongji::identifier {
 
 class Decider::Impl {
 public:
@@ -37,7 +37,7 @@ public:
     }
 
 private:
-    using ArmorPriority = world_exe::tongji::predictor::ArmorPriority;
+    using ArmorPriority = world_exe::tongji::identifier::ArmorPriority;
     using ArmorId       = world_exe::enumeration::ArmorIdFlag;
 
     using PriorityMap = std::unordered_map<ArmorId, ArmorPriority>;

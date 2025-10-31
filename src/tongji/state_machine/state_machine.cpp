@@ -2,35 +2,37 @@
 
 #include <memory>
 
+#include "../identifier/tracker.hpp"
 #include "enum/car_id.hpp"
-#include "tongji/predictor/live_target_manager/live_target_manager.hpp"
 
 namespace world_exe::tongji::state_machine {
 
 class StateMachine::Impl {
 public:
-    Impl(std::shared_ptr<predictor::LiveTargetManager> live_target_manager)
-        : live_target_manager_(live_target_manager)
-        , target_ids_(enumeration::CarIDFlag::None) { }
+    Impl()
+        : tracker_(std::make_unique<identifier::Tracker>())
+        , target_id_(enumeration::CarIDFlag::None) { }
 
-    /// but why?
-    const enumeration::CarIDFlag& GetAllowdToFires() const {
-        target_ids_ = live_target_manager_->GetAllowedTargetID();
-        return target_ids_;
+    const enumeration::CarIDFlag& GetAllowdToFires() const { return target_id_; }
+
+    void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
+        target_id_ = tracker_->SelectTrackingTargetID(armors_in_image);
     }
 
 private:
-    std::shared_ptr<predictor::LiveTargetManager> live_target_manager_;
-    mutable enumeration::CarIDFlag target_ids_;
+    std::unique_ptr<identifier::Tracker> tracker_;
+    enumeration::CarIDFlag target_id_;
 };
 
-StateMachine::StateMachine(std::shared_ptr<predictor::LiveTargetManager> live_target_manager)
-    : pimpl_(std::make_unique<Impl>(live_target_manager)) { }
-
-StateMachine::~StateMachine() {};
-StateMachine::StateMachine() {};
+StateMachine::StateMachine()
+    : pimpl_(std::make_unique<Impl>()) { }
+StateMachine::~StateMachine() { };
 
 const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const {
     return pimpl_->GetAllowdToFires();
+}
+
+void StateMachine::Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
+    return pimpl_->Update(armors_in_image);
 }
 }

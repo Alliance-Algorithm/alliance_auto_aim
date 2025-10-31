@@ -16,9 +16,9 @@ public:
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager);
     ~FireController();
 
-    const data ::FireControl CalculateTarget(const std::chrono::seconds& time_duration) const override;
+    const data ::FireControl CalculateTarget(
+        const std::chrono::seconds& time_duration) const override;
     const enumeration ::CarIDFlag GetAttackCarId() const override;
-    data::TimeStamp GetTimeStamp() const;
 
     void UpdateGimbalPosition(const double& gimbal_yaw);
 
