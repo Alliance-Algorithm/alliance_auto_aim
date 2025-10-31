@@ -87,6 +87,7 @@ public:
         const auto& time            = combined->GetTimeStamp();
         const auto& armor3d         = predictor->Predict(fire_targets,time);
         fire_control                ->set_armor(armor3d);
+        fire_control                ->SetPredictor(predictor->GetPredictor(fire_targets));
 
         
        core::EventBus::Publish<data::FireControl>(ParamsForSystemV1::fire_control_event, control());
