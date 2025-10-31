@@ -21,7 +21,7 @@ class LiveTargetManager::Impl {
 public:
     Impl(const std::string& config_path, const double& timeout_sec)
         : targets_map_()
-        , last_update_timestamp_()
+        , last_update_timestamp_(data::TimeStamp {})
         , config_path_(config_path) { }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(

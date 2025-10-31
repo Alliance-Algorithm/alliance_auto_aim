@@ -26,7 +26,10 @@ namespace world_exe::tongji::solver {
 
 class Solver::Impl {
 public:
-    Impl() { }
+    explicit Impl()
+        : R_camera2gimbal_(Eigen::Matrix3d::Zero())
+        , t_camera2gimbal_(Eigen::Vector3d::Zero())
+        , reprojection_util_(std::make_unique<ReprojectionUtil>()) { }
 
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> EstimateAllArmorPoses(
         std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
@@ -50,7 +53,7 @@ public:
         t_camera2gimbal_ = t_camera2gimbal;
     }
 
-    auto Camera2Gimbal(const Eigen::Vector3d& xyz_in_camera) -> const auto {
+    auto Camera2Gimbal(const Eigen::Vector3d& xyz_in_camera) const -> const auto {
         Eigen::Vector3d xyz_in_gimbal =
             R_camera2gimbal_.transpose() * xyz_in_camera + t_camera2gimbal_;
         return xyz_in_gimbal;
@@ -151,5 +154,9 @@ auto Solver::CalculateOptimizeYaw(const data::ArmorImageSpacing& armor_in_image,
     const double& initial_armor_yaw_in_gimbal) const -> const double {
     return pimpl_->CalculateOptimizeYaw(
         armor_in_image, armor_xyz_in_gimbal, gimbal_yaw, initial_armor_yaw_in_gimbal);
+}
+
+auto Solver::Camera2Gimbal(const Eigen::Vector3d& xyz_in_camera) const -> const auto {
+    return pimpl_->Camera2Gimbal(xyz_in_camera);
 }
 }

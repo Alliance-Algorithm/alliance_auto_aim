@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <ctime>
 #include <memory>
 #include <opencv2/core/types.hpp>
@@ -14,7 +13,6 @@
 #include "identified_armor.hpp"
 
 namespace world_exe::tongji::identifier {
-using namespace std::chrono_literals;
 
 enum class TrackState {
     Lost,      //
@@ -32,16 +30,15 @@ class Tracker final {
 public:
     Tracker()
         : armor_filter_(std::make_unique<identifier::ArmorFilter>())
-        , decider_(std::make_unique<Decider>())
-        , last_track_timestamp_(std::chrono::steady_clock::now()) { }
+        , decider_(std::make_unique<Decider>()) { }
 
     ~Tracker() = default;
 
-    auto SelectTrackingTargetID(
-        const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image) noexcept
+    auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image,
+        const std::chrono::milliseconds& duration_from_last_update) noexcept
+
         -> enumeration::ArmorIdFlag const {
-        CheckCameraOffline();
-        last_track_timestamp_ = std::chrono::steady_clock::now();
+        CheckCameraOffline(duration_from_last_update);
 
         auto filtered_ids = enumeration::ArmorIdFlag::None;
 
@@ -134,9 +131,8 @@ private:
         }
     }
 
-    void CheckCameraOffline() {
-        if (state_ != TrackState::Lost
-            && (std::chrono::steady_clock::now() - last_track_timestamp_) < timeout_sec_)
+    void CheckCameraOffline(const std::chrono::milliseconds duration_from_last_update) {
+        if (state_ != TrackState::Lost && (duration_from_last_update > timeout_sec_))
             SetState(TrackState::Lost);
     }
 
@@ -154,16 +150,14 @@ private:
     std::unique_ptr<identifier::ArmorFilter> armor_filter_;
     std::unique_ptr<Decider> decider_;
 
-    int detect_count_                      = 0;
-    int temp_lost_count_                   = 0;
-    int max_temp_lost_count_               = 15;
-    const int min_detect_count_            = 5;
-    const int outpost_max_temp_lost_count_ = 75;
-    const int normal_max_temp_lost_count_  = max_temp_lost_count_;
-    const int max_switch_count_            = 200;
-    static constexpr auto timeout_sec_     = 100ms;
-
-    std::chrono::steady_clock::time_point last_track_timestamp_;
+    int detect_count_                            = 0;
+    int temp_lost_count_                         = 0;
+    int max_temp_lost_count_                     = 15;
+    const int min_detect_count_                  = 5;
+    const int outpost_max_temp_lost_count_       = 75;
+    const int normal_max_temp_lost_count_        = max_temp_lost_count_;
+    const int max_switch_count_                  = 200;
+    const std::chrono::milliseconds timeout_sec_ = std::chrono::milliseconds(100);
 };
 
 }

@@ -9,7 +9,6 @@
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
 #include "tongji/fire_controller/fire_controller.hpp"
-// #include "tongji/identifier/identifier.hpp"
 #include "tongji/predictor/live_target_manager/live_target_manager.hpp"
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
@@ -21,8 +20,7 @@ class AutoAimSystem::Impl {
 public:
     Impl(const bool& debug)
         : debug(debug)
-        , config_path_("")
-        , save_path_("") {
+        , config_path_("../../configs/example.yaml") {
         identifier_ = std::make_unique<v1::identifier::Identifier>(
             parameters::ParamsForSystemV1::szu_model_path(),
             parameters::ParamsForSystemV1::device(), parameters::HikCameraProfile::get_width(),
@@ -45,7 +43,9 @@ public:
     auto Solve(const cv::Mat& raw) -> void {
         const auto& [armors_in_image, flag] = identifier_->identify(raw);
         if (flag == enumeration::ArmorIdFlag::None) return;
-        state_machine_->Update(armors_in_image);
+        state_machine_->Update(armors_in_image,
+            std::chrono::duration_cast<milliseconds>(
+                std::chrono::steady_clock::now() - time_stamp_));
 
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         const auto& [pack, check] = syncer_->get_data(armors_in_image->GetTimeStamp());
@@ -86,7 +86,6 @@ public:
 private:
     bool debug;
     const std::string config_path_;
-    const std::string save_path_;
 
     std::chrono::steady_clock::time_point time_stamp_;
     std::unique_ptr<v1::identifier::Identifier> identifier_;

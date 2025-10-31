@@ -15,8 +15,9 @@ public:
 
     const enumeration::CarIDFlag& GetAllowdToFires() const { return target_id_; }
 
-    void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
-        target_id_ = tracker_->SelectTrackingTargetID(armors_in_image);
+    void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+        const std::chrono::milliseconds& duration_from_last_update) {
+        target_id_ = tracker_->SelectTrackingTargetID(armors_in_image, duration_from_last_update);
     }
 
 private:
@@ -32,7 +33,8 @@ const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const {
     return pimpl_->GetAllowdToFires();
 }
 
-void StateMachine::Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
-    return pimpl_->Update(armors_in_image);
+void StateMachine::Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+    const std::chrono::milliseconds& duration_from_last_update) {
+    return pimpl_->Update(armors_in_image, duration_from_last_update);
 }
 }
