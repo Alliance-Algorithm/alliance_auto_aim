@@ -8,14 +8,13 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
-#include "../predictor/target_snapshot_manager/target_snapshot.hpp"
+#include "../predictor/car_predictor/car_predictor.hpp"
 #include "aim_point_chooser.hpp"
-#include "interfaces/predictor.hpp"
+#include "tongji/predictor/kalman_filter/extended_kalman_filter.hpp"
+#include "tongji/predictor/kalman_filter/predict_model.hpp"
 #include "trajectory.hpp"
 
 namespace world_exe::tongji::fire_control {
-
-using TargetSnapshot = predictor::TargetSnapshot;
 
 struct AimSolution {
     bool valid;
@@ -49,7 +48,7 @@ public:
         TrajectoryResult final_trajectory;
         bool converged = false;
         // HACK:不同击打点影响飞行时间的迭代，需要根据整车的状态（转速和坐标）来选择击打点，不得已将指针转换为派生类
-        auto snapshot_derived = std::dynamic_pointer_cast<TargetSnapshot>(snapshot);
+        auto snapshot_derived = std::dynamic_pointer_cast<predictor::CarPredictor>(snapshot);
 
         // 预测目标在未来 dt时间后的位置
         for (int i = 0; i < 10; ++i) {

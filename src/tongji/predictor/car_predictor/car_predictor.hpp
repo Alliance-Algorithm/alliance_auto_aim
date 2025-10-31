@@ -2,28 +2,38 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <memory>
 #include <optional>
 
 #include <Eigen/Dense>
 
+#include "../in_gimbal_control_armor.hpp"
 #include "../kalman_filter/extended_kalman_filter.hpp"
 #include "../kalman_filter/predict_model.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "data/time_stamped.hpp"
 #include "enum/car_id.hpp"
+#include "interfaces/predictor.hpp"
 
 namespace world_exe::tongji::predictor {
 
-class LiveTarget {
+class CarPredictor final : public interfaces::IPredictor {
 public:
     using PredictorModel = EKFModel<11, 4>;
     using EKF            = ExtendedKalmanFilter<PredictorModel>;
 
-    LiveTarget(const Eigen::Vector3d& armor_xyz_in_gimbal,
+    explicit CarPredictor(
+        const EKF& ekf, const PredictorModel& model, const data::TimeStamp& time_stamp)
+        : ekf_(ekf)
+        , model_(model)
+        , time_stamp_(time_stamp) { }
+
+    explicit CarPredictor(const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const enumeration::CarIDFlag& car_id,
-        const data::TimeStamp time_stamp)
+        const data::TimeStamp& time_stamp)
         : time_stamp_(time_stamp)
-        , model_(car_id) {
+        , model_(car_id)
+        , car_id_(car_id) {
         // x vx y vy z vz a w r l h
         // a: angle
         // w: angular velocity
@@ -42,13 +52,10 @@ public:
         ekf_.emplace(x0, P0, model_); // 初始化滤波器（预测量、预测量协方差）
     }
 
-    EKF::XVec GetEkfX() const { return ekf_->x; }
-    EKF::PDig GetP0Dig() const { return model_.GetP0Dig(); }
-    const PredictorModel& GetModel() const { return model_; }
-    data::TimeStamp LastSeen() const { return time_stamp_; }
+    const enumeration ::ArmorIdFlag& GetId() const override { return car_id_; }
 
-    std::vector<data::ArmorGimbalControlSpacing> GetPredictedArmorGimbalControlSpacings(
-        const data::TimeStamp& time_stamp) const {
+    std ::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
+        const data ::TimeStamp& time_stamp) const override {
         const auto ekf_x = this->GetPredictedX((time_stamp - time_stamp_).to_seconds());
         std::vector<data::ArmorGimbalControlSpacing> armors;
         for (int id = 0; id < model_.GetArmorNum(); id++) {
@@ -61,8 +68,14 @@ public:
             armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
             armors.emplace_back(std::move(armor));
         }
-        return armors;
+        return std::make_shared<InGimbalControlArmor>(armors, time_stamp_);
     }
+
+    EKF::XVec GetEkfX() const { return ekf_->x; }
+    auto GetModel() const -> const PredictorModel { return model_; }
+    auto GetEkf() const -> const EKF { return ekf_.value(); }
+
+    data::TimeStamp LastSeen() const { return time_stamp_; }
 
     auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> const {
         const auto [x_n, P_n] = ekf_->PredictOnce(dt);
@@ -131,6 +144,7 @@ private:
     data::TimeStamp time_stamp_;
     PredictorModel model_;
     std::optional<EKF> ekf_;
+    enumeration::CarIDFlag car_id_;
 
     int last_id_                           = -1;
     int update_count_                      = 0;

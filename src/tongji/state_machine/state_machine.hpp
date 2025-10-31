@@ -7,10 +7,6 @@
 #include "interfaces/armor_in_image.hpp"
 #include "interfaces/car_state.hpp"
 
-namespace world_exe::tongji::predictor {
-class LiveTargetManager;
-}
-
 namespace world_exe::tongji::state_machine {
 class StateMachine final : public interfaces::ICarState {
 public:

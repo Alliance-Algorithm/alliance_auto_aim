@@ -1,4 +1,4 @@
-#include "live_target_manager.hpp"
+#include "car_predictor_manager.hpp"
 
 #include <cstdint>
 #include <ctime>
@@ -6,34 +6,39 @@
 #include <unordered_map>
 
 #include "../in_gimbal_control_armor.hpp"
-#include "../target_snapshot_manager/target_snapshot_manager.hpp"
+
+#include "car_predictor.hpp"
 #include "data/predictor_update_package.hpp"
 #include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
-#include "live_target.hpp"
 #include "util/index.hpp"
 #include "util/math.hpp"
 
 namespace world_exe::tongji::predictor {
 
-class LiveTargetManager::Impl {
+class CarPredictorManager::Impl {
 public:
     Impl(const std::string& config_path, const double& timeout_sec)
         : targets_map_()
-        , last_update_timestamp_(data::TimeStamp {})
+        , last_update_timestamp_(data::TimeStamp { })
         , config_path_(config_path) { }
 
     std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
         const enumeration::ArmorIdFlag& flag, const data::TimeStamp& time_stamp) {
-        std::unordered_map<enumeration::ArmorIdFlag, std::vector<data::ArmorGimbalControlSpacing>>
-            result;
+        std::vector<data::ArmorGimbalControlSpacing> result;
 
-        for (auto id : util::enumeration::ExpandArmorIdFlags(flag)) {
-            auto it = targets_map_.find(id);
-            if (it != targets_map_.end() && it->second && it->second->IsConverged()) {
-                auto spacings = it->second->GetPredictedArmorGimbalControlSpacings(time_stamp);
-                result[id]    = spacings;
+        for (const auto& car_id : util::enumeration::ExpandArmorIdFlags(flag)) {
+            if (const auto it = targets_map_.find(car_id); it != targets_map_.end()) {
+                const auto& [id, predictor] = *it;
+                if (!predictor->IsConverged()) {
+                    continue;
+                }
+                if (predictor->IsConverged()) {
+                    auto spacings = predictor->Predictor(time_stamp);
+                    result.insert(result.end(), spacings->GetArmors(id).begin(),
+                        spacings->GetArmors(id).end());
+                }
             }
         }
 
@@ -42,11 +47,11 @@ public:
 
     std::shared_ptr<interfaces::IPredictor> GetPredictor(
         const enumeration::ArmorIdFlag& flag) const {
-
-        if (targets_map_.empty()) return nullptr;
-
-        return std::make_shared<TargetSnapshotManager>(
-            config_path_, targets_map_, last_update_timestamp_);
+        const auto& it = targets_map_.find(flag);
+        if (it == targets_map_.end()) return nullptr;
+        const auto& [id, predictor] = *it;
+        return std::make_shared<CarPredictor>(
+            predictor->GetEkf(), predictor->GetModel(), predictor->LastSeen());
     }
 
     void Update(std::shared_ptr<data::PredictorUpdatePackage> data) {
@@ -65,7 +70,7 @@ public:
             for (const auto& armor : armors) {
                 if (!targets_map_.contains(armor.id)) {
                     targets_map_.try_emplace(armor.id,
-                        std::make_unique<LiveTarget>(armor.position,
+                        std::make_unique<CarPredictor>(armor.position,
                             util::math::quaternion_to_euler(armor.orientation, 2, 1, 0), armor.id,
                             data->GetTimeStamp()));
                 } else {
@@ -80,26 +85,26 @@ public:
     }
 
 private:
-    std::unordered_map<enumeration::ArmorIdFlag, std::unique_ptr<LiveTarget>> targets_map_;
+    std::unordered_map<enumeration::ArmorIdFlag, std::unique_ptr<CarPredictor>> targets_map_;
     data::TimeStamp last_update_timestamp_;
 
     const std::string config_path_;
 };
 
-LiveTargetManager::LiveTargetManager(const std::string& config_path, const double& timeout_sec)
+CarPredictorManager::CarPredictorManager(const std::string& config_path, const double& timeout_sec)
     : pimpl_(std::make_unique<Impl>(config_path, timeout_sec)) { }
-LiveTargetManager::~LiveTargetManager() = default;
+CarPredictorManager::~CarPredictorManager() = default;
 
-std ::shared_ptr<interfaces ::IArmorInGimbalControl> LiveTargetManager::Predict(
+std ::shared_ptr<interfaces ::IArmorInGimbalControl> CarPredictorManager::Predict(
     const enumeration ::ArmorIdFlag& id, const data::TimeStamp& time_stamp) {
     return pimpl_->Predict(id, time_stamp);
 }
-std ::shared_ptr<interfaces::IPredictor> LiveTargetManager::GetPredictor(
+std ::shared_ptr<interfaces::IPredictor> CarPredictorManager::GetPredictor(
     const enumeration ::ArmorIdFlag& id) const {
     return pimpl_->GetPredictor(id);
 }
 
-void LiveTargetManager::Update(std::shared_ptr<data::PredictorUpdatePackage> data) {
+void CarPredictorManager::Update(std::shared_ptr<data::PredictorUpdatePackage> data) {
     return pimpl_->Update(data);
 }
 

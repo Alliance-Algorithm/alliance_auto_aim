@@ -5,8 +5,6 @@
 #include <opencv2/core/types.hpp>
 #include <vector>
 
-#include "../predictor/target_snapshot_manager/target_snapshot.hpp"
-#include "../predictor/target_snapshot_manager/target_snapshot_manager.hpp"
 #include "armor_filter.hpp"
 #include "decider.hpp"
 #include "enum/armor_id.hpp"
@@ -23,9 +21,7 @@ enum class TrackState {
 };
 
 class Tracker final {
-    using TargetSnapshotManager = world_exe::tongji::predictor::TargetSnapshotManager;
-    using TargetSnapshot        = world_exe::tongji::predictor::TargetSnapshot;
-    using ArmorInImage          = world_exe::tongji::identifier::IdentifiedArmor;
+    using ArmorInImage = world_exe::tongji::identifier::IdentifiedArmor;
 
 public:
     Tracker()

@@ -9,10 +9,10 @@
 
 namespace world_exe::tongji::predictor {
 
-class LiveTargetManager final : public interfaces::ITargetPredictor {
+class CarPredictorManager final : public interfaces::ITargetPredictor {
 public:
-    LiveTargetManager(const std::string& config_path, const double& timeout_sec = 0.1);
-    ~LiveTargetManager();
+    CarPredictorManager(const std::string& config_path, const double& timeout_sec = 0.1);
+    ~CarPredictorManager();
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> Predict(
         const enumeration ::ArmorIdFlag& id, const data::TimeStamp& time_stamp) override;
@@ -21,10 +21,10 @@ public:
 
     void Update(std::shared_ptr<data::PredictorUpdatePackage> data);
 
-    LiveTargetManager(const LiveTargetManager&)                = delete;
-    LiveTargetManager& operator=(const LiveTargetManager&)     = delete;
-    LiveTargetManager(LiveTargetManager&&) noexcept            = default;
-    LiveTargetManager& operator=(LiveTargetManager&&) noexcept = default;
+    CarPredictorManager(const CarPredictorManager&)                = delete;
+    CarPredictorManager& operator=(const CarPredictorManager&)     = delete;
+    CarPredictorManager(CarPredictorManager&&) noexcept            = default;
+    CarPredictorManager& operator=(CarPredictorManager&&) noexcept = default;
 
 private:
     class Impl;

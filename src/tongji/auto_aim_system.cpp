@@ -9,10 +9,11 @@
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
 #include "tongji/fire_controller/fire_controller.hpp"
-#include "tongji/predictor/live_target_manager/live_target_manager.hpp"
+#include "tongji/predictor/car_predictor/car_predictor_manager.hpp"
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
 #include "v1/identifier/identifier.hpp"
+
 namespace world_exe::tongji {
 using namespace std::chrono;
 
@@ -21,12 +22,13 @@ public:
     Impl(const bool& debug)
         : debug(debug)
         , config_path_("../../configs/example.yaml") {
+
         identifier_ = std::make_unique<v1::identifier::Identifier>(
             parameters::ParamsForSystemV1::szu_model_path(),
             parameters::ParamsForSystemV1::device(), parameters::HikCameraProfile::get_width(),
             parameters::HikCameraProfile::get_height());
         pnp_solver_          = std::make_unique<solver::Solver>();
-        live_target_manager_ = std::make_shared<predictor::LiveTargetManager>(config_path_);
+        live_target_manager_ = std::make_shared<predictor::CarPredictorManager>(config_path_);
         state_machine_       = std::make_shared<state_machine::StateMachine>();
         fire_controller_     = std::make_unique<fire_control::FireController>(
             config_path_, state_machine_, live_target_manager_);
@@ -91,7 +93,7 @@ private:
     std::unique_ptr<v1::identifier::Identifier> identifier_;
     std::unique_ptr<solver::Solver> pnp_solver_;
     std::shared_ptr<state_machine::StateMachine> state_machine_;
-    std::shared_ptr<predictor::LiveTargetManager> live_target_manager_;
+    std::shared_ptr<predictor::CarPredictorManager> live_target_manager_;
     std::unique_ptr<world_exe::v1::Syncer> syncer_;
     std::unique_ptr<fire_control::FireController> fire_controller_;
 };

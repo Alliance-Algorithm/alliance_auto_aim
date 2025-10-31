@@ -6,22 +6,20 @@
 #include <yaml-cpp/yaml.h>
 
 #include "../identifier/identified_armor.hpp"
-#include "../predictor/live_target_manager/live_target_manager.hpp"
-#include "../predictor/target_snapshot_manager/target_snapshot_manager.hpp"
 #include "../state_machine/state_machine.hpp"
 #include "aim_solver.hpp"
 #include "data/fire_control.hpp"
 #include "fire_decision.hpp"
 #include "interfaces/target_predictor.hpp"
+#include "tongji/predictor/car_predictor/car_predictor_manager.hpp"
 
 namespace world_exe::tongji::fire_control {
 
-using TargetSnapshotManager = predictor::TargetSnapshotManager;
-using StateMachine          = state_machine::StateMachine;
-using IdentifiedArmor       = identifier::IdentifiedArmor;
-using CarIDFlag             = enumeration::CarIDFlag;
-using LiveTargetManager     = predictor::LiveTargetManager;
-using TimeStamp             = data::TimeStamp;
+using StateMachine        = state_machine::StateMachine;
+using IdentifiedArmor     = identifier::IdentifiedArmor;
+using CarIDFlag           = enumeration::CarIDFlag;
+using CarPredictorManager = predictor ::CarPredictorManager;
+using TimeStamp           = data::TimeStamp;
 
 class FireController::Impl {
 public:
