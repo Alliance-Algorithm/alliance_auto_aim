@@ -1,6 +1,6 @@
 #pragma once
 
-#include <opencv2/core/mat.hpp>
+#include "data/time_stamped.hpp"
 
 namespace world_exe::interfaces {
 /**
@@ -12,9 +12,9 @@ template <class T> class ISyncBlock {
 
 public:
 
-    virtual void set_data(const T& camera_data);
+    virtual void set_data(const T& camera_data) = 0;
 
-    virtual std::tuple<T, bool> get_data(time_t timestamp);
+    virtual std::tuple<T, bool> get_data(const data::TimeStamp& timestamp) = 0;
 
     virtual ~ISyncBlock() = default;
 };

@@ -8,7 +8,7 @@
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
 
-namespace world_exe::tongji::predictor {
+namespace world_exe::tongji::identifier {
 
 enum PriorityMode { MODE_ONE = 1, MODE_TWO };
 

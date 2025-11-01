@@ -15,8 +15,7 @@ const std::vector<data::ArmorImageSpacing>& ArmorInImage::GetArmors(const enumer
     return result;
 }
 
-const ITimeStamped& ArmorInImage::GetTimeStamped() const {
-    time_stamped_.GetTimeStamp();
+const data::TimeStamp& ArmorInImage::GetTimeStamp() const {
     return time_stamped_;
 }
 }

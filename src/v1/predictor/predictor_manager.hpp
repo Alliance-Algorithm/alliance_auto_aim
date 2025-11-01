@@ -1,6 +1,7 @@
 #pragma once
 
-#include "interfaces/predictor_update_package.hpp"
+#include "data/time_stamped.hpp"
+#include "data/predictor_update_package.hpp"
 #include "interfaces/target_predictor.hpp"
 
 namespace world_exe::v1::predictor {
@@ -9,10 +10,10 @@ public:
     PredictorManager();
     ~PredictorManager();
 
-    void Update(std::shared_ptr<interfaces::IPreDictorUpdatePackage> data);
+    void Update(std::shared_ptr<data::PredictorUpdatePackage> data);
 
     virtual std::shared_ptr<interfaces::IArmorInGimbalControl> Predict(
-        const enumeration::ArmorIdFlag& id, const std::time_t& time_stamp);
+        const enumeration::ArmorIdFlag& id, const data::TimeStamp& time_stamp);
 
     std::shared_ptr<interfaces::IPredictor> GetPredictor(const enumeration::ArmorIdFlag& id) const;
 

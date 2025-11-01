@@ -2,6 +2,7 @@
 
 #include "data/fire_control.hpp"
 #include "enum/car_id.hpp"
+#include <chrono>
 #include <ctime>
 
 namespace world_exe::interfaces {
@@ -17,7 +18,7 @@ public:
      * @param time_duration 额外时间差 典型值：当前时刻到当前帧传感器传入内容的时间差
      * @return const data::FireControl
      */
-    virtual const data::FireControl CalculateTarget(const std::time_t& time_duration) const = 0;
+    virtual const data::FireControl CalculateTarget(const std::chrono::seconds& time_duration) const = 0;
 
     /**
      * @brief 获取当前火控系统锁定的车辆ID

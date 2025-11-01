@@ -1,6 +1,6 @@
 #pragma once
 #include "interfaces/identifier.hpp"
-#include "armor_image_detail.hpp"
+
 namespace world_exe::interfaces::detail {
 
 class ArmorIdentifier : public world_exe::interfaces::IIdentifier {

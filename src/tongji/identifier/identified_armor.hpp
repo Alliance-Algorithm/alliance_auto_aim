@@ -2,12 +2,12 @@
 
 #include "enum/armor_id.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "interfaces/time_stamped.hpp"
+#include "data/time_stamped.hpp"
 #include "util/index.hpp"
 
 namespace world_exe::tongji::identifier {
 
-class IdentifiedArmor final : public interfaces::IArmorInImage, public interfaces::ITimeStamped {
+class IdentifiedArmor final : public interfaces::IArmorInImage {
 public:
     explicit IdentifiedArmor(const std::vector<data::ArmorImageSpacing>& armors) {
         for (const auto& armor : armors) {
@@ -15,9 +15,7 @@ public:
         }
     }
 
-    const interfaces::ITimeStamped& GetTimeStamped() const override { return *this; }
-
-    const std::time_t& GetTimeStamp() const override { return time_stamp_; };
+    const data::TimeStamp& GetTimeStamp() const override { return time_stamp_; }
 
     const std::vector<data::ArmorImageSpacing>& GetArmors(
         const enumeration::ArmorIdFlag& armor_id) const override {
@@ -29,7 +27,7 @@ public:
     }
 
 private:
-    std::time_t time_stamp_ { std::time(nullptr) };
+    data::TimeStamp time_stamp_ { std::chrono::steady_clock::now().time_since_epoch() };
     std::array<std::vector<data::ArmorImageSpacing>, 8> armors_;
 };
 }

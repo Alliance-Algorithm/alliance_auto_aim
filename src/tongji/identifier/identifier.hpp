@@ -37,15 +37,22 @@ struct Lightbar {
         this->ratio       = length / width;
     }
 };
+
 class Identifier final : public interfaces::IIdentifier {
 public:
-    Identifier(const std::string& model_path, int model_image_width, int model_image_height);
+    explicit Identifier(const std::string& config_path, const std::string& save_path,
+        const bool& debug = true, const bool& record = false);
     ~Identifier();
 
     const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
     identify(const cv::Mat& input_image) override;
 
     void SetTargetColor(Color target_color);
+
+    Identifier(const Identifier&)                = delete;
+    Identifier& operator=(const Identifier&)     = delete;
+    Identifier(Identifier&&) noexcept            = default;
+    Identifier& operator=(Identifier&&) noexcept = default;
 
 private:
     class Impl;

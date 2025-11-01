@@ -16,6 +16,7 @@
 
 #include "openvino/core/preprocess/pre_post_process.hpp"
 #include "openvino/runtime/core.hpp"
+#include <chrono>
 #include <memory>
 
 namespace world_exe::v1::identifier {
@@ -74,10 +75,13 @@ public:
      */
     std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag> Identify(
         const cv::Mat& input_image) {
+            
         // 首先使用深度学习模型进行装甲板检测得到roi区域
         const auto armor_infos = model_infer(input_image);
         // 然后进行灯条匹配验证
-        return matchPlate(input_image, armor_infos);
+        auto [a, b] = matchPlate(input_image, armor_infos);
+        a->time_stamp_ = std::chrono::steady_clock::now().time_since_epoch();
+        return {a, b};
     }
 
     /**
@@ -228,7 +232,7 @@ private:
             , angle_(angle) { }
     };
 
-    std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag> matchPlate(
+    std::tuple<std::shared_ptr<IdentifierArmor>, enumeration::CarIDFlag> matchPlate(
         const cv::Mat& img, const std::vector<ArmorInfo>& armor_infos) {
         if (armor_infos.empty()) return {};
 

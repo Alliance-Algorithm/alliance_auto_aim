@@ -1,3 +1,4 @@
+#include "armor_image_detail.hpp"
 #include "armor_identifier_detail.hpp"
 #include <cmath>
 #include <opencv2/opencv.hpp>

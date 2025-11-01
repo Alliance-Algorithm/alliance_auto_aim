@@ -5,16 +5,23 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <openvino/runtime/core.hpp>
+#include <string>
+#include <yaml-cpp/node/parse.h>
+#include <yaml-cpp/yaml.h>
 
 #include "enum/armor_id.hpp"
 
 namespace world_exe::tongji::identifier {
+
+// TODO:早期代码，和深大模型不适配，需要TODOTODO
 class Classifier final {
 public:
-    explicit Classifier(
-        const std::string& model_path, int model_image_width, int model_image_height)
-        : model_image_width_(model_image_width)
-        , model_image_height_(model_image_height) {
+    explicit Classifier(const std::string& config_path) {
+        const auto yaml       = YAML::Load(config_path);
+        const auto model_path = yaml["classify_model"].as<std::string>();
+        model_image_width_    = yaml["model_image_width"].as<int>();
+        model_image_height_   = yaml["model_image_height"].as<int>();
+
         net_            = cv::dnn::readNetFromONNX(model_path);
         auto ovmodel    = core_.read_model(model_path);
         compiled_model_ = core_.compile_model(
@@ -147,7 +154,7 @@ private:
     ov::Core core_;
     ov::CompiledModel compiled_model_;
 
-    const int model_image_height_ = 640;
-    const int model_image_width_  = 640;
+    int model_image_height_ = 640;
+    int model_image_width_  = 640;
 };
 }

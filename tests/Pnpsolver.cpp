@@ -2,8 +2,6 @@
 #include <interfaces/pnp_solver.hpp>
 #include "mocks/MockArmor2D.hpp"
 #include "interfaces/pnp_solver.hpp"
-#include "parameters/rm_parameters.hpp"
-#include "mocks/MockHikCameraProfile.hpp"
 
 using world_exe::interfaces::IPnpSolver;
 using world_exe::tests::mock::MockArmorInImage;

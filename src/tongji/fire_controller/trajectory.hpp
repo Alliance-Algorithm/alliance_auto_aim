@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-namespace world_exe::tongji::predictor {
+namespace world_exe::tongji::fire_control {
 
 struct TrajectoryResult {
     bool solvable = true;

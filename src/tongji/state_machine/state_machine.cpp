@@ -2,37 +2,39 @@
 
 #include <memory>
 
+#include "../identifier/tracker.hpp"
 #include "enum/car_id.hpp"
-#include "interfaces/target_predictor.hpp"
-#include "tongji/predictor/live_target_manager/live_target_manager.hpp"
 
 namespace world_exe::tongji::state_machine {
 
 class StateMachine::Impl {
 public:
-    Impl(std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager)
-        : live_target_manager_(std::move(live_target_manager)) { }
+    Impl()
+        : tracker_(std::make_unique<identifier::Tracker>())
+        , target_id_(enumeration::CarIDFlag::None) { }
 
-    const enumeration::CarIDFlag& GetAllowdToFires() const { return target_ids_; }
+    const enumeration::CarIDFlag& GetAllowdToFires() const { return target_id_; }
 
-    void Update() {
-        auto live_target_manager =
-            std::dynamic_pointer_cast<predictor::LiveTargetManager>(live_target_manager_);
-        target_ids_ = live_target_manager->GetAllowedTargetID();
+    void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+        const std::chrono::milliseconds& duration_from_last_update) {
+        target_id_ = tracker_->SelectTrackingTargetID(armors_in_image, duration_from_last_update);
     }
 
 private:
-    std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager_;
-    enumeration::CarIDFlag target_ids_;
+    std::unique_ptr<identifier::Tracker> tracker_;
+    enumeration::CarIDFlag target_id_;
 };
 
-StateMachine::StateMachine(
-    std::shared_ptr<world_exe::interfaces::ITargetPredictor> live_target_manager)
-    : pimpl_(std::make_unique<Impl>(live_target_manager)) { }
-StateMachine::~StateMachine() = default;
+StateMachine::StateMachine()
+    : pimpl_(std::make_unique<Impl>()) { }
+StateMachine::~StateMachine() { };
 
 const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const {
     return pimpl_->GetAllowdToFires();
 }
 
+void StateMachine::Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+    const std::chrono::milliseconds& duration_from_last_update) {
+    return pimpl_->Update(armors_in_image, duration_from_last_update);
+}
 }

@@ -1,4 +1,3 @@
-#include "Pnpsolver.cpp" 
 #include "v1/pnpsolver/armor_pnp_solver.hpp"
 #include <core/system_factory.hpp>
 #include <enum/system_version.hpp>
@@ -6,6 +5,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <parameters/params_system_v1.hpp>
+#include <parameters/rm_parameters.hpp>
+#include "Pnpsolver.cpp"
 #include "sync_test.cpp"
 
 using namespace world_exe::v1::pnpsolver;
@@ -13,6 +14,7 @@ using world_exe::parameters::Robomaster;
 
 using ::testing::Return;
 using ::testing::_;
+
 
 TEST_P(PnpsolverTest,AbilityTest)
 {

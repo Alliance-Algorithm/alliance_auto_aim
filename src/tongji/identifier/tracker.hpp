@@ -3,18 +3,14 @@
 #include <ctime>
 #include <memory>
 #include <opencv2/core/types.hpp>
-#include <utility>
 #include <vector>
 
-#include "../../identifier/armor_filter.hpp"
-#include "../../identifier/identified_armor.hpp"
-#include "../../time_stamp/time_stamp.hpp"
-#include "../target_snapshot_manager/target_snapshot.hpp"
-#include "../target_snapshot_manager/target_snapshot_manager.hpp"
+#include "armor_filter.hpp"
 #include "decider.hpp"
 #include "enum/armor_id.hpp"
+#include "identified_armor.hpp"
 
-namespace world_exe::tongji::predictor {
+namespace world_exe::tongji::identifier {
 
 enum class TrackState {
     Lost,      //
@@ -25,25 +21,23 @@ enum class TrackState {
 };
 
 class Tracker final {
-    using TargetSnapshotManager = world_exe::tongji::predictor::TargetSnapshotManager;
-    using TargetSnapshot        = world_exe::tongji::predictor::TargetSnapshot;
-    using ArmorInImage          = world_exe::tongji::identifier::IdentifiedArmor;
+    using ArmorInImage = world_exe::tongji::identifier::IdentifiedArmor;
 
 public:
     Tracker()
         : armor_filter_(std::make_unique<identifier::ArmorFilter>())
-        , decider_(std::make_unique<Decider>())
-        , last_track_timestamp_(std::time(nullptr)) { }
+        , decider_(std::make_unique<Decider>()) { }
 
     ~Tracker() = default;
 
     auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image,
-        const std::time_t& now) noexcept -> enumeration::ArmorIdFlag const {
-        CheckCameraOffline(now);
-        last_track_timestamp_.SetTimeStamp(now);
+        const std::chrono::milliseconds& duration_from_last_update) noexcept
+
+        -> enumeration::ArmorIdFlag const {
+        CheckCameraOffline(duration_from_last_update);
 
         auto filtered_ids = enumeration::ArmorIdFlag::None;
-        auto detected_ids = enumeration::ArmorIdFlag::None;
+
         std::vector<data::ArmorImageSpacing> filtered_armors;
         for (uint32_t i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); ++i) {
             auto id = static_cast<enumeration::ArmorIdFlag>(
@@ -52,12 +46,9 @@ public:
             if (armors_in_image->GetArmors(id).empty()) continue;
 
             // 图像中出现的装甲板
-            auto armors  = armors_in_image->GetArmors(id);
-            detected_ids = static_cast<enumeration::ArmorIdFlag>(
-                static_cast<uint32_t>(detected_ids) | static_cast<uint32_t>(id));
-
+            auto armors = armors_in_image->GetArmors(id);
             // 对从图像识别到的装甲板进行过滤
-            filtered_armors = std::move(armor_filter_->FilterArmor(std::move(armors)));
+            filtered_armors = armor_filter_->FilterArmor(armors);
             if (!filtered_armors.empty()) {
                 filtered_ids =
                     static_cast<enumeration::ArmorIdFlag>(static_cast<uint32_t>(filtered_ids)
@@ -65,12 +56,15 @@ public:
             }
         }
 
-        UpdateState(!(detected_ids == enumeration::ArmorIdFlag::None));
+        UpdateState(!(filtered_ids == enumeration::ArmorIdFlag::None));
 
         tracking_car_id_ = decider_->GetBestArmor(filtered_armors);
         return tracking_car_id_;
     }
 
+    TrackState GetState() const { return state_; }
+
+private:
     void UpdateState(bool found) {
         switch (state_) {
         case TrackState::Lost: {
@@ -133,14 +127,8 @@ public:
         }
     }
 
-    TrackState GetState() const { return state_; }
-
-private:
-    void CheckCameraOffline(const std::time_t& now) {
-        // TODO:If the underlying timestamp is std::time_t, then this if branch will never be
-        // entered
-        if (state_ != TrackState::Lost
-            && static_cast<double>(now - last_track_timestamp_.GetTimeStamp()) < 0.1)
+    void CheckCameraOffline(const std::chrono::milliseconds duration_from_last_update) {
+        if (state_ != TrackState::Lost && (duration_from_last_update > timeout_sec_))
             SetState(TrackState::Lost);
     }
 
@@ -158,15 +146,14 @@ private:
     std::unique_ptr<identifier::ArmorFilter> armor_filter_;
     std::unique_ptr<Decider> decider_;
 
-    int detect_count_                      = 0;
-    int temp_lost_count_                   = 0;
-    int max_temp_lost_count_               = 15;
-    const int min_detect_count_            = 5;
-    const int outpost_max_temp_lost_count_ = 75;
-    const int normal_max_temp_lost_count_  = max_temp_lost_count_;
-    const int max_switch_count_            = 200;
-
-    time_stamp::TimeStamp last_track_timestamp_;
+    int detect_count_                            = 0;
+    int temp_lost_count_                         = 0;
+    int max_temp_lost_count_                     = 15;
+    const int min_detect_count_                  = 5;
+    const int outpost_max_temp_lost_count_       = 75;
+    const int normal_max_temp_lost_count_        = max_temp_lost_count_;
+    const int max_switch_count_                  = 200;
+    const std::chrono::milliseconds timeout_sec_ = std::chrono::milliseconds(100);
 };
 
 }

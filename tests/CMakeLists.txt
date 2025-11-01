@@ -15,7 +15,7 @@ target_compile_features(test_main PRIVATE cxx_std_20)
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/refs/heads/main.zip
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/thirdparty/googletest
 )
 
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)

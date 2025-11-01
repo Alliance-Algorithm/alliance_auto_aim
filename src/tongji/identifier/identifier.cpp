@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <list>
-#include <utility>
+#include <memory>
 #include <vector>
 
 #include <fmt/chrono.h>
@@ -14,41 +14,39 @@
 #include <opencv2/core/types.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <yaml-cpp/node/parse.h>
+#include <yaml-cpp/yaml.h>
 
+#include "../identifier/classifier.hpp"
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
 #include "identified_armor.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "../identifier/classifier.hpp"
 #include "util/logger.hpp"
 #include "util/stringifier.hpp"
 
 namespace world_exe::tongji::identifier {
-
 class Identifier::Impl {
 public:
-    explicit Impl(const std::string& model_path, const int& model_image_width,
-        const int& model_image_height, const double& threshold, const double& max_angle_error,
-        const double& min_lightbar_ratio, const double& max_lightbar_ratio,
-        const double& min_lightbar_length, const double& max_armor_ratio,
-        const double& min_armor_ratio, const double& max_side_ratio, const double& min_confidence,
-        const double& max_rectangular_error, const std::string& save_path, const bool& debug = true,
-        const bool& record = true)
-        : classifier_(model_path, model_image_width, model_image_height)
-        , threshold_(threshold)
-        , max_angle_error_(max_angle_error / 57.3) // degree to rad
-        , min_lightbar_ratio_(min_lightbar_ratio)
-        , max_lightbar_ratio_(max_lightbar_ratio)
-        , min_lightbar_length_(min_lightbar_length)
-        , max_armor_ratio_(max_armor_ratio)
-        , min_armor_ratio_(min_armor_ratio)
-        , max_side_ratio_(max_side_ratio)
-        , min_confidence_(min_confidence)
-        , max_rectangular_error_(max_rectangular_error / 57.3) // degree to rad
-        , save_path_(std::move(save_path))
+    explicit Impl(const std::string& config_path, const std::string& save_path, const bool& debug,
+        const bool& record)
+        : classifier_(std::make_unique<Classifier>(config_path))
+        , save_path_(save_path)
         , debug_(debug)
         , record_(record)
         , target_color_(blue) {
+        const auto yaml = YAML::Load(config_path);
+
+        threshold_             = yaml["threshold"].as<double>();
+        max_angle_error_       = yaml["max_angle_error"].as<double>() / 57.3; // degree to rad
+        min_lightbar_ratio_    = yaml["min_lightbar_ratio"].as<double>();
+        max_lightbar_ratio_    = yaml["max_lightbar_ratio"].as<double>();
+        min_lightbar_length_   = yaml["min_lightbar_length"].as<double>();
+        max_armor_ratio_       = yaml["max_armor_ratio"].as<double>();
+        min_armor_ratio_       = yaml["min_armor_ratio"].as<double>();
+        max_side_ratio_        = yaml["max_side_ratio"].as<double>();
+        min_confidence_        = yaml["min_confidence"].as<double>();
+        max_rectangular_error_ = yaml["max_rectangular_error"].as<double>() / 57.3; // degree to rad
 
         if (!std::filesystem::exists(save_path_)) std::filesystem::create_directories(save_path_);
     }
@@ -131,7 +129,7 @@ public:
 
                 armor_candidate.pattern = GetPattern(bgr_img, *left, *right);
 
-                classifier_.Classify(
+                classifier_->Classify(
                     armor_candidate.pattern, armor_candidate.id, armor_candidate.confidence);
 
                 if (!CheckName(
@@ -322,10 +320,10 @@ private:
     }
 
 private:
-    Classifier classifier_;
+    std::unique_ptr<Classifier> classifier_;
 
     double threshold_;
-    double max_angle_error_;
+    double max_angle_error_; // rad
     double min_lightbar_ratio_, max_lightbar_ratio_;
     double min_lightbar_length_;
     double min_armor_ratio_, max_armor_ratio_;
@@ -339,6 +337,11 @@ private:
     bool record_;
     std::string save_path_;
 };
+
+Identifier::Identifier(const std::string& config_path, const std::string& save_path,
+    const bool& debug, const bool& record)
+    : pimpl_(std::make_unique<Impl>(config_path, save_path, debug, record)) { }
+Identifier::~Identifier() = default;
 
 const std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag>
 Identifier::identify(const cv::Mat& input_image) {

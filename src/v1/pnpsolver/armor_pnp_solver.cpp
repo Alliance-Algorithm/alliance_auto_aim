@@ -5,7 +5,7 @@
 
 #include "armor_pnp_solver.hpp"
 #include "interfaces/armor_in_camera.hpp"
-#include "interfaces/time_stamped.hpp"
+#include "data/time_stamped.hpp"
 #include "parameters/profile.hpp"
 #include "util/index.hpp"
 
@@ -55,17 +55,15 @@ private:
 
     const std::vector<cv::Point3d>& NormalArmorObjectPoints_;
 };
-class ArmorInCamera final : public world_exe::interfaces::IArmorInCamera,
-                            world_exe::interfaces::ITimeStamped {
+class ArmorInCamera final : public world_exe::interfaces::IArmorInCamera {
 public:
-    const world_exe::interfaces::ITimeStamped& GetTimeStamped() const override { return *this; }
+    const world_exe::data::TimeStamp& GetTimeStamp() const override { return time_stampe; }
     const std::vector<world_exe::data::ArmorCameraSpacing>& GetArmors(
         const world_exe::enumeration::ArmorIdFlag& armor_id) const override {
         return armors[world_exe::util::enumeration::GetIndex(armor_id)];
     }
-    const std::time_t& GetTimeStamp() const override { return time_stampe; }
 
-    std::time_t time_stampe = 0;
+    world_exe::data::TimeStamp time_stampe{};
     std::vector<world_exe::data::ArmorCameraSpacing>
         armors[static_cast<int>(world_exe::enumeration::ArmorIdFlag::Count)];
 
@@ -85,8 +83,6 @@ std::shared_ptr<world_exe::interfaces::IArmorInCamera> ArmorIPPEPnPSolver::Solve
     }
     return armors_;
 }
-
-const std::time_t& ArmorIPPEPnPSolver::GetTimeStamp() const { return time_point_; }
 
 ArmorIPPEPnPSolver::ArmorIPPEPnPSolver(const std::vector<cv::Point3d>& LargeArmorObjectPoints,
     const std::vector<cv::Point3d>& NormalArmorObjectPoints)
