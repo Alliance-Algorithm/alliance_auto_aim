@@ -1,5 +1,5 @@
 
-#include "util/math_tongji.hpp"
+#include "tongji/utils/math.hpp"
 
 #include <cmath>
 #include <numbers>
@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 #include <Eigen/Dense>
 
-namespace math = world_exe::util::math;
+namespace math = world_exe::tongji::utils::math;
 
 constexpr double TOLERANCE = 1e-6;
 

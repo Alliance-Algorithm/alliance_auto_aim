@@ -11,6 +11,7 @@
 #include <opencv2/core/mat.hpp>
 #include <yaml-cpp/yaml.h>
 
+#include "../solver/reprojection_util.hpp"
 #include "data/armor_camera_spacing.hpp"
 #include "data/armor_image_spaceing.hpp"
 #include "data/time_stamped.hpp"
@@ -18,8 +19,7 @@
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
 #include "solved_armor.hpp"
-#include "tongji/solver/reprojection_util.hpp"
-#include "util/coordinate.hpp"
+#include "tongji/utils/coordinate.hpp"
 #include "util/index.hpp"
 #include "util/math.hpp"
 namespace world_exe::tongji::solver {

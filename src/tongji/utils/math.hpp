@@ -2,7 +2,7 @@
 
 #include <Eigen/Eigen>
 
-namespace world_exe::util::math {
+namespace world_exe::tongji::utils::math {
 
 // [−π,π] 注意边界值
 static constexpr double clamp_pm_pi(auto angle) {
@@ -120,6 +120,15 @@ static Eigen::Matrix<double, 3, 3> xyz2ypd_jacobian(const Eigen::Vector3d& xyz) 
     // clang-format on
 
     return J;
+}
+
+template <typename T> T square(T const& a) { return a * a; };
+
+static inline double get_abs_angle(const Eigen::Vector2d& vec1, const Eigen::Vector2d& vec2) {
+    if (vec1.norm() == 0. || vec2.norm() == 0.) {
+        return 0.;
+    }
+    return std::acos(vec1.dot(vec2) / (vec1.norm() * vec2.norm())); //(0~pi)
 }
 
 } // namespace rmcs_auto_aim::util::math

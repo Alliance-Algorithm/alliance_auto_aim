@@ -12,8 +12,8 @@
 #include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
+#include "tongji/utils/math.hpp"
 #include "util/index.hpp"
-#include "util/math.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -71,12 +71,12 @@ public:
                 if (!targets_map_.contains(armor.id)) {
                     targets_map_.try_emplace(armor.id,
                         std::make_unique<CarPredictor>(armor.position,
-                            util::math::quaternion_to_euler(armor.orientation, 2, 1, 0), armor.id,
+                            utils::math::quaternion_to_euler(armor.orientation), armor.id,
                             data->GetTimeStamp()));
                 } else {
                     targets_map_.at(armor.id)->Update(data->GetTimeStamp(), armor.position,
-                        util::math::quaternion_to_euler(armor.orientation, 2, 1, 0),
-                        util::math::xyz2ypd(armor.position));
+                        utils::math::quaternion_to_euler(armor.orientation),
+                        utils::math::xyz2ypd(armor.position));
                 }
             }
 

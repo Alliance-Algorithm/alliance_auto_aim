@@ -11,8 +11,8 @@
 #include "data/armor_image_spaceing.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
-#include "util/coordinate.hpp"
-#include "util/math.hpp"
+#include "tongji/utils/coordinate.hpp"
+#include "tongji/utils/math.hpp"
 
 namespace world_exe::tongji::solver {
 
@@ -105,11 +105,11 @@ private:
                     + std::fabs(ref_d.norm() - pt_d.norm()))
                 / ref_d.norm();
             double angular_dis =
-                ref_d.norm() * util::math::get_abs_angle(ref_d, pt_d) / ref_d.norm();
+                ref_d.norm() * utils::math::get_abs_angle(ref_d, pt_d) / ref_d.norm();
             // 平方可能是为了配合 sin 和 cos
             // 弧度差代价（0 度左右占比应该大）
-            double cost_i = util::math::square(pixel_dis * std::sin(inclined))
-                + util::math::square(angular_dis * std::cos(inclined))
+            double cost_i = utils::math::square(pixel_dis * std::sin(inclined))
+                + utils::math::square(angular_dis * std::cos(inclined))
                     * 2.0; // DETECTOR_ERROR_PIXEL_BY_SLOPE
             // 重投影像素误差越大，越相信斜率
             cost += std::sqrt(cost_i);

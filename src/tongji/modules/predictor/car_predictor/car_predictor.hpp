@@ -1,19 +1,18 @@
 #pragma once
 
-#include <cstdlib>
 #include <ctime>
 #include <memory>
 #include <optional>
 
 #include <Eigen/Dense>
 
-#include "../in_gimbal_control_armor.hpp"
-#include "../kalman_filter/extended_kalman_filter.hpp"
-#include "../kalman_filter/predict_model.hpp"
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "data/time_stamped.hpp"
 #include "enum/car_id.hpp"
 #include "interfaces/predictor.hpp"
+#include "tongji/modules/predictor/in_gimbal_control_armor.hpp"
+#include "tongji/modules/predictor/kalman_filter/extended_kalman_filter.hpp"
+#include "tongji/modules/predictor/kalman_filter/predict_model.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -59,13 +58,13 @@ public:
         const auto ekf_x = this->GetPredictedX((time_stamp - time_stamp_).to_seconds());
         std::vector<data::ArmorGimbalControlSpacing> armors;
         for (int id = 0; id < model_.GetArmorNum(); id++) {
-            auto angle = util::math::clamp_pm_pi(ekf_x[6] + id * 2 * CV_PI / model_.GetArmorNum());
+            auto angle = utils::math::clamp_pm_pi(ekf_x[6] + id * 2 * CV_PI / model_.GetArmorNum());
             auto xyz   = model_.h_armor_xyz(ekf_x, id);
 
             data::ArmorGimbalControlSpacing armor;
             armor.id          = model_.GetID();
             armor.position    = xyz;
-            armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
+            armor.orientation = utils::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
             armors.emplace_back(std::move(armor));
         }
         return std::make_shared<InGimbalControlArmor>(armors, time_stamp_);

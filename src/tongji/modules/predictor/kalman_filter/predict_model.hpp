@@ -7,7 +7,7 @@
 #include <opencv2/core/cvdef.h>
 
 #include "enum/car_id.hpp"
-#include "util/math.hpp"
+#include "tongji/utils/math.hpp"
 namespace world_exe::tongji::predictor {
 
 template <auto T>
@@ -75,15 +75,15 @@ public:
     // 防止夹角求和出现异常值
     constexpr auto x_add(const XVec& a, const XVec& b) const -> const auto {
         XVec c = a + b;
-        c(6)   = util ::math::clamp_pm_pi(c(6));
+        c(6)   = utils::math::clamp_pm_pi(c(6));
         return c;
     }
 
     constexpr auto z_substract(const ZVec& a, const ZVec& b) const -> const auto {
         auto c = a - b;
-        c(0)   = util::math::clamp_pm_pi(c(0));
-        c(1)   = util::math::clamp_pm_pi(c(1));
-        c(3)   = util::math::clamp_pm_pi(c(3));
+        c(0)   = utils::math::clamp_pm_pi(c(0));
+        c(1)   = utils::math::clamp_pm_pi(c(1));
+        c(3)   = utils::math::clamp_pm_pi(c(3));
         return c;
     }
 
@@ -111,7 +111,7 @@ public:
     // 防止夹角求和出现异常值
     auto f(const XVec& x, const double& dt)const ->const auto{
         XVec x_prior = this->A(dt) * x;
-        x_prior(6)   = util::math::clamp_pm_pi(x_prior(6));
+        x_prior(6)   = utils::math::clamp_pm_pi(x_prior(6));
         return x_prior;
     };
 
@@ -128,8 +128,8 @@ public:
         }
 
         std::sort(xyza_i_list.begin(), xyza_i_list.end(), [](const auto& a, const auto& b) {
-            auto ypd1 = util::math::xyz2ypd(a.first.head(3));
-            auto ypd2 = util::math::xyz2ypd(b.first.head(3));
+            auto ypd1 = utils::math::xyz2ypd(a.first.head(3));
+            auto ypd2 = utils::math::xyz2ypd(b.first.head(3));
             return ypd1(2) < ypd2(2);
         });
 
@@ -138,9 +138,9 @@ public:
 
         for (int i = 0; i < std::min(3, armor_num_); ++i) {
             const auto& xyza = xyza_i_list[i].first;
-            auto ypd         = util::math::xyz2ypd(xyza.head(3));
-            double error     = std::abs(util::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - xyza(3)))
-                + std::abs(util::math::clamp_pm_pi(armor_ypd_in_gimbal(0) - ypd(0)));
+            auto ypd         = utils::math::xyz2ypd(xyza.head(3));
+            double error     = std::abs(utils::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - xyza(3)))
+                + std::abs(utils::math::clamp_pm_pi(armor_ypd_in_gimbal(0) - ypd(0)));
 
             if (error < min_error) {
                 min_error = error;
@@ -152,7 +152,7 @@ public:
 
     // 计算出装甲板中心的坐标（考虑长短轴）
     auto h_armor_xyz(const XVec& x, int id) const ->const auto {
-        auto angle   = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
+        auto angle   = utils::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
         auto use_l_h = (armor_num_ == 4) && (id == 1 || id == 3);
 
         auto r       = (use_l_h) ? x(8) + x(9) : x(8);
@@ -164,7 +164,7 @@ public:
     }
 
     constexpr auto H(const XVec& x, int id) const->HMat const {
-        auto angle   = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
+        auto angle   = utils::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
         auto cos_angle=std::cos(angle);
         auto sin_angle=std::sin(angle);
 
@@ -192,7 +192,7 @@ public:
         // clang-format on
 
         auto armor_xyz   = h_armor_xyz(x, id);
-        auto H_armor_ypd = util::math::xyz2ypd_jacobian(armor_xyz);
+        auto H_armor_ypd = utils::math::xyz2ypd_jacobian(armor_xyz);
         // clang-format off
         Eigen::Matrix<double,zn,zn>H_armor_ypda;
             H_armor_ypda<<
@@ -208,7 +208,7 @@ public:
         const Eigen::Vector3d& armor_ypd_in_gimbal, int id) const -> RMat const {
         // Eigen::VectorXd R_dig{{4e-3, 4e-3, 1, 9e-2}};
         auto center_yaw  = std::atan2(armor_xyz_in_gimbal(1), armor_xyz_in_gimbal(0));
-        auto delta_angle = util::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - center_yaw);
+        auto delta_angle = utils::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - center_yaw);
         RDig R_dig(4);
         R_dig << 4e-3, 4e-3, log(std::abs(delta_angle) + 1) + 1,
             log(std::abs(armor_ypd_in_gimbal(2)) + 1) / 200 + 9e-2;
@@ -254,17 +254,17 @@ public:
 
     constexpr auto h(const XVec& x, const int& id) const -> const auto {
         auto xyz   = this->h_armor_xyz(x, id);
-        auto ypd   = util::math::xyz2ypd(xyz);
-        auto angle = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / this->armor_num_);
+        auto ypd   = utils::math::xyz2ypd(xyz);
+        auto angle = utils::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / this->armor_num_);
         return Eigen::Vector4d { ypd(0), ypd(1), ypd(2), angle };
     }
 
     // 防止夹角求差出现异常值
     constexpr auto z_subtract(const ZVec& a, const ZVec& b) const -> const auto {
         ZVec c = a - b;
-        c(0)   = util::math::clamp_pm_pi(c(0));
-        c(1)   = util::math::clamp_pm_pi(c(1));
-        c(3)   = util::math::clamp_pm_pi(c(3));
+        c(0)   = utils::math::clamp_pm_pi(c(0));
+        c(1)   = utils::math::clamp_pm_pi(c(1));
+        c(3)   = utils::math::clamp_pm_pi(c(3));
         return c;
     };
 
@@ -272,7 +272,7 @@ public:
         std::vector<Eigen::Vector4d> _armor_xyza_list;
 
         for (int i = 0; i < armor_num_; i++) {
-            auto angle = util::math::clamp_pm_pi(ekf_x(6) + i * 2 * CV_PI / armor_num_);
+            auto angle = utils::math::clamp_pm_pi(ekf_x(6) + i * 2 * CV_PI / armor_num_);
             auto xyz   = h_armor_xyz(ekf_x, i);
             _armor_xyza_list.push_back({ xyz(0), xyz(1), xyz(2), angle });
         }
