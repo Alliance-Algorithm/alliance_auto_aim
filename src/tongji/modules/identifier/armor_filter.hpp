@@ -7,7 +7,7 @@
 #include "data/armor_image_spaceing.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
-#include "util/index.hpp"
+#include "tongji/utils/index.hpp"
 
 namespace world_exe::tongji::identifier {
 
@@ -34,7 +34,7 @@ public:
 
     void Update(enumeration::CarIDFlag ids) {
         invincible_armor_.clear();
-        for (auto id : util::enumeration::ExpandArmorIdFlags(ids)) {
+        for (auto id : tongji::utils::index::ExpandArmorIdFlags(ids)) {
             invincible_armor_.emplace(std::move(id));
         }
     }

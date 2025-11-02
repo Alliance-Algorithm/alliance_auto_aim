@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 #include <Eigen/Dense>
 
-namespace coord = world_exe::util::coordinate;
+namespace coord = world_exe::tongji::utils::coordinate;
 
 TEST(CoordinateTest, Opencv2RosPosition_SimpleAxis) {
     // 1. 准备 (Arrange) - 在 OpenCV 坐标系下，沿着每个轴单位移动

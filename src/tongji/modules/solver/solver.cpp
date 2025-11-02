@@ -117,14 +117,14 @@ private:
         // 1. P_C_cv -> P_C_ros (位置)
         Eigen::Vector3d xyz_in_camera_cv;
         cv::cv2eigen(tvec, xyz_in_camera_cv);
-        const auto xyz_in_camera = util::coordinate::opencv2ros_position(xyz_in_camera_cv);
+        const auto xyz_in_camera = utils::coordinate::opencv2ros_position(xyz_in_camera_cv);
 
         // 2. R_A->C_cv -> R_A->C_ros (姿态)
         cv::Mat rmat;
         cv::Rodrigues(rvec, rmat);
         Eigen::Matrix3d R_armor2camera_cv;
         cv::cv2eigen(rmat, R_armor2camera_cv);
-        const auto R_armor2camera = util::coordinate::opencv2ros_rotation(R_armor2camera_cv);
+        const auto R_armor2camera = utils::coordinate::opencv2ros_rotation(R_armor2camera_cv);
 
         return { xyz_in_camera, R_armor2camera };
     }

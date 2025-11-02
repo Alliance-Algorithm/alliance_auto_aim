@@ -12,8 +12,8 @@
 #include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
+#include "tongji/utils/index.hpp"
 #include "tongji/utils/math.hpp"
-#include "util/index.hpp"
 
 namespace world_exe::tongji::predictor {
 
@@ -28,7 +28,7 @@ public:
         const enumeration::ArmorIdFlag& flag, const data::TimeStamp& time_stamp) {
         std::vector<data::ArmorGimbalControlSpacing> result;
 
-        for (const auto& car_id : util::enumeration::ExpandArmorIdFlags(flag)) {
+        for (const auto& car_id : utils::index::ExpandArmorIdFlags(flag)) {
             if (const auto it = targets_map_.find(car_id); it != targets_map_.end()) {
                 const auto& [id, predictor] = *it;
                 if (!predictor->IsConverged()) {
