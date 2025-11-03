@@ -2,6 +2,7 @@
 #include "core/system_factory.hpp"
 #include "../v1/auto_aim_system_v1.hpp"
 #include "enum/system_version.hpp"
+#include "tongji/auto_aim_system.hpp"
 #include <format>
 
 // 构建系统，Version 为特定版本
@@ -12,6 +13,9 @@ void world_exe::core::SystemFactory::Build(const enumeration::SystemVersion& ver
         break;
     case world_exe::enumeration::SystemVersion::V1Debug:
         world_exe::v1::SystemV1::build(true); // 构建调试运行的V1版本
+        break;
+    case world_exe::enumeration::SystemVersion::V2:
+        world_exe::tongji::AutoAimSystem::build(false); // 构建调试运行的V1版本
         break;
     default:
 #if __cplusplus >= 202002L

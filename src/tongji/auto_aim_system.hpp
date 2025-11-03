@@ -5,6 +5,8 @@ namespace world_exe::tongji {
 
 class AutoAimSystem final {
 public:
+    static void build(bool debug);
+
     explicit AutoAimSystem(const bool& debug);
     ~AutoAimSystem();
 
@@ -14,5 +16,6 @@ public:
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
+    static std::unique_ptr<AutoAimSystem> v2;
 };
 }

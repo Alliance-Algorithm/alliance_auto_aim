@@ -136,8 +136,11 @@ private:
     const bool debug = false;
 };
 
-std::unique_ptr<SystemV1> world_exe::v1::SystemV1::build(const bool& debug) {
-    return std::make_unique<SystemV1>(debug);
+std::unique_ptr<SystemV1> SystemV1::v1;
+
+void world_exe::v1::SystemV1::build(const bool& debug) {
+    if (v1 != nullptr) return;
+    v1 = std::make_unique<SystemV1>(debug);
 }
 SystemV1::SystemV1(const bool& debug){
     instance_ = std::make_unique<Impl>(debug);
