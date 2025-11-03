@@ -8,6 +8,7 @@
 #include <parameters/rm_parameters.hpp>
 #include "Pnpsolver.cpp"
 #include "sync_test.cpp"
+#include "triple_buffer.cpp"
 
 using namespace world_exe::v1::pnpsolver;
 using world_exe::parameters::Robomaster;
