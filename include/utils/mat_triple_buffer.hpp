@@ -29,16 +29,18 @@ public:
     
     void set(const cv::Mat& image)
     {
-        any_data.store(true);
         buffer[ptr_set_].Load(image,func_());
-
         size_t old = ptr_get_.exchange(ptr_set_, std::memory_order_acq_rel);
+        data_version.fetch_add(1, std::memory_order_release);
         ptr_set_ = old;
     }
     std::optional<std::reference_wrapper<data::MatStamped>> get()
     {
-        if(!any_data) return std::nullopt;
-        any_data.store(false);
+        size_t current_version = data_version.load(std::memory_order_acquire);
+        size_t expected = last_read_version.load(std::memory_order_acquire);
+
+        if (current_version == expected) return std::nullopt; 
+
         size_t old = ptr_get_.exchange(ptr_occ_, std::memory_order_acq_rel);
         ptr_occ_ = old;
         return buffer[ptr_occ_];
@@ -50,8 +52,9 @@ public:
     std::atomic_uint8_t ptr_occ_ = 0;
     std::atomic_uint8_t ptr_get_ = 1;
     std::atomic_uint8_t ptr_set_ = 2;
-
-    std::atomic_bool    any_data = 0;
+    
+    std::atomic<size_t> data_version{0};
+    std::atomic<size_t> last_read_version{0};
 };
 
 }
