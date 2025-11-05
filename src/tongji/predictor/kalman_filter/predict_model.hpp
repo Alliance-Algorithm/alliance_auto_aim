@@ -225,8 +225,8 @@ public:
             v1 = 10;  // 前哨站加速度方差
             v2 = 0.1; // 前哨站角加速度方差
         } else {
-            v1 = 100; // 加速度方差
-            v2 = 400; // 角加速度方差
+            v1 = 10000; // 加速度方差
+            v2 = 40000; // 角加速度方差
         }
         auto a = dt * dt * dt * dt / 4;
         auto b = dt * dt * dt / 2;
@@ -252,7 +252,7 @@ public:
         return _Q;
     }
 
-    constexpr auto h(const XVec& x, const int& id) const -> const auto {
+    Eigen::Vector4d h(const XVec& x, const int& id) const {
         auto xyz   = this->h_armor_xyz(x, id);
         auto ypd   = util::math::xyz2ypd(xyz);
         auto angle = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / this->armor_num_);
@@ -260,7 +260,7 @@ public:
     }
 
     // 防止夹角求差出现异常值
-    constexpr auto z_subtract(const ZVec& a, const ZVec& b) const -> const auto {
+    constexpr auto z_subtract(const ZVec& a, const ZVec& b) const -> ZVec {
         ZVec c = a - b;
         c(0)   = util::math::clamp_pm_pi(c(0));
         c(1)   = util::math::clamp_pm_pi(c(1));

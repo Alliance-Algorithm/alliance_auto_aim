@@ -2,6 +2,7 @@
 
 #include <concepts>
 #include <deque>
+#include <iostream>
 #include <numeric>
 
 #include <Eigen/Dense>
@@ -67,21 +68,21 @@ public:
     auto Update(const double& dt, const ZVec& z, const HMat& H, const RMat& R, const int& id)
         -> const XVec {
         const auto [x_prior, P_prior] = PredictOnce(dt);
-        const auto z_prior            = model_.h(x_prior, id);
+        const ZVec z_prior            = model_.h(x_prior, id);
 
-        const auto residual = model_.z_subtract(z, z_prior);
+        const ZVec residual = model_.z_subtract(z, z_prior);
 
-        const auto S = H * P_prior * H.transpose() + R;
+        const RMat S = H * P_prior * H.transpose() + R;
 
-        const auto K = P_prior * H.transpose() * S.inverse();
+        const Eigen::MatrixXd K = P_prior * H.transpose() * S.inverse();
+            std::cout << P << "\n" << std::endl;
 
-        x = x_prior;
-        x = model_.x_add(x, K * residual);
+        x << model_.x_add(x_prior, K * residual);
 
         // Stable Compution of the Posterior Covariance
         // https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/07-Kalman-Filter-Math.ipynb
-        P = (I - K * H) * P * (I - K * H).transpose() + K * R * K.transpose();
-
+        // FIXME: P -> P^- 
+        P << (I - K * H) * P_prior * (I - K * H).transpose() + K * R * K.transpose();
         const auto P_inverse = P_prior.inverse();
         const auto error     = x - x_prior;
 

@@ -6,7 +6,7 @@
 namespace world_exe::parameters {
 struct ParamsForSystemV1::Impl {
 public:
-    std::string model_path         = "path/to/szu_identify_model.onnx";
+    std::string model_path         = "/home/alray/workspace/ros_alliance_ws/alliance_ros_auto_aim/alliance_auto_aim/models/szu_identify_model.onnx";
     std::string device             = "AUTO";
     double control_delay_in_second = 0.05;
     double velocity_begin          = 26;

@@ -50,6 +50,7 @@ public:
 
         EKF::PMat P0 = model_.GetP0Dig().asDiagonal();
         ekf_.emplace(x0, P0, model_); // 初始化滤波器（预测量、预测量协方差）
+
     }
 
     const enumeration ::ArmorIdFlag& GetId() const override { return car_id_; }

@@ -17,6 +17,7 @@
 #include "openvino/core/preprocess/pre_post_process.hpp"
 #include "openvino/runtime/core.hpp"
 #include <chrono>
+#include <exception>
 #include <memory>
 
 namespace world_exe::v1::identifier {
@@ -80,7 +81,8 @@ public:
         const auto armor_infos = model_infer(input_image);
         // 然后进行灯条匹配验证
         auto [a, b] = matchPlate(input_image, armor_infos);
-        a->time_stamp_ = std::chrono::steady_clock::now().time_since_epoch();
+        if(a != nullptr)
+            a->time_stamp_ = std::chrono::steady_clock::now().time_since_epoch();
         return {a, b};
     }
 
@@ -122,7 +124,6 @@ private:
 
         const auto output        = infer_request.get_output_tensor(0);
         const auto& output_shape = output.get_shape();
-
         cv::Mat output_buffer(static_cast<int>(output_shape[1]), static_cast<int>(output_shape[2]),
             CV_32F, output.data());
 
@@ -206,7 +207,6 @@ private:
         cv::dnn::NMSBoxes(boxes, confidences, conf_threshold_, nms_threshold_, indices);
 
         // 构建最终的检测结果
-        std::vector<ArmorInfo> objects_;
         for (const std::size_t valid_index : indices)
             if (valid_index <= boxes.size()) {
                 auto object  = tmp_objects_[valid_index];
@@ -407,6 +407,7 @@ private:
 
     bool target_color_ { false };      ///< 目标颜色：false=蓝色，true=红色
     ov::CompiledModel compiled_model_; ///< 编译后的 OpenVINO 模型
+    std::vector<ArmorInfo> objects_{};
 };
 
 Identifier::Identifier(const std::string& model_path, const std::string& device,
