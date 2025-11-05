@@ -106,8 +106,9 @@ public:
     bool IsConverged() const {
         auto r_ok = ekf_->x[8] > 0.05 && ekf_->x[8] < 0.5;
         auto l_ok = ekf_->x[8] + ekf_->x[9] > 0.05 && ekf_->x[8] + ekf_->x[9] < 0.5;
+        auto rot  = abs(ekf_->x[7]) > 0.3f;
 
-        if (r_ok && l_ok) return false;
+        if (r_ok && l_ok && rot) return false;
         // util::logger::logger()->debug("[Target] r={:.3f}, l={:.3f}", ekf_->x[8], ekf_->x[9]);
         return true;
     }

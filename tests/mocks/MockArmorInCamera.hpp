@@ -16,15 +16,18 @@ class MockArmorInCamera final : public world_exe::interfaces::IArmorInCamera{
 
     public:
     const enumeration::CarIDFlag armorid = enumeration::CarIDFlag::InfantryIII;
-    MockArmorInCamera(double angular_speed = 1,double speed = 1) 
+    MockArmorInCamera(double angular_speed = 1,double speed = 1, double delay = 0) 
         : time(std::chrono::steady_clock::now().time_since_epoch())
         , armor()
         , none(){
             armor.emplace_back(
                 armorid,
-                Eigen::Vector3d{3,0.2 * sin(time.to_seconds() * speed),0.2 * cos(2 * time.to_seconds() * speed)}, 
+                Eigen::Vector3d{
+                    3 + cos((time.to_seconds() + delay) * angular_speed) * 0.2,
+                    sin((time.to_seconds() + delay) * angular_speed) * 0.2,
+                    0}, 
                 Eigen::Quaterniond{
-                Eigen::AngleAxisd(sin(time.to_seconds() * angular_speed) , Eigen::Vector3d::UnitZ()).toRotationMatrix()}
+                Eigen::AngleAxisd(-sin((time.to_seconds() + delay) * angular_speed) , Eigen::Vector3d::UnitZ()).toRotationMatrix()}
             );
     }
 

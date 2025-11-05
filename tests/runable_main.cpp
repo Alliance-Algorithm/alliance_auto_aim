@@ -1,6 +1,7 @@
 
 #include "mocks/MockArmorInCamera.hpp"
 #include <chrono>
+#include <iostream>
 #include <memory>
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/core/mat.hpp>
@@ -19,11 +20,12 @@ int main(){
     cv::Mat image = cv::Mat{1080, 1440 ,CV_8UC3, {255,255,255}};
     auto tmp = image.clone();
 
-        cv::imshow("imshow",tmp);
-        cv::waitKey(0);
+
+    cv::imshow("imshow",tmp);
+    cv::waitKey(0);
     while(true){
         image.copyTo(tmp);
-        auto data = std::make_shared<world_exe::tests::mock::MockArmorInCamera>(1 , 1);
+        auto data = std::make_shared<world_exe::tests::mock::MockArmorInCamera>(1 , 0);
         world_exe::data::CameraGimbalMuzzleSyncData data2{
             {std::chrono::steady_clock::now().time_since_epoch()}, 
             Eigen::Affine3d::Identity(),Eigen::Affine3d::Identity()};
@@ -34,13 +36,20 @@ int main(){
             world_exe::parameters::HikCameraProfile::get_distortion_parameters(), 
             world_exe::parameters::Robomaster::NormalArmorObjectPointsRos, 
             tmp);
+        draw_armor_in_camera(
+            world_exe::tests::mock::MockArmorInCamera{1, 1, .5},
+            world_exe::parameters::HikCameraProfile::get_intrinsic_parameters(), 
+            world_exe::parameters::HikCameraProfile::get_distortion_parameters(), 
+            world_exe::parameters::Robomaster::NormalArmorObjectPointsRos, 
+            tmp);
 
         auto combine = std::make_shared<world_exe::data::PredictorUpdatePackage>(data2,data);
 
         predictor.Update(combine);
-        auto armor = predictor.Predict(data->armorid, std::chrono::steady_clock::now().time_since_epoch());
+
+        auto armor2 = predictor.Predict(data->armorid, (std::chrono::steady_clock::now().time_since_epoch() + std::chrono::milliseconds(500)));
         draw_armor_in_gimbal(
-            *armor,
+            *armor2,
             world_exe::parameters::HikCameraProfile::get_intrinsic_parameters(), 
             world_exe::parameters::HikCameraProfile::get_distortion_parameters(), 
             world_exe::parameters::Robomaster::NormalArmorObjectPointsRos,
@@ -48,6 +57,6 @@ int main(){
             tmp);
         cv::imshow("imshow",tmp);
         cv::waitKey(1);
-        std::this_thread::sleep_for(std::chrono::milliseconds{10});
+        std::this_thread::sleep_for(std::chrono::milliseconds{2});
     }
 }
