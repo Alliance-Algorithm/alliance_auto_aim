@@ -228,7 +228,7 @@ public:
             v1 = 100; // 加速度方差
             v2 = 400; // 角加速度方差
         }
-        auto dt_ = dt * 1e3;
+        auto dt_ = dt ;
         auto a = dt_ * dt_ * dt_ * dt_ / 4;
         auto b = dt_ * dt_ * dt_ / 2;
         auto c = dt_ * dt_;

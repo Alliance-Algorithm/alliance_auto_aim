@@ -25,7 +25,7 @@ int main(){
     cv::waitKey(0);
     while(true){
         image.copyTo(tmp);
-        auto data = std::make_shared<world_exe::tests::mock::MockArmorInCamera>(1 , 0);
+        auto data = std::make_shared<world_exe::tests::mock::MockArmorInCamera>(1 , 0.0);
         world_exe::data::CameraGimbalMuzzleSyncData data2{
             {std::chrono::steady_clock::now().time_since_epoch()}, 
             Eigen::Affine3d::Identity(),Eigen::Affine3d::Identity()};
@@ -37,7 +37,7 @@ int main(){
             world_exe::parameters::Robomaster::NormalArmorObjectPointsRos, 
             tmp);
         draw_armor_in_camera(
-            world_exe::tests::mock::MockArmorInCamera{1, 1, .5},
+            world_exe::tests::mock::MockArmorInCamera{1, 0.0, .5},
             world_exe::parameters::HikCameraProfile::get_intrinsic_parameters(), 
             world_exe::parameters::HikCameraProfile::get_distortion_parameters(), 
             world_exe::parameters::Robomaster::NormalArmorObjectPointsRos, 

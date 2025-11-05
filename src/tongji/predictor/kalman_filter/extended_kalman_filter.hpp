@@ -2,7 +2,6 @@
 
 #include <concepts>
 #include <deque>
-#include <iostream>
 #include <numeric>
 
 #include <Eigen/Dense>
@@ -43,7 +42,8 @@ public:
     ExtendedKalmanFilter(const XVec& x0, const PMat& P0, const EKFModel& model)
         : x(x0)
         , P(P0)
-        , model_(model) {
+        , model_(model)
+        , I(Eigen::Matrix<double,xn,xn>::Identity()) {
         // data["residual_yaw"]        = 0.0;
         // data["residual_pitch"]      = 0.0;
         // data["residual_distance"]   = 0.0;
@@ -73,7 +73,6 @@ public:
         const ZVec residual = model_.z_subtract(z, z_prior);
 
         const RMat S = H * P_prior * H.transpose() + R;
-
         const Eigen::MatrixXd K = P_prior * H.transpose() * S.inverse();
             // std::cout << P << "\n" << std::endl;
 
@@ -82,7 +81,8 @@ public:
         // Stable Compution of the Posterior Covariance
         // https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/07-Kalman-Filter-Math.ipynb
         // FIXME: P -> P^- 
-        P << (I - K * H) * P_prior * (I - K * H).transpose() + K * R * K.transpose();
+        P << (I - K * H) * P_prior;
+        // P << (I - K * H) * P_prior * (I - K * H).transpose() + K * R * K.transpose();
         const auto P_inverse = P_prior.inverse();
         const auto error     = x - x_prior;
 

@@ -15,6 +15,16 @@ namespace world_exe::tests::mock{
 class MockArmorInCamera final : public world_exe::interfaces::IArmorInCamera{
 
     public:
+    
+    Eigen::Vector3d interpolateOscillating(const Eigen::Vector3d& p1, const Eigen::Vector3d& p2, double t, double period) {
+        // 归一化时间到 [0, 1]
+        double phase = std::fmod(t, period) / period;
+
+        // 使用三角波函数实现往返效果
+        double alpha = 2.0 * std::abs(phase - 0.5); // 从 0 到 1 再回到 0
+
+        return (1.0 - alpha) * p1 + alpha * p2;
+    }
     const enumeration::CarIDFlag armorid = enumeration::CarIDFlag::InfantryIII;
     MockArmorInCamera(double angular_speed = 1,double speed = 1, double delay = 0) 
         : time(std::chrono::steady_clock::now().time_since_epoch())
@@ -23,9 +33,10 @@ class MockArmorInCamera final : public world_exe::interfaces::IArmorInCamera{
             armor.emplace_back(
                 armorid,
                 Eigen::Vector3d{
-                    3 + cos((time.to_seconds() + delay) * angular_speed) * 0.2,
+                    cos((time.to_seconds() + delay) * angular_speed) * 0.2,
                     sin((time.to_seconds() + delay) * angular_speed) * 0.2,
-                    0}, 
+                    0}
+                    + interpolateOscillating({3,0.2,0},{4,-0.2,0},time.to_seconds(), 1 / speed), 
                 Eigen::Quaterniond{
                 Eigen::AngleAxisd(-sin((time.to_seconds() + delay) * angular_speed) , Eigen::Vector3d::UnitZ()).toRotationMatrix()}
             );
