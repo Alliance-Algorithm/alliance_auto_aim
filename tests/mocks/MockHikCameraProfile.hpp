@@ -1,5 +1,6 @@
 #pragma once
-#include "parameters/profile.hpp"
+
+#include <opencv2/core/mat.hpp>
 
 namespace world_exe::tests::mock {
 class MockHikCameraProfile{

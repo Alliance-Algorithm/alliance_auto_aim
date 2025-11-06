@@ -6,8 +6,10 @@
 #include <gtest/gtest.h>
 #include <parameters/params_system_v1.hpp>
 #include <parameters/rm_parameters.hpp>
+#include <v1/identifier/identifier.hpp>
 #include "Pnpsolver.cpp"
 #include "sync_test.cpp"
+#include "triple_buffer.cpp"
 
 using namespace world_exe::v1::pnpsolver;
 using world_exe::parameters::Robomaster;

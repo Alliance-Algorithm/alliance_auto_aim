@@ -31,10 +31,11 @@ public:
         for (const auto& car_id : util::enumeration::ExpandArmorIdFlags(flag)) {
             if (const auto it = targets_map_.find(car_id); it != targets_map_.end()) {
                 const auto& [id, predictor] = *it;
-                if (!predictor->IsConverged()) {
-                    continue;
-                }
-                if (predictor->IsConverged()) {
+                // if (!predictor->IsConverged()) {
+                //     continue;
+                // }
+                // if (predictor->IsConverged()) 
+                {
                     auto spacings = predictor->Predictor(time_stamp);
                     result.insert(result.end(), spacings->GetArmors(id).begin(),
                         spacings->GetArmors(id).end());
@@ -80,7 +81,7 @@ public:
                 }
             }
 
-            std::erase_if(targets_map_, [](const auto& pair) { return pair.second->IsAppeared(); });
+            // std::erase_if(targets_map_, [](const auto& pair) { return pair.second->IsAppeared(); });
         }
     }
 

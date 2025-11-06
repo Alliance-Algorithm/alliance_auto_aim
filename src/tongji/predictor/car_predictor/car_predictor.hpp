@@ -50,6 +50,7 @@ public:
 
         EKF::PMat P0 = model_.GetP0Dig().asDiagonal();
         ekf_.emplace(x0, P0, model_); // 初始化滤波器（预测量、预测量协方差）
+
     }
 
     const enumeration ::ArmorIdFlag& GetId() const override { return car_id_; }
@@ -105,8 +106,9 @@ public:
     bool IsConverged() const {
         auto r_ok = ekf_->x[8] > 0.05 && ekf_->x[8] < 0.5;
         auto l_ok = ekf_->x[8] + ekf_->x[9] > 0.05 && ekf_->x[8] + ekf_->x[9] < 0.5;
+        auto rot  = abs(ekf_->x[7]) > 0.3f;
 
-        if (r_ok && l_ok) return false;
+        if (r_ok && l_ok && rot) return false;
         // util::logger::logger()->debug("[Target] r={:.3f}, l={:.3f}", ekf_->x[8], ekf_->x[9]);
         return true;
     }

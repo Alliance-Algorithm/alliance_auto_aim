@@ -5,6 +5,7 @@
 
 #include "../v1/sync/syncer.hpp"
 #include "core/event_bus.hpp"
+#include "data/mat_stamped.hpp"
 #include "data/predictor_update_package.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
@@ -35,22 +36,22 @@ public:
         time_stamp_ = std::chrono::steady_clock::now();
         syncer_     = std::make_unique<world_exe::v1::Syncer>(seconds(2), 6e-6);
 
-        core::EventBus::Subscript<cv::Mat>(parameters::ParamsForSystemV1::raw_image_event,
-            [this](const auto& mat) { Solve(mat); });
+        core::EventBus::Subscript<world_exe::data::MatStamped>(parameters::ParamsForSystemV1::raw_image_event,
+            [this](const world_exe::data::MatStamped& mat) { Solve(mat); });
         core::EventBus::Subscript<data::CameraGimbalMuzzleSyncData>(
             parameters::ParamsForSystemV1::camera_capture_transforms,
             [this](const auto& pkg) { SetTransfroms(pkg); });
     }
 
-    auto Solve(const cv::Mat& raw) -> void {
-        const auto& [armors_in_image, flag] = identifier_->identify(raw);
+    auto Solve(const data::MatStamped& raw) -> void {
+        const auto& [armors_in_image, flag] = identifier_->identify(raw.mat);
         if (flag == enumeration::ArmorIdFlag::None) return;
         state_machine_->Update(armors_in_image,
             std::chrono::duration_cast<milliseconds>(
                 std::chrono::steady_clock::now() - time_stamp_));
 
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
-        const auto& [pack, check] = syncer_->get_data(armors_in_image->GetTimeStamp());
+        const auto& [pack, check] = syncer_->get_data(raw.stamp);
         if (!check) return;
 
         const auto R_camera2gimbal = pack.camera_to_gimbal.rotation();
@@ -101,4 +102,10 @@ private:
 AutoAimSystem::AutoAimSystem(const bool& debug)
     : pimpl_(std::make_unique<Impl>(debug)) { }
 AutoAimSystem::~AutoAimSystem() = default;
+
+std::unique_ptr<AutoAimSystem> AutoAimSystem::v2;
+void AutoAimSystem::build(bool debug){
+    if(v2 != nullptr) return;
+    v2 = std::make_unique<AutoAimSystem>(debug);
+}
 }
