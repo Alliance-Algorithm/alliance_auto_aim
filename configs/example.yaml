@@ -42,13 +42,3 @@ leaving_angle: 20 # degree
 R_muzzle2camera:
 t_muzzle2camera:
 
-#####-----planner parameters-----#####
-fire_thresh: 0.003
-
-max_yaw_acc: 50
-Q_yaw: [9e6, 0]
-R_yaw: [1]
-
-max_pitch_acc: 100
-Q_pitch: [9e6,0]
-R_pitch: [1]
