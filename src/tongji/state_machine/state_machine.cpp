@@ -1,5 +1,6 @@
 #include "state_machine.hpp"
 
+#include <iostream>
 #include <memory>
 
 #include "../identifier/tracker.hpp"

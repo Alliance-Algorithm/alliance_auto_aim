@@ -4,18 +4,19 @@
 
 namespace world_exe::util::math {
 static constexpr double ratio(const auto& point) { return atan2(point.y, point.x); }
-static constexpr double clamp_pm_pi(auto&& angle) {
-    while (angle >= std::numbers::pi)
-        angle -= 2 * std::numbers::pi;
-    while (angle <= -std::numbers::pi)
-        angle += 2 * std::numbers::pi;
 
-    return angle;
-}
 static constexpr double clamp_pm_tau(auto&& angle) {
     while (angle >= 2 * std::numbers::pi)
         angle -= 2 * std::numbers::pi;
     while (angle <= -2 * std::numbers::pi)
+        angle += 2 * std::numbers::pi;
+
+    return angle;
+}
+static constexpr double clamp_pm_pi(auto&& angle) {
+    while (angle > std::numbers::pi)
+        angle -= 2 * std::numbers::pi;
+    while (angle <= -std::numbers::pi)
         angle += 2 * std::numbers::pi;
 
     return angle;
@@ -204,7 +205,6 @@ static Eigen::Matrix<double, 3, 3> xyz2ypd_jacobian(const Eigen::Vector3d& xyz) 
     auto dyaw_dx = -y / (x * x + y * y);
     auto dyaw_dy = x / (x * x + y * y);
     auto dyaw_dz = 0.0;
-
 
     auto dpitch_dx = -(x * z) / ((z * z / (x * x + y * y) + 1) * std::pow((x * x + y * y), 1.5));
     auto dpitch_dy = -(y * z) / ((z * z / (x * x + y * y) + 1) * std::pow((x * x + y * y), 1.5));
