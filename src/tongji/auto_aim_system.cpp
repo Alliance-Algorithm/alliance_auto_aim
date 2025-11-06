@@ -1,29 +1,32 @@
 #include "auto_aim_system.hpp"
 
 #include <chrono>
+
 #include <cstdio>
 #include <exception>
 #include <iostream>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
-#include <print>
+
+#include <tuple>
 
 #include "../v1/sync/syncer.hpp"
 #include "core/event_bus.hpp"
 #include "data/mat_stamped.hpp"
 #include "data/predictor_update_package.hpp"
+#include "data/sync_data.hpp"
 #include "data/time_stamped.hpp"
+#include "enum/car_id.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
-#include "parameters/rm_parameters.hpp"
+
+#include "../tests/mocks/mock_camera_tranform.hpp"
 #include "tongji/fire_controller/fire_controller.hpp"
-#include "tongji/identifier/identifier.hpp"
 #include "tongji/predictor/car_predictor/car_predictor_manager.hpp"
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
 #include "utils/fps_counter.hpp"
-#include "utils/visualization.hpp"
 #include "v1/identifier/identifier.hpp"
 
 namespace world_exe::tongji {
@@ -47,8 +50,10 @@ public:
         state_machine_       = std::make_shared<state_machine::StateMachine>();
         fire_controller_     = std::make_unique<fire_control::FireController>(
             config_path_, state_machine_, live_target_manager_);
-        time_stamp_ = std::chrono::steady_clock::now();
-        syncer_     = std::make_unique<world_exe::v1::Syncer>(seconds(2), 6e-6);
+        time_stamp_           = std::chrono::steady_clock::now();
+        syncer_               = std::make_unique<world_exe::v1::Syncer>(seconds(2), 6e-6);
+        mock_camera_tranform_ = std::make_unique<tests::mock::Camera2GimbalTransformer>(
+            Vector3D(1, 1, 0.0), 0, 0, M_PI / 6.0);
 
         core::EventBus::Subscript<world_exe::data::MatStamped>(
             parameters::ParamsForSystemV1::raw_image_event,
@@ -167,6 +172,7 @@ private:
     std::shared_ptr<predictor::CarPredictorManager> live_target_manager_;
     std::unique_ptr<world_exe::v1::Syncer> syncer_;
     std::unique_ptr<fire_control::FireController> fire_controller_;
+    std::unique_ptr<tests::mock::Camera2GimbalTransformer> mock_camera_tranform_;
 };
 
 AutoAimSystem::AutoAimSystem(const bool& debug)
