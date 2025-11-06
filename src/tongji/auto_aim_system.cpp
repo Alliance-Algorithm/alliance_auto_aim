@@ -6,12 +6,12 @@
 #include "../v1/sync/syncer.hpp"
 #include "core/event_bus.hpp"
 #include "data/predictor_update_package.hpp"
-#include "modules/fire_controller/fire_controller.hpp"
-#include "modules/predictor/car_predictor/car_predictor_manager.hpp"
-#include "modules/solver/solver.hpp"
-#include "modules/state_machine/state_machine.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
+#include "tongji/fire_controller/fire_controller.hpp"
+#include "tongji/predictor/car_predictor/car_predictor_manager.hpp"
+#include "tongji/solver/solver.hpp"
+#include "tongji/state_machine/state_machine.hpp"
 #include "v1/identifier/identifier.hpp"
 
 namespace world_exe::tongji {

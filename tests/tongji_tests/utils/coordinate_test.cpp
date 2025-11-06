@@ -1,4 +1,4 @@
-#include "tongji/utils/coordinate.hpp"
+#include "util/coordinate.hpp"
 
 #include "gtest/gtest.h"
 #include <Eigen/Dense>

@@ -8,10 +8,10 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
+#include "../predictor/car_predictor/car_predictor.hpp"
 #include "aim_point_chooser.hpp"
-#include "tongji/modules/predictor/car_predictor/car_predictor.hpp"
-#include "tongji/modules/predictor/kalman_filter/extended_kalman_filter.hpp"
-#include "tongji/modules/predictor/kalman_filter/predict_model.hpp"
+#include "tongji/predictor/kalman_filter/extended_kalman_filter.hpp"
+#include "tongji/predictor/kalman_filter/predict_model.hpp"
 #include "trajectory.hpp"
 
 namespace world_exe::tongji::fire_control {

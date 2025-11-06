@@ -2,7 +2,7 @@
 
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/car_id.hpp"
-#include "tongji/utils/math.hpp"
+#include "util/math.hpp"
 
 #include <yaml-cpp/yaml.h>
 
@@ -29,8 +29,8 @@ public:
 
         std::vector<std::tuple<int, double>> delta_angle_list;
         for (int i = 0; i < armor_num; i++) {
-            const auto ypr   = utils::math::get_ypr_from_quaternion(armors[i].orientation);
-            auto delta_angle = utils::math::clamp_pm_pi(ypr[0] - center_yaw);
+            auto delta_angle = util::math::clamp_pm_pi(
+                util::math::get_yaw_from_quaternion(armors[i].orientation) - center_yaw);
             delta_angle_list.emplace_back(std::make_tuple(i, delta_angle));
         }
         std::sort(delta_angle_list.begin(), delta_angle_list.end(),

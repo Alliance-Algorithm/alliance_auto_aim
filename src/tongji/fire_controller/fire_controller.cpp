@@ -5,13 +5,13 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "../identifier/identified_armor.hpp"
+#include "../state_machine/state_machine.hpp"
 #include "aim_solver.hpp"
 #include "data/fire_control.hpp"
 #include "fire_decision.hpp"
 #include "interfaces/target_predictor.hpp"
-#include "tongji/modules/identifier/identified_armor.hpp"
-#include "tongji/modules/predictor/car_predictor/car_predictor_manager.hpp"
-#include "tongji/modules/state_machine/state_machine.hpp"
+#include "tongji/predictor/car_predictor/car_predictor_manager.hpp"
 
 namespace world_exe::tongji::fire_control {
 
