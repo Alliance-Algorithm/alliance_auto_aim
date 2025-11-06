@@ -7,10 +7,7 @@ set(CMAKE_BUILD_TYPE Debug)
 # 包含主项目头文件
 include_directories(../include)
 
-file(GLOB_RECURSE TONGJI_TEST_SOURCES "./tongji_tests/*.cpp")
-
-add_executable(all_tests 
-    ${TONGJI_TEST_SOURCES})
+add_executable(test_main test_main.cpp)
 
 add_executable(runable runable_main.cpp)
 
@@ -28,15 +25,15 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-target_link_libraries(all_tests 
+target_link_libraries(test_main 
     GTest::gtest_main 
     GTest::gmock_main
     alliance_auto_aim
 )
+
 target_link_libraries(runable
     alliance_auto_aim
 )
 
 
-include(GoogleTest)
-gtest_discover_tests(all_tests)
+
