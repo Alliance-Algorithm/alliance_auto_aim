@@ -75,7 +75,7 @@ void world_exe::util::visualization ::draw_armor_in_camera(
     for (int i = 0; i < static_cast<uint32_t>(enumeration::ArmorIdFlag::Count); i++)
         for (const auto& armor :
             camera_armor.GetArmors(static_cast<enumeration::ArmorIdFlag>(1 << i))) {
-            data::ArmorImageSpacing img_armor {};
+            data::ArmorImageSpacing img_armor { };
             world_exe::util::cast::armor_3d_camera_to_armor_2d_image(armor, intrinsic_parameters,
                 distortion_parameters, points_in_armor_spacing, img_armor);
             draw_armor_2d(img_armor, in_out_mat);
@@ -87,17 +87,15 @@ void world_exe::util::visualization ::draw_armor_in_camera(
 void world_exe::util::visualization::draw_armor_in_gimbal(
     const interfaces::IArmorInGimbalControl& camera_armor, const cv::Mat& intrinsic_parameters,
     const cv::Mat& distortion_parameters, const std::vector<cv::Point3d>& points_in_armor_spacing,
-    const Eigen::Affine3d gimal_to_camera,
-    cv::Mat& in_out_mat) {
+    const Eigen::Affine3d gimal_to_camera, cv::Mat& in_out_mat) {
     for (int i = 0; i < static_cast<uint32_t>(world_exe::enumeration::ArmorIdFlag::Count); i++)
         for (const auto& armor_gimbal :
             camera_armor.GetArmors(static_cast<world_exe::enumeration::ArmorIdFlag>(1 << i))) {
-            world_exe::data::ArmorImageSpacing img_armor {};
-            world_exe::data::ArmorCameraSpacing armor{
-                armor_gimbal.id,
+            world_exe::data::ArmorImageSpacing img_armor { };
+            world_exe::data::ArmorCameraSpacing armor { armor_gimbal.id,
                 gimal_to_camera * armor_gimbal.position,
-                Eigen::Quaterniond{gimal_to_camera * armor_gimbal.orientation.toRotationMatrix()}
-            };
+                Eigen::Quaterniond {
+                    gimal_to_camera.rotation() * armor_gimbal.orientation.toRotationMatrix() } };
             world_exe::util::cast::armor_3d_camera_to_armor_2d_image(armor, intrinsic_parameters,
                 distortion_parameters, points_in_armor_spacing, img_armor);
             draw_armor_2d(img_armor, in_out_mat);
