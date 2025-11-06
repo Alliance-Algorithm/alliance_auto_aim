@@ -21,8 +21,8 @@
 #include "enum/armor_id.hpp"
 #include "identified_armor.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "tongji/utils/logger.hpp"
-#include "tongji/utils/stringifier.hpp"
+#include "util/logger.hpp"
+#include "util/stringifier.hpp"
 
 namespace world_exe::tongji::identifier {
 class Identifier::Impl {
@@ -196,7 +196,7 @@ private:
     void Save(const cv::Mat& armor_pattern, enumeration::ArmorIdFlag armor_id) const {
         auto file_name = fmt::format("{:%Y-%m-%d_%H-%M-%S}", std::chrono::system_clock::now());
         auto img_path  = fmt::format(
-            "{}/{}_{}.jpg", save_path_, utils::stringifier::ToString(armor_id), file_name);
+            "{}/{}_{}.jpg", save_path_, util::stringifier::ToString(armor_id), file_name);
         cv::imwrite(img_path, armor_pattern);
     }
 
@@ -297,7 +297,7 @@ private:
 
         // 出现 5号 则显示 debug 信息。但不过滤。
         if (armor_id == enumeration::ArmorIdFlag::InfantryV && debug_)
-            utils::logger::logger()->debug("See pattern 5 : InfantryV ");
+            world_exe::util::logger::logger()->debug("See pattern 5 : InfantryV ");
 
         return name_ok && confidence_ok;
     }
@@ -311,8 +311,8 @@ private:
 
         // 保存异常的图案，用于分类器的迭代
         if (!name_ok && debug_) {
-            utils::logger::logger()->debug(
-                "see strange armor: {}", utils::stringifier::ToString(armor_id));
+            util::logger::logger()->debug(
+                "see strange armor: {}", util::stringifier::ToString(armor_id));
             Save(armor_pattern, armor_id);
         }
         return name_ok;

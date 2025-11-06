@@ -1,9 +1,9 @@
 #pragma once
 
-#include "data/time_stamped.hpp"
 #include "enum/armor_id.hpp"
 #include "interfaces/armor_in_image.hpp"
-#include "tongji/utils/index.hpp"
+#include "data/time_stamped.hpp"
+#include "util/index.hpp"
 
 namespace world_exe::tongji::identifier {
 
@@ -11,7 +11,7 @@ class IdentifiedArmor final : public interfaces::IArmorInImage {
 public:
     explicit IdentifiedArmor(const std::vector<data::ArmorImageSpacing>& armors) {
         for (const auto& armor : armors) {
-            armors_[utils::index::GetIndex(armor.id)].emplace_back(armor);
+            armors_[util::enumeration::GetIndex(armor.id)].emplace_back(armor);
         }
     }
 
@@ -19,7 +19,7 @@ public:
 
     const std::vector<data::ArmorImageSpacing>& GetArmors(
         const enumeration::ArmorIdFlag& armor_id) const override {
-        return armors_[utils::index::GetIndex(armor_id)];
+        return armors_[util::enumeration::GetIndex(armor_id)];
     }
 
     static IdentifiedArmor DecorateIArmorInImage(const interfaces::IArmorInImage& armor) {

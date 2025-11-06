@@ -61,11 +61,11 @@ private:
         // get R_armor2camera t_armor2camera
         const Eigen::Vector3d& t_armor2gimbal = armor_xyz_in_gimbal;
         Eigen::Matrix3d R_armor2camera        = R_camera2gimbal.transpose() * R_armor2gimbal;
-        Eigen::Matrix3d R_armor2camera_cv = utils::coordinate::ros2opencv_rotation(R_armor2camera);
+        Eigen::Matrix3d R_armor2camera_cv = util::coordinate::ros2opencv_rotation(R_armor2camera);
 
         Eigen::Vector3d t_armor2camera =
             R_camera2gimbal.transpose() * (armor_xyz_in_gimbal) + t_gimbal2camera;
-        Eigen::Vector3d t_armor2camera_cv = utils::coordinate::ros2opencv_position(t_armor2camera);
+        Eigen::Vector3d t_armor2camera_cv = util::coordinate::ros2opencv_position(t_armor2camera);
 
         // get rvec tvec
         cv::Vec3d rvec;

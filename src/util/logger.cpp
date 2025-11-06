@@ -7,7 +7,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-namespace world_exe::tongji::utils::logger {
+namespace world_exe::util::logger {
 std::shared_ptr<spdlog::logger> logger_ = nullptr;
 
 void set_logger() {

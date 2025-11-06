@@ -4,7 +4,7 @@
 
 #include "enum/armor_id.hpp"
 
-namespace world_exe::tongji::utils::stringifier {
+namespace world_exe::util::stringifier {
 static inline std::string ToString(const world_exe::enumeration::ArmorIdFlag& id) {
 
     switch (id) {
