@@ -74,7 +74,7 @@ public:
 
         const RMat S = H * P_prior * H.transpose() + R;
         const Eigen::MatrixXd K = P_prior * H.transpose() * S.inverse();
-            // std::cout << P << "\n" << std::endl;
+        // std::cout << P << "\n" << std::endl;
 
         x << model_.x_add(x_prior, K * residual);
 

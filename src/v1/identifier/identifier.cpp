@@ -16,8 +16,8 @@
 
 #include "openvino/core/preprocess/pre_post_process.hpp"
 #include "openvino/runtime/core.hpp"
-#include <chrono>
 #include <exception>
+#include <iostream>
 #include <memory>
 
 namespace world_exe::v1::identifier {
@@ -76,14 +76,16 @@ public:
      */
     std::tuple<const std::shared_ptr<interfaces::IArmorInImage>, enumeration::CarIDFlag> Identify(
         const cv::Mat& input_image) {
-            
+
         // 首先使用深度学习模型进行装甲板检测得到roi区域
         const auto armor_infos = model_infer(input_image);
         // 然后进行灯条匹配验证
         auto [a, b] = matchPlate(input_image, armor_infos);
-        if(a != nullptr)
-            a->time_stamp_ = std::chrono::steady_clock::now().time_since_epoch();
-        return {a, b};
+        if (!a) {
+            return { a, enumeration::CarIDFlag::None };
+        }
+        a->time_stamp_ = std::chrono::steady_clock::now().time_since_epoch();
+        return { a, b };
     }
 
     /**
@@ -141,7 +143,7 @@ private:
             if (confidence < conf_threshold_) continue; // 过滤低置信度检测
 
             // 解析颜色分类结果（蓝、红、紫、无色）
-            const auto color_scores   = output_buffer.row(i).colRange(9, 13);  // color
+            const auto color_scores = output_buffer.row(i).colRange(9, 13); // color
             // 解析车辆类型分类结果（哨兵、英雄、工程等）
             const auto classes_scores = output_buffer.row(i).colRange(13, 22); // num
             cv::Point class_id, color_id;
@@ -207,6 +209,7 @@ private:
         cv::dnn::NMSBoxes(boxes, confidences, conf_threshold_, nms_threshold_, indices);
 
         // 构建最终的检测结果
+        objects_.clear();
         for (const std::size_t valid_index : indices)
             if (valid_index <= boxes.size()) {
                 auto object  = tmp_objects_[valid_index];
@@ -233,8 +236,8 @@ private:
     };
 
     std::tuple<std::shared_ptr<IdentifierArmor>, enumeration::CarIDFlag> matchPlate(
-        const cv::Mat& img, const std::vector<ArmorInfo>& armor_infos) {
-        if (armor_infos.empty()) return {};
+        const cv::Mat& img, const std::vector<ArmorInfo> armor_infos) {
+        if (armor_infos.empty()) return { };
 
         // 图像预处理：转换为灰度图并二值化，为后续灯条检测做准备,由于我们前面通过模型拿到了灯条的roi区域，在区域内基本不会误识别，所以后面我们通过传统方式来匹配时各种阈值都可以给松一些，注意，这里的阈值可能要根据实际情况做出调整
         cv::cvtColor(img, gray_img_, cv::COLOR_BGR2GRAY);
@@ -253,7 +256,7 @@ private:
                     0, image_width_),
                 std::clamp(static_cast<int>(armor.rect_.y
                                - armor.rect_.height / 2. * (match_magnification_ratio_ - 1.)),
-                    0, image_width_)
+                    0, image_height_)
             };
             cv::Size rect_size { std::clamp(static_cast<int>(
                                                 armor.rect_.width * match_magnification_ratio_),
@@ -407,7 +410,7 @@ private:
 
     bool target_color_ { false };      ///< 目标颜色：false=蓝色，true=红色
     ov::CompiledModel compiled_model_; ///< 编译后的 OpenVINO 模型
-    std::vector<ArmorInfo> objects_{};
+    std::vector<ArmorInfo> objects_ { };
 };
 
 Identifier::Identifier(const std::string& model_path, const std::string& device,

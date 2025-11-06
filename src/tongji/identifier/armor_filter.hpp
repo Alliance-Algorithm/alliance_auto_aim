@@ -18,24 +18,28 @@ public:
     std::vector<data::ArmorImageSpacing> FilterArmor(
         std::vector<data::ArmorImageSpacing> armors) const {
 
+        armors.erase(std::remove_if(armors.begin(), armors.end(), [&](const auto& armor) {
         // 25赛季没有5号装甲板
-        armors.erase(std::remove_if(armors.begin(), armors.end(),
-            [](const auto& armor) { return armor.id == enumeration::ArmorIdFlag::InfantryV; }));
         // 不打前哨站
-        armors.erase(std::remove_if(armors.begin(), armors.end(),
-            [](const auto& armor) { return armor.id == enumeration::ArmorIdFlag::Outpost; }));
         // 过滤掉刚复活无敌的装甲板
-        armors.erase(std::remove_if(armors.begin(), armors.end(),
-                         [&](const auto& armor) { return invincible_armor_.count(armor.id); }),
-            armors.end());
 
-        return std::move(armors);
+            return armor.id == enumeration::ArmorIdFlag::InfantryV
+                || armor.id == enumeration::ArmorIdFlag::Outpost
+                || invincible_armor_.count(armor.id);
+        }));
+        // armors.erase(std::remove_if(armors.begin(), armors.end(),
+        //     [](const auto& armor) { return armor.id == enumeration::ArmorIdFlag::Outpost; }));
+        // // 过滤掉刚复活无敌的装甲板
+        // armors.erase(std::remove_if(armors.begin(), armors.end(),
+        //     [&](const auto& armor) { return invincible_armor_.count(armor.id); }));
+
+        return armors;
     }
 
     void Update(enumeration::CarIDFlag ids) {
         invincible_armor_.clear();
         for (auto id : util::enumeration::ExpandArmorIdFlags(ids)) {
-            invincible_armor_.emplace(std::move(id));
+            invincible_armor_.insert(std::move(id));
         }
     }
 

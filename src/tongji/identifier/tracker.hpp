@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ctime>
+#include <iostream>
 #include <memory>
 #include <opencv2/core/types.hpp>
 #include <vector>
@@ -32,8 +33,8 @@ public:
 
     auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image,
         const std::chrono::milliseconds& duration_from_last_update) noexcept
-
         -> enumeration::ArmorIdFlag const {
+
         CheckCameraOffline(duration_from_last_update);
 
         auto filtered_ids = enumeration::ArmorIdFlag::None;
@@ -52,11 +53,11 @@ public:
             if (!filtered_armors.empty()) {
                 filtered_ids =
                     static_cast<enumeration::ArmorIdFlag>(static_cast<uint32_t>(filtered_ids)
-                        | static_cast<uint32_t>(filtered_armors.at(0).id));
+                        | static_cast<uint32_t>(filtered_armors[0].id));
             }
         }
 
-        UpdateState(!(filtered_ids == enumeration::ArmorIdFlag::None));
+        // UpdateState(!(filtered_ids == enumeration::ArmorIdFlag::None));
 
         tracking_car_id_ = decider_->GetBestArmor(filtered_armors);
         return tracking_car_id_;
