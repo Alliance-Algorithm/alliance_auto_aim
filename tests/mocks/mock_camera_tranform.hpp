@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <iostream>
 
 using namespace Eigen;
 using AffineTransform = Affine3d; // 仿射变换矩阵 (4x4)

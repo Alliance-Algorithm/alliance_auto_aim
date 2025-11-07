@@ -18,8 +18,8 @@ int main() {
     using namespace world_exe::util::visualization;
 
     Eigen::Vector3d V_input(1., 0., 0.);
-    double Omega_Yaw   = 0.0;
-    double Omega_Pitch = 0.0;
+    double Omega_Yaw   = 0.1;
+    double Omega_Pitch = 0.05;
     double Max_Pitch   = M_PI / 48.0;
     auto transformer   = world_exe::tests::mock::Camera2GimbalTransformer(
         V_input, Omega_Yaw, Omega_Pitch, Max_Pitch);
@@ -46,17 +46,6 @@ int main() {
 
         auto transform = transformer.updateAndGetTransform(dt);
 
-        for (int i = 0; i < num; ++i) {
-            armors_in_gimbal_3[i].position = transform * armors_in_camera_3[i].position;
-            armors_in_gimbal_3[i].orientation =
-                Quaterniond(transform.rotation()) * armors_in_camera_3[i].orientation;
-        }
-
-        // draw_armor_in_camera(*armor_in_camera,
-        //     world_exe::parameters::HikCameraProfile::get_intrinsic_parameters(),
-        //     world_exe::parameters::HikCameraProfile::get_distortion_parameters(),
-        //     world_exe::parameters::Robomaster::NormalArmorObjectPointsRos, tmp);
-
         draw_armor_in_gimbal(*armor_in_gimbal,
             world_exe::parameters::HikCameraProfile::get_intrinsic_parameters(),
             world_exe::parameters::HikCameraProfile::get_distortion_parameters(),
@@ -64,11 +53,5 @@ int main() {
             tmp);
         cv::imshow("imshow", tmp);
         cv::waitKey(1);
-
-        // std::cout << armors_in_camera_3[0].position << std::endl;
-        std::cout << armors_in_gimbal_3[0].position << std::endl;
-        std::cout << std::endl;
-
-        // std::this_thread::sleep_for(std::chrono::milliseconds {  });
     }
 }

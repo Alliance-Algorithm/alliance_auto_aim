@@ -43,4 +43,5 @@ target_link_libraries(gimbal_mock
 )
 
 
-
+include(GoogleTest)
+gtest_discover_tests(test_main)
