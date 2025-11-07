@@ -80,9 +80,9 @@ public:
 
         // Stable Compution of the Posterior Covariance
         // https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/07-Kalman-Filter-Math.ipynb
-        // FIXME: P -> P^- 
-        P << (I - K * H) * P_prior;
+        // FIXME: P -> P^-
         // P << (I - K * H) * P_prior * (I - K * H).transpose() + K * R * K.transpose();
+        P << (I - K * H) * P_prior;
         const auto P_inverse = P_prior.inverse();
         const auto error     = x - x_prior;
 

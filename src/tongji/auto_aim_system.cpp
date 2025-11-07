@@ -1,19 +1,21 @@
 #include "auto_aim_system.hpp"
 
 #include <chrono>
+
 #include <cstdio>
 #include <exception>
-#include <iostream>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
-#include <print>
+#include <tuple>
 
 #include "../v1/sync/syncer.hpp"
 #include "core/event_bus.hpp"
 #include "data/mat_stamped.hpp"
 #include "data/predictor_update_package.hpp"
+#include "data/sync_data.hpp"
 #include "data/time_stamped.hpp"
+#include "enum/car_id.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
 #include "parameters/rm_parameters.hpp"
@@ -23,7 +25,6 @@
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
 #include "utils/fps_counter.hpp"
-#include "utils/visualization.hpp"
 #include "v1/identifier/identifier.hpp"
 
 namespace world_exe::tongji {
@@ -72,8 +73,6 @@ public:
         // }
         // if (fps_.count()) std::cout << fps_.fps() << std::endl;
         // return;
-
-        // std::cout << "here" << std::endl;
 
         if (flag == enumeration::ArmorIdFlag::None) return;
         // std::cout << "here" << std::endl;
@@ -167,6 +166,7 @@ private:
     std::shared_ptr<predictor::CarPredictorManager> live_target_manager_;
     std::unique_ptr<world_exe::v1::Syncer> syncer_;
     std::unique_ptr<fire_control::FireController> fire_controller_;
+    // std::unique_ptr<tests::mock::Camera2GimbalTransformer> mock_camera_tranform_;
 };
 
 AutoAimSystem::AutoAimSystem(const bool& debug)

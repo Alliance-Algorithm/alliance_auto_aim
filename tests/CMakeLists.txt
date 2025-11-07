@@ -11,6 +11,9 @@ add_executable(test_main test_main.cpp)
 
 add_executable(runable runable_main.cpp)
 
+add_executable(gimbal_mock mock_gimbal_test.cpp)
+
+
 # 确保测试使用 C++20
 target_compile_features(test_main PRIVATE cxx_std_20)
 target_compile_features(runable PRIVATE cxx_std_20)
@@ -30,7 +33,12 @@ target_link_libraries(test_main
     GTest::gmock_main
     alliance_auto_aim
 )
+
 target_link_libraries(runable
+    alliance_auto_aim
+)
+
+target_link_libraries(gimbal_mock
     alliance_auto_aim
 )
 
