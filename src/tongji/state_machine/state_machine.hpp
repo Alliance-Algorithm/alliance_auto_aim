@@ -16,7 +16,10 @@ public:
     const enumeration ::CarIDFlag& GetAllowdToFires() const override;
 
     void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+        const enumeration::CarIDFlag& invincible_armors,
         const std::chrono::milliseconds& duration_from_last_update);
+
+    void SetLostState();
 
     StateMachine(const StateMachine&)                = delete;
     StateMachine& operator=(const StateMachine&)     = delete;

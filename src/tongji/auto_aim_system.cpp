@@ -18,9 +18,7 @@
 #include "enum/car_id.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
-#include "parameters/rm_parameters.hpp"
 #include "tongji/fire_controller/fire_controller.hpp"
-#include "tongji/identifier/identifier.hpp"
 #include "tongji/predictor/car_predictor/car_predictor_manager.hpp"
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
@@ -68,15 +66,16 @@ public:
         //     util::visualization::draw_armor_in_image(*armors_in_image, visualized);
         //     cv::imshow("identified", visualized);
         //     cv::waitKey(1);
-        // } else {
-        //     std::printf("No identified armors/n");
         // }
         // if (fps_.count()) std::cout << fps_.fps() << std::endl;
-        // return;
 
-        if (flag == enumeration::ArmorIdFlag::None) return;
-        // std::cout << "here" << std::endl;
-        state_machine_->Update(armors_in_image,
+        if (flag == enumeration::ArmorIdFlag::None) {
+            state_machine_->SetLostState();
+            return;
+        }
+
+        // TODO:update invincible_armors
+        state_machine_->Update(armors_in_image, enumeration::CarIDFlag::None,
             std::chrono::duration_cast<milliseconds>(
                 std::chrono::steady_clock::now() - time_stamp_));
 
@@ -99,8 +98,6 @@ public:
             parameters::ParamsForSystemV1::tracker_current_armors_event,
             live_target_manager_->Predict(flag, pack.camera_capture_begin_time_stamp));
 
-        state_machine_ = std::make_shared<state_machine::StateMachine>();
-
         const auto target_id = state_machine_->GetAllowdToFires();
 
         const auto gimbal_yaw = R_camera2gimbal.eulerAngles(2, 1, 0)[0];
@@ -111,6 +108,7 @@ public:
 
         core::EventBus::Publish<data::FireControl>(
             parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
+        time_stamp_ = std::chrono::steady_clock::now();
 
         if (!debug) [[likely]]
             return;
