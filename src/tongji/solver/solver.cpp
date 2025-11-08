@@ -34,7 +34,7 @@ public:
     std::shared_ptr<world_exe::interfaces::IArmorInCamera> EstimateAllArmorPoses(
         std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
         std::vector<data::ArmorCameraSpacing> armor_plates;
-
+        if (!armors_in_image) return nullptr;
         for (int i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); i++) {
             const auto& armor_id = util::enumeration::GetArmorIdFlag(i);
             const auto& armors   = armors_in_image->GetArmors(armor_id);

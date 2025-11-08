@@ -1,6 +1,5 @@
 #include "state_machine.hpp"
 
-#include <iostream>
 #include <memory>
 
 #include "../identifier/tracker.hpp"
@@ -17,8 +16,17 @@ public:
     const enumeration::CarIDFlag& GetAllowdToFires() const { return target_id_; }
 
     void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+        const enumeration::CarIDFlag& invincible_armors,
         const std::chrono::milliseconds& duration_from_last_update) {
-        target_id_ = tracker_->SelectTrackingTargetID(armors_in_image, duration_from_last_update);
+
+        target_id_ = enumeration::CarIDFlag::None;
+        target_id_ = tracker_->SelectTrackingTargetID(
+            armors_in_image, invincible_armors, duration_from_last_update);
+    }
+
+    void SetLostState() {
+        target_id_ = enumeration::CarIDFlag::None;
+        tracker_->SetLostState();
     }
 
 private:
@@ -35,7 +43,10 @@ const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const {
 }
 
 void StateMachine::Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+    const enumeration::CarIDFlag& invincible_armors,
     const std::chrono::milliseconds& duration_from_last_update) {
-    return pimpl_->Update(armors_in_image, duration_from_last_update);
+    return pimpl_->Update(armors_in_image, invincible_armors, duration_from_last_update);
 }
+
+void StateMachine::SetLostState() { return pimpl_->SetLostState(); }
 }
