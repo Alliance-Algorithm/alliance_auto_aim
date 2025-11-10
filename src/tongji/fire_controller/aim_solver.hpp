@@ -29,7 +29,7 @@ public:
     using PredictorModel = predictor::EKFModel<11, 4>;
     using EKF            = predictor::ExtendedKalmanFilter<PredictorModel>;
 
-    AimingSolver(const std::string& config_path, const double& gravity = 9.7833)
+    explicit AimingSolver(const std::string& config_path, const double& gravity = 9.7833)
         : aim_point_chooser_(std::make_unique<AimPointChooser>(config_path))
         , g_(gravity) {
 
@@ -39,8 +39,8 @@ public:
         bullet_speed_ = yaml["bullet_speed"].as<double>();
     }
 
-    AimSolution SolveAimSolution(std::shared_ptr<interfaces::IPredictor> snapshot,
-        data::TimeStamp time_stamp, const double& control_delay_s) {
+    AimSolution SolveAimSolution(std::shared_ptr<interfaces::IPredictor> const& snapshot,
+        data::TimeStamp const& time_stamp, const double& control_delay_s) {
 
         // 迭代求解飞行时间 (最多10次，收敛条件：相邻两次fly_time差 <0.001)
         double prev_fly_time_s;

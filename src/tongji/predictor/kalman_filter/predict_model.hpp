@@ -31,7 +31,7 @@ public:
     using QMat = Eigen::Matrix<double, xn, xn>;
     using HMat = Eigen::Matrix<double, zn, xn>;
 
-    EKFModel(const enumeration::CarIDFlag& car_id)
+    explicit EKFModel(const enumeration::CarIDFlag& car_id)
         : car_id_(car_id) {
 
         bool is_balance = (car_id == enumeration::CarIDFlag::InfantryIII
@@ -39,9 +39,7 @@ public:
             || car_id == enumeration::CarIDFlag::InfantryV);
 
         P0_dig_.resize(11);
-        if (is_balance) {
-            P0_dig_ << 1, 64, 1, 64, 1, 64, 0.4, 100, 1, 1, 1;
-        } else if (car_id == enumeration::CarIDFlag::Outpost) {
+        if (car_id == enumeration::CarIDFlag::Outpost) {
             P0_dig_ << 1, 64, 1, 64, 1, 81, 0.4, 100, 1e-4, 0, 0;
         } else if (car_id == enumeration::CarIDFlag::Base) {
             P0_dig_ << 1, 64, 1, 64, 1, 64, 0.4, 100, 1e-4, 0, 0;
@@ -67,19 +65,19 @@ public:
         }
     }
 
-    auto GetP0Dig() const -> const PDig { return P0_dig_; }
-    auto GetRadius() const -> const double { return radius_; }
-    auto GetID() const -> const auto { return car_id_; }
-    auto GetArmorNum() const -> const int { return armor_num_; }
+    auto GetP0Dig() const -> PDig { return P0_dig_; }
+    auto GetRadius() const -> double { return radius_; }
+    auto GetID() const -> auto { return car_id_; }
+    auto GetArmorNum() const -> int { return armor_num_; }
 
     // 防止夹角求和出现异常值
-    constexpr auto x_add(const XVec& a, const XVec& b) const -> const auto {
+    constexpr auto x_add(const XVec& a, const XVec& b) const -> auto {
         XVec c = a + b;
         c(6)   = util ::math::clamp_pm_pi(c(6));
         return c;
     }
 
-    constexpr auto z_substract(const ZVec& a, const ZVec& b) const -> const auto {
+    constexpr auto z_substract(const ZVec& a, const ZVec& b) const -> auto {
         auto c = a - b;
         c(0)   = util::math::clamp_pm_pi(c(0));
         c(1)   = util::math::clamp_pm_pi(c(1));
@@ -87,11 +85,11 @@ public:
         return c;
     }
 
-    auto A(double dt) const -> auto const {
+    auto A(double dt) const -> auto {
         // 状态转移矩阵
-        AMat _A;
+        AMat A_mat;
         // clang-format off
-        _A<<
+        A_mat<<
         1, dt,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  0,  1, dt,  0,  0,  0,  0,  0,  0,  0,
@@ -104,12 +102,12 @@ public:
         0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,
         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1;
         //clang-format on
-        return _A;
+        return A_mat;
     }
 
 
     // 防止夹角求和出现异常值
-    auto f(const XVec& x, const double& dt)const ->const auto{
+    auto f(const XVec& x, const double& dt)const -> auto{
         XVec x_prior = this->A(dt) * x;
         x_prior(6)   = util::math::clamp_pm_pi(x_prior(6));
         return x_prior;
@@ -118,7 +116,7 @@ public:
 
     auto MatchArmor(const XVec& x, const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal) const
-        ->const int {
+        -> int {
 
         const auto& xyza_list = GetArmorXYZAList(x);
         std::vector<std::pair<Eigen::Vector4d, int>> xyza_i_list;
@@ -151,7 +149,7 @@ public:
     }
 
     // 计算出装甲板中心的坐标（考虑长短轴）
-    auto h_armor_xyz(const XVec& x, int id) const ->const auto {
+    auto h_armor_xyz(const XVec& x, int id) const -> auto {
         auto angle   = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
         auto use_l_h = (armor_num_ == 4) && (id == 1 || id == 3);
 
@@ -163,7 +161,7 @@ public:
         return Eigen::Vector3d { armor_x, armor_y, armor_z };
     }
 
-    constexpr auto H(const XVec& x, int id) const->HMat const {
+    constexpr auto H(const XVec& x, int id) const->HMat  {
         auto angle   = util::math::clamp_pm_pi(x(6) + id * 2 * CV_PI / armor_num_);
         auto cos_angle=std::cos(angle);
         auto sin_angle=std::sin(angle);
@@ -205,7 +203,7 @@ public:
     }
 
     auto R(const Eigen::Vector3d& armor_xyz_in_gimbal, const Eigen::Vector3d& armor_ypr_in_gimbal,
-        const Eigen::Vector3d& armor_ypd_in_gimbal, int id) const -> RMat const {
+        const Eigen::Vector3d& armor_ypd_in_gimbal, int id) const -> RMat {
         // Eigen::VectorXd R_dig{{4e-3, 4e-3, 1, 9e-2}};
         auto center_yaw  = std::atan2(armor_xyz_in_gimbal(1), armor_xyz_in_gimbal(0));
         auto delta_angle = util::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - center_yaw);
@@ -217,7 +215,7 @@ public:
         return R_dig.asDiagonal();
     }
 
-    auto Q(const double& dt) const -> const auto {
+    auto Q(const double& dt) const -> auto {
         // Piecewise White Noise Model
         // https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/07-Kalman-Filter-Math.ipynb
         double v1, v2;
@@ -235,9 +233,9 @@ public:
         auto c   = dt_ * dt_;
 
         // 预测过程噪声偏差的方差
-        QMat _Q;
+        QMat Q_mat;
         // clang-format off
-        _Q
+        Q_mat
         <<
         a * v1, b * v1,      0,      0,      0,      0,      0,      0, 0, 0, 0,
         b * v1, c * v1,      0,      0,      0,      0,      0,      0, 0, 0, 0,
@@ -251,7 +249,7 @@ public:
              0,      0,      0,      0,      0,      0,      0,      0, 0, 0, 0,
              0,      0,      0,      0,      0,      0,      0,      0, 0, 0, 0;
         // clang-format on
-        return _Q;
+        return Q_mat;
     }
 
     Eigen::Vector4d h(const XVec& x, const int& id) const {
@@ -270,7 +268,7 @@ public:
         return c;
     };
 
-    constexpr auto GetArmorXYZAList(const XVec& ekf_x) const -> const auto {
+    constexpr auto GetArmorXYZAList(const XVec& ekf_x) const -> auto {
         std::vector<Eigen::Vector4d> _armor_xyza_list;
 
         for (int i = 0; i < armor_num_; i++) {

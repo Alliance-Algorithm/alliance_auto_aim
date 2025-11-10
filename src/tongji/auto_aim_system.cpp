@@ -30,7 +30,7 @@ using namespace std::chrono;
 
 class AutoAimSystem::Impl {
 public:
-    Impl(const bool& debug)
+    explicit Impl(const bool& debug)
         : debug(debug)
         , config_path_("/workspaces/src/alliance_ros_auto_aim/alliance_auto_aim/configs/"
                        "example.yaml")

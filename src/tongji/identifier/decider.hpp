@@ -22,7 +22,7 @@ enum class ArmorPriority {
 
 class Decider {
 public:
-    Decider(PriorityMode mode = PriorityMode::MODE_ONE);
+    explicit Decider(PriorityMode mode = PriorityMode::MODE_ONE);
     ~Decider();
 
     enumeration::ArmorIdFlag GetBestArmor(std::vector<data::ArmorImageSpacing>& armors) const;

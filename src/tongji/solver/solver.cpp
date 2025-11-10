@@ -31,8 +31,8 @@ public:
         , t_camera2gimbal_(Eigen::Vector3d::Zero())
         , reprojection_util_(std::make_unique<ReprojectionUtil>()) { }
 
-    std::shared_ptr<world_exe::interfaces::IArmorInCamera> EstimateAllArmorPoses(
-        std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
+    static std::shared_ptr<world_exe::interfaces::IArmorInCamera> EstimateAllArmorPoses(
+        std::shared_ptr<interfaces::IArmorInImage> const& armors_in_image) {
         std::vector<data::ArmorCameraSpacing> armor_plates;
         if (!armors_in_image) return nullptr;
         for (int i = 0; i < static_cast<int>(enumeration::ArmorIdFlag::Count); i++) {
@@ -53,7 +53,7 @@ public:
         t_camera2gimbal_ = t_camera2gimbal;
     }
 
-    auto Camera2Gimbal(const Eigen::Vector3d& xyz_in_camera) const -> const auto {
+    auto Camera2Gimbal(const Eigen::Vector3d& xyz_in_camera) const -> auto {
         Eigen::Vector3d xyz_in_gimbal =
             R_camera2gimbal_.transpose() * xyz_in_camera + t_camera2gimbal_;
         return xyz_in_gimbal;
@@ -61,7 +61,7 @@ public:
 
     auto CalculateOptimizeYaw(const data::ArmorImageSpacing& armor_in_image,
         const Eigen::Vector3d& armor_xyz_in_gimbal, const double& gimbal_yaw,
-        const double& initial_armor_yaw_in_gimbal) const -> const double {
+        const double& initial_armor_yaw_in_gimbal) const -> double {
         constexpr double SEARCH_RANGE = 140; // degree
         const auto yaw0 = util::math::clamp_pm_pi(gimbal_yaw - SEARCH_RANGE / 2 * CV_PI / 180.0);
 
@@ -86,13 +86,13 @@ public:
         return best_yaw;
     }
 
-    const data::TimeStamp GetTimeStamp() const {
+    static data::TimeStamp GetTimeStamp() {
         return data::TimeStamp(std::chrono::steady_clock::now().time_since_epoch());
     }
 
 private:
-    data::ArmorCameraSpacing EstimatePose(
-        const world_exe::data::ArmorImageSpacing& armor_in_image) const {
+    static data::ArmorCameraSpacing EstimatePose(
+        const world_exe::data::ArmorImageSpacing& armor_in_image) {
         const auto& [xyz_in_camera, R_armor2camera] = EstimatePnp(armor_in_image);
 
         data::ArmorCameraSpacing pose;
@@ -102,8 +102,8 @@ private:
         return pose;
     }
 
-    auto EstimatePnp(const world_exe::data::ArmorImageSpacing& armor_in_image) const
-        -> const std::tuple<Eigen::Vector3d, Eigen::Matrix3d> {
+    static auto EstimatePnp(const world_exe::data::ArmorImageSpacing& armor_in_image)
+        -> std::tuple<Eigen::Vector3d, Eigen::Matrix3d> {
         const auto& object_points = armor_in_image.isLargeArmor
             ? parameters::Robomaster::LargeArmorObjectPointsOpencv
             : parameters::Robomaster::NormalArmorObjectPointsOpencv;
@@ -151,12 +151,12 @@ void Solver::SetCamera2Gimbal(
 
 auto Solver::CalculateOptimizeYaw(const data::ArmorImageSpacing& armor_in_image,
     const Eigen::Vector3d& armor_xyz_in_gimbal, const double& gimbal_yaw,
-    const double& initial_armor_yaw_in_gimbal) const -> const double {
+    const double& initial_armor_yaw_in_gimbal) const -> double {
     return pimpl_->CalculateOptimizeYaw(
         armor_in_image, armor_xyz_in_gimbal, gimbal_yaw, initial_armor_yaw_in_gimbal);
 }
 
-auto Solver::Camera2Gimbal(const Eigen::Vector3d& xyz_in_camera) const -> const auto {
+auto Solver::Camera2Gimbal(const Eigen::Vector3d& xyz_in_camera) const -> auto {
     return pimpl_->Camera2Gimbal(xyz_in_camera);
 }
 }

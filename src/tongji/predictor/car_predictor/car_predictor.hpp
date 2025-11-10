@@ -50,7 +50,6 @@ public:
 
         EKF::PMat P0 = model_.GetP0Dig().asDiagonal();
         ekf_.emplace(x0, P0, model_); // 初始化滤波器（预测量、预测量协方差）
-
     }
 
     const enumeration ::ArmorIdFlag& GetId() const override { return car_id_; }
@@ -73,22 +72,22 @@ public:
     }
 
     EKF::XVec GetEkfX() const { return ekf_->x; }
-    auto GetModel() const -> const PredictorModel { return model_; }
-    auto GetEkf() const -> const EKF { return ekf_.value(); }
+    auto GetModel() const -> PredictorModel { return model_; }
+    auto GetEkf() const -> EKF { return ekf_.value(); }
 
     data::TimeStamp LastSeen() const { return time_stamp_; }
 
-    auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> const {
+    auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> {
         const auto [x_n, P_n] = ekf_->PredictOnce(dt);
         return model_.GetArmorXYZAList(x_n);
     }
 
-    auto GetPredictedX(const double& dt) const -> const EKF::XVec {
+    auto GetPredictedX(const double& dt) const -> EKF::XVec {
         const auto& [x_n, P_n] = ekf_->PredictOnce(dt);
         return x_n;
     }
 
-    void Update(const data::TimeStamp time_stamp, const Eigen::Vector3d& armor_xyz_in_gimbal,
+    void Update(data::TimeStamp const& time_stamp, const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal) {
 
         // 装甲板匹配

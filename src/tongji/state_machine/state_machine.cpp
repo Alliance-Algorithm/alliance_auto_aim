@@ -15,7 +15,7 @@ public:
 
     const enumeration::CarIDFlag& GetAllowdToFires() const { return target_id_; }
 
-    void Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+    void Update(std::shared_ptr<interfaces::IArmorInImage> const& armors_in_image,
         const enumeration::CarIDFlag& invincible_armors,
         const std::chrono::milliseconds& duration_from_last_update) {
 
@@ -42,7 +42,7 @@ const enumeration::CarIDFlag& StateMachine::GetAllowdToFires() const {
     return pimpl_->GetAllowdToFires();
 }
 
-void StateMachine::Update(std::shared_ptr<interfaces::IArmorInImage> armors_in_image,
+void StateMachine::Update(std::shared_ptr<interfaces::IArmorInImage> const& armors_in_image,
     const enumeration::CarIDFlag& invincible_armors,
     const std::chrono::milliseconds& duration_from_last_update) {
     return pimpl_->Update(armors_in_image, invincible_armors, duration_from_last_update);

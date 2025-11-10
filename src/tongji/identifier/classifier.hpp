@@ -13,7 +13,7 @@
 
 namespace world_exe::tongji::identifier {
 
-// TODO:早期代码，和深大模型不适配，需要TODOTODO
+// TODO:和深大模型不适配，需要TODOTODO
 class Classifier final {
 public:
     explicit Classifier(const std::string& config_path) {

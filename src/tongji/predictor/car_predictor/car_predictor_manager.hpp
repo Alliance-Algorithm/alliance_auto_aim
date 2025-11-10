@@ -11,7 +11,7 @@ namespace world_exe::tongji::predictor {
 
 class CarPredictorManager final : public interfaces::ITargetPredictor {
 public:
-    CarPredictorManager(const std::string& config_path, const double& timeout_sec = 0.1);
+    explicit CarPredictorManager(const std::string& config_path, const double& timeout_sec = 0.1);
     ~CarPredictorManager();
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> Predict(
@@ -19,7 +19,7 @@ public:
     std ::shared_ptr<interfaces::IPredictor> GetPredictor(
         const enumeration ::ArmorIdFlag& id) const override;
 
-    void Update(std::shared_ptr<data::PredictorUpdatePackage> data);
+    void Update(std::shared_ptr<data::PredictorUpdatePackage> const& data);
 
     CarPredictorManager(const CarPredictorManager&)                = delete;
     CarPredictorManager& operator=(const CarPredictorManager&)     = delete;

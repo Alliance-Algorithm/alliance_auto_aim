@@ -12,8 +12,8 @@ namespace world_exe::tongji::fire_control {
 class FireController final : public interfaces::IFireControl {
 public:
     FireController(const std::string& config_path,
-        std::shared_ptr<interfaces::ICarState> state_machine,
-        std::shared_ptr<interfaces::ITargetPredictor> live_target_manager);
+        std::shared_ptr<interfaces::ICarState> const& state_machine,
+        std::shared_ptr<interfaces::ITargetPredictor> const& live_target_manager);
     ~FireController();
 
     const data ::FireControl CalculateTarget(

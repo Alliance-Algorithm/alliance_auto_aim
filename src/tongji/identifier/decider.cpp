@@ -20,6 +20,8 @@ public:
 
         const PriorityMap& priority_map = (mode_ == PriorityMode::MODE_ONE) ? mode1 : mode2;
         std::vector<std::pair<enumeration::ArmorIdFlag, ArmorPriority>> armors_list;
+        armors_list.reserve(armors.size());
+
         for (const auto& armor : armors) {
             armors_list.emplace_back(armor.id, priority_map.at(armor.id));
         }

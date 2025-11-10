@@ -12,7 +12,7 @@ using CarIDFlag = enumeration::CarIDFlag;
 
 class AimPointChooser {
 public:
-    AimPointChooser(const std::string& config_path) {
+    explicit AimPointChooser(const std::string& config_path) {
         auto yaml      = YAML::LoadFile(config_path);
         comming_angle_ = yaml["comming_angle"].as<double>() / 57.3; // degree to rad
         leaving_angle_ = yaml["leaving_angle"].as<double>() / 57.3; // degree to rad
@@ -20,7 +20,7 @@ public:
 
     std::pair<bool, data::ArmorGimbalControlSpacing> ChooseAimArmor(
         const Eigen::Vector<double, 11>& ekf_x,
-        const std::vector<data::ArmorGimbalControlSpacing> armors, const CarIDFlag& single_id) {
+        std::vector<data::ArmorGimbalControlSpacing> const& armors, const CarIDFlag& single_id) {
         const auto armor_num = armors.size();
         int chosen_id        = -1;
 
@@ -31,7 +31,7 @@ public:
         for (int i = 0; i < armor_num; i++) {
             auto delta_angle = util::math::clamp_pm_pi(
                 util::math::get_yaw_from_quaternion(armors[i].orientation) - center_yaw);
-            delta_angle_list.emplace_back(std::make_tuple(i, delta_angle));
+            delta_angle_list.emplace_back(i, delta_angle);
         }
         std::sort(delta_angle_list.begin(), delta_angle_list.end(),
             [](const auto& a, const auto& b) { return std::get<1>(a) > std::get<1>(b); });

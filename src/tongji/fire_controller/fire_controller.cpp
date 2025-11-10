@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 
+#include <utility>
 #include <yaml-cpp/yaml.h>
 
 #include "../identifier/identified_armor.hpp"
@@ -29,14 +30,14 @@ public:
         , firable_(false)
         , aiming_solver_(std::make_unique<AimingSolver>(config_path))
         , fire_decision_(std::make_unique<FireDecision>(config_path))
-        , state_machine_(state_machine)
-        , live_target_manager_(live_target_manager) {
+        , state_machine_(std::move(state_machine))
+        , live_target_manager_(std::move(live_target_manager)) {
 
         auto yaml        = YAML::LoadFile(config_path);
         control_delay_s_ = yaml["control_delay_s"].as<double>();
     }
 
-    const data ::FireControl CalculateTarget(
+    data ::FireControl CalculateTarget(
         const std::chrono::seconds& time_from_tracker_timepoint) const {
 
         if (!fire_decision_ || !state_machine_ || !live_target_manager_)
@@ -57,8 +58,8 @@ public:
         const auto gimbal_command = GimbalCommand { aim_solution.yaw, aim_solution.pitch };
         const auto target_pos     = Eigen::Vector3d { aim_solution.aim_point };
         auto fire_command         = aim_solution.valid
-                    ? fire_decision_->ShouldFire(gimbal_yaw_, gimbal_command, target_pos)
-                    : false;
+            ? fire_decision_->ShouldFire(gimbal_yaw_, gimbal_command, target_pos)
+            : false;
         firable_                  = fire_command;
 
         data::FireControl result;
@@ -68,7 +69,7 @@ public:
         return result;
     }
 
-    const CarIDFlag GetAttackCarId() const {
+    CarIDFlag GetAttackCarId() const {
         if (firable_) return locked_target;
         return CarIDFlag::None;
     }
@@ -81,7 +82,7 @@ private:
     double gimbal_yaw_;
 
     CarIDFlag locked_target;
-    mutable double firable_;
+    mutable bool firable_;
 
     std::unique_ptr<AimingSolver> aiming_solver_;
     std::unique_ptr<FireDecision> fire_decision_;
@@ -90,8 +91,8 @@ private:
 };
 
 FireController::FireController(const std::string& config_path,
-    std::shared_ptr<interfaces::ICarState> state_machine,
-    std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
+    std::shared_ptr<interfaces::ICarState> const& state_machine,
+    std::shared_ptr<interfaces::ITargetPredictor> const& live_target_manager)
     : pimpl_(std::make_unique<Impl>(config_path, state_machine, live_target_manager)) { }
 FireController::~FireController() = default;
 

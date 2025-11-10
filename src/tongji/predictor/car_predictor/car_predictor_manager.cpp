@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <ctime>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 
 #include "../in_gimbal_control_armor.hpp"
@@ -19,7 +20,7 @@ namespace world_exe::tongji::predictor {
 
 class CarPredictorManager::Impl {
 public:
-    Impl(const std::string& config_path, const double& timeout_sec)
+    Impl(std::string_view config_path, const double& timeout_sec)
         : targets_map_()
         , last_update_timestamp_(data::TimeStamp { })
         , config_path_(config_path) { }
@@ -34,7 +35,7 @@ public:
                 // if (!predictor->IsConverged()) {
                 //     continue;
                 // }
-                // if (predictor->IsConverged()) 
+                // if (predictor->IsConverged())
                 {
                     auto spacings = predictor->Predictor(time_stamp);
                     result.insert(result.end(), spacings->GetArmors(id).begin(),
@@ -55,7 +56,7 @@ public:
             predictor->GetEkf(), predictor->GetModel(), predictor->LastSeen());
     }
 
-    void Update(std::shared_ptr<data::PredictorUpdatePackage> data) {
+    void Update(std::shared_ptr<data::PredictorUpdatePackage> const& data) {
         last_update_timestamp_ = data->GetTimeStamp();
 
         const Eigen::Affine3d transform = data->GetCameraToWorld();
@@ -81,7 +82,8 @@ public:
                 }
             }
 
-            // std::erase_if(targets_map_, [](const auto& pair) { return pair.second->IsAppeared(); });
+            // std::erase_if(targets_map_, [](const auto& pair) { return pair.second->IsAppeared();
+            // });
         }
     }
 
@@ -105,7 +107,7 @@ std ::shared_ptr<interfaces::IPredictor> CarPredictorManager::GetPredictor(
     return pimpl_->GetPredictor(id);
 }
 
-void CarPredictorManager::Update(std::shared_ptr<data::PredictorUpdatePackage> data) {
+void CarPredictorManager::Update(std::shared_ptr<data::PredictorUpdatePackage> const& data) {
     return pimpl_->Update(data);
 }
 

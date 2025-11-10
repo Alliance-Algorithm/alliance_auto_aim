@@ -43,7 +43,7 @@ public:
         : x(x0)
         , P(P0)
         , model_(model)
-        , I(Eigen::Matrix<double,xn,xn>::Identity()) {
+        , I(Eigen::Matrix<double, xn, xn>::Identity()) {
         // data["residual_yaw"]        = 0.0;
         // data["residual_pitch"]      = 0.0;
         // data["residual_distance"]   = 0.0;
@@ -56,7 +56,7 @@ public:
     }
 
     // 无副作用，不修改x，仅预测
-    auto PredictOnce(const double& dt) const -> const std::pair<XVec, PMat> {
+    auto PredictOnce(const double& dt) const -> std::pair<XVec, PMat> {
         const auto A   = model_.A(dt);
         const auto Q   = model_.Q(dt);
         const auto x_n = model_.f(x, dt);
@@ -66,13 +66,13 @@ public:
     }
 
     auto Update(const double& dt, const ZVec& z, const HMat& H, const RMat& R, const int& id)
-        -> const XVec {
+        -> XVec {
         const auto [x_prior, P_prior] = PredictOnce(dt);
         const ZVec z_prior            = model_.h(x_prior, id);
 
         const ZVec residual = model_.z_subtract(z, z_prior);
 
-        const RMat S = H * P_prior * H.transpose() + R;
+        const RMat S            = H * P_prior * H.transpose() + R;
         const Eigen::MatrixXd K = P_prior * H.transpose() * S.inverse();
         // std::cout << P << "\n" << std::endl;
 
@@ -91,15 +91,15 @@ public:
         return x;
     }
 
-    auto IsDiverse() const -> bool const { return CalculateFailureRate() >= max_failure_rate; }
+    auto IsDiverse() const -> bool { return CalculateFailureRate() >= max_failure_rate; }
 
 private:
-    auto CalculateFailureRate() const -> bool const {
+    auto CalculateFailureRate() const -> bool {
         int failures = std::accumulate(recent_nis_failures.begin(), recent_nis_failures.end(), 0);
         return (double)failures / window_size;
     }
 
-    auto GetRecentNISFailureRate() const -> double const {
+    auto GetRecentNISFailureRate() const -> double {
         if (recent_nis_failures.empty()) return 0.0;
 
         int recent_failures =

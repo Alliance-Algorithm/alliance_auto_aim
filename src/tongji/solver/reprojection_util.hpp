@@ -21,11 +21,11 @@ public:
     ReprojectionUtil()  = default;
     ~ReprojectionUtil() = default;
 
-    double CalculateReprojectionError(const Eigen::Matrix3d& R_camera2gimbal,
+    static double CalculateReprojectionError(const Eigen::Matrix3d& R_camera2gimbal,
         const Eigen::Vector3d& t_gimbal2camera,
         const world_exe::data::ArmorImageSpacing& armor_in_image,
         const Eigen::Vector3d& armor_xyz_in_gimbal, const double& armor_yaw,
-        const double& armor_pitch, const double& inclined) const {
+        const double& armor_pitch, const double& inclined)  {
 
         auto image_points = ReprojectArmor(R_camera2gimbal, t_gimbal2camera, armor_xyz_in_gimbal,
             armor_yaw, armor_pitch, armor_in_image.isLargeArmor);
@@ -41,9 +41,9 @@ public:
     }
 
 private:
-    std::vector<cv::Point2d> ReprojectArmor(const Eigen::Matrix3d& R_camera2gimbal,
+    static std::vector<cv::Point2d> ReprojectArmor(const Eigen::Matrix3d& R_camera2gimbal,
         const Eigen::Vector3d& t_gimbal2camera, const Eigen::Vector3d& armor_xyz_in_gimbal,
-        const double& armor_yaw, const double& armor_pitch, const bool& is_large) const {
+        const double& armor_yaw, const double& armor_pitch, const bool& is_large) {
 
         auto sin_yaw   = std::sin(armor_yaw);
         auto cos_yaw   = std::cos(armor_yaw);
@@ -69,9 +69,9 @@ private:
 
         // get rvec tvec
         cv::Vec3d rvec;
-        cv::Mat _R_armor2camera_cv;
-        cv::eigen2cv(R_armor2camera_cv, _R_armor2camera_cv);
-        cv::Rodrigues(_R_armor2camera_cv, rvec);
+        cv::Mat R_armor2camera_cv_mat;
+        cv::eigen2cv(R_armor2camera_cv, R_armor2camera_cv_mat);
+        cv::Rodrigues(R_armor2camera_cv_mat, rvec);
         cv::Vec3d tvec(t_armor2camera_cv[0], t_armor2camera_cv[1], t_armor2camera_cv[2]);
 
         std::vector<cv::Point2d> image_points;
@@ -84,8 +84,8 @@ private:
         return image_points;
     }
 
-    double SJTU_cost(const std::vector<cv::Point2d>& cv_refs,
-        const std::vector<cv::Point2d>& cv_pts, const double& inclined) const {
+    static double SJTU_cost(const std::vector<cv::Point2d>& cv_refs,
+        const std::vector<cv::Point2d>& cv_pts, const double& inclined)  {
         std::size_t size = cv_refs.size();
         std::vector<Eigen::Vector2d> refs;
         std::vector<Eigen::Vector2d> pts;

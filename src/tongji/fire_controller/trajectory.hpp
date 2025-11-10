@@ -17,7 +17,7 @@ struct TrajectorySolver {
     // g 重力加速度，单位：m/s^2
     //(g·x²)/(2v₀²)·u² - x·u + (g·x²)/(2v₀²) + y = 0(其中u = tan(θ))
     static auto SolveTrajectory(const double& v0, const double& d, const double& h, const double& g)
-        -> TrajectoryResult const {
+        -> TrajectoryResult {
         auto a     = g * d * d / (2 * v0 * v0);
         auto b     = -d;
         auto c     = a + h;

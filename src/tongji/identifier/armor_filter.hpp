@@ -2,7 +2,6 @@
 
 #include <ranges>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include "data/armor_image_spaceing.hpp"
@@ -33,7 +32,7 @@ public:
     void Update(enumeration::CarIDFlag ids) {
         invincible_armor_.clear();
         for (auto id : util::enumeration::ExpandArmorIdFlags(ids)) {
-            invincible_armor_.insert(std::move(id));
+            invincible_armor_.insert(id);
         }
     }
 
