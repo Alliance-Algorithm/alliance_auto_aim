@@ -1,10 +1,9 @@
 #pragma once
+#include <yaml-cpp/yaml.h>
 
 #include "data/armor_gimbal_control_spacing.hpp"
 #include "enum/car_id.hpp"
 #include "util/math.hpp"
-
-#include <yaml-cpp/yaml.h>
 
 namespace world_exe::tongji::fire_control {
 
@@ -25,7 +24,7 @@ public:
         int chosen_id        = -1;
 
         // 整车旋转中心的球坐标yaw
-        const auto center_yaw = std::atan2(ekf_x[2], ekf_x[0]);
+        const auto center_yaw = std::atan2(ekf_x[2], ekf_x[0]); // rad
 
         std::vector<std::tuple<int, double>> delta_angle_list;
         for (int i = 0; i < armor_num; i++) {
@@ -33,15 +32,18 @@ public:
                 util::math::get_yaw_from_quaternion(armors[i].orientation) - center_yaw);
             delta_angle_list.emplace_back(i, delta_angle);
         }
-        std::sort(delta_angle_list.begin(), delta_angle_list.end(),
-            [](const auto& a, const auto& b) { return std::get<1>(a) > std::get<1>(b); });
+        std::sort(
+            delta_angle_list.begin(), delta_angle_list.end(), [](const auto& a, const auto& b) {
+                return std::abs(std::get<1>(a)) < std::abs(std::get<1>(b));
+            });
 
         // 不考虑小陀螺
         if (std::abs(ekf_x[8]) <= 2 && single_id != CarIDFlag::Outpost) {
             // 选择在可射击范围内的装甲板
             std::vector<int> id_list;
             for (const auto& [id, delta_angle] : delta_angle_list) {
-                if (std::abs(delta_angle) > 60 / 57.3) continue;
+                // std::println("id:{},delta_angle: {}", id, delta_angle / std::numbers::pi * 180);
+                if (std::abs(delta_angle) > (60 / 57.3)) continue;
                 id_list.emplace_back(id);
             }
 
@@ -58,11 +60,10 @@ public:
             }
         } else {
             // 小陀螺
-            double coming_angle  = (single_id == CarIDFlag::Outpost) ? 70 / 57.3 : comming_angle_;
-            double leaving_angle = (single_id == CarIDFlag::Outpost) ? 30 / 57.3 : leaving_angle_;
+            double coming_angle  = (single_id == CarIDFlag::Outpost) ? (70 / 57.3) : comming_angle_;
+            double leaving_angle = (single_id == CarIDFlag::Outpost) ? (30 / 57.3) : leaving_angle_;
 
             // 在小陀螺时，一侧的装甲板不断出现，另一侧的装甲板不断消失，显然前者被打中的概率更高
-            //
             for (const auto& [id, delta_angle] : delta_angle_list) {
                 if (std::abs(delta_angle) > coming_angle) continue;
                 if ((ekf_x[7] > 0 && delta_angle < leaving_angle)
@@ -76,7 +77,6 @@ public:
         if (chosen_id == -1) {
             return { false, armors[std::get<0>(delta_angle_list.front())] };
         }
-
         return {
             true,
             armors[chosen_id],

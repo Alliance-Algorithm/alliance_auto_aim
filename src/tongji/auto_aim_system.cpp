@@ -4,9 +4,12 @@
 
 #include <cstdio>
 #include <exception>
+#include <filesystem>
+#include <iostream>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
+#include <print>
 #include <tuple>
 
 #include "../v1/sync/syncer.hpp"
@@ -16,6 +19,7 @@
 #include "data/sync_data.hpp"
 #include "data/time_stamped.hpp"
 #include "enum/car_id.hpp"
+#include "interfaces/armor_in_gimbal_control.hpp"
 #include "parameters/params_system_v1.hpp"
 #include "parameters/profile.hpp"
 #include "tongji/fire_controller/fire_controller.hpp"
@@ -23,6 +27,7 @@
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
 #include "utils/fps_counter.hpp"
+#include "utils/visualization.hpp"
 #include "v1/identifier/identifier.hpp"
 
 namespace world_exe::tongji {
@@ -32,8 +37,10 @@ class AutoAimSystem::Impl {
 public:
     explicit Impl(const bool& debug)
         : debug(debug)
-        , config_path_("/workspaces/src/alliance_ros_auto_aim/alliance_auto_aim/configs/"
-                       "example.yaml")
+        , config_path_(std::filesystem::path { __FILE__ }.parent_path().parent_path().parent_path()
+              / "configs"
+              / "example."
+                "yaml")
         , fps_() {
         identifier_ = std::make_unique<v1::identifier::Identifier>(
             parameters::ParamsForSystemV1::szu_model_path(),
@@ -71,6 +78,7 @@ public:
 
         if (flag == enumeration::ArmorIdFlag::None) {
             state_machine_->SetLostState();
+            std::println("no armors identified");
             return;
         }
 
@@ -101,6 +109,11 @@ public:
         const auto target_id = state_machine_->GetAllowdToFires();
 
         const auto gimbal_yaw = R_camera2gimbal.eulerAngles(2, 1, 0)[0];
+        // std::cout << R_camera2gimbal.eulerAngles(2, 1, 0) << std::endl;
+
+        // std::cout << "gimbal_yaw: " << gimbal_yaw << std::endl;
+        // const auto gimbal_yaw = 0.;
+        time_stamp_ = pack.camera_capture_begin_time_stamp;
         fire_controller_->UpdateGimbalPosition(gimbal_yaw);
 
         /// 这里应该有一个线程进行稳定的输出之类的
@@ -108,7 +121,10 @@ public:
 
         core::EventBus::Publish<data::FireControl>(
             parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
-        time_stamp_ = std::chrono::steady_clock::now();
+
+        core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
+            world_exe::parameters::ParamsForSystemV1::get_lastest_predictor_event,
+            fire_controller_->GetArmorsToView());
 
         if (!debug) [[likely]]
             return;
@@ -123,7 +139,7 @@ public:
             parameters::ParamsForSystemV1::tracker_update_event, combined);
         core::EventBus::Publish<enumeration::CarIDFlag>(
             parameters::ParamsForSystemV1::car_tracing_event, state_machine_->GetAllowdToFires());
-        // std::cout << "here" << std::endl;
+
         // if (armors_in_image) {
         //     auto visualized = raw.mat.clone();
         //     util::visualization::draw_armor_in_image(*armors_in_image, visualized);
@@ -149,8 +165,12 @@ public:
 
     data::FireControl GetControlCommand() {
         fire_controller_->GetAttackCarId();
-        return fire_controller_->CalculateTarget(
-            std::chrono::duration_cast<seconds>(std::chrono::steady_clock::now() - time_stamp_));
+        // std::println("time_stamp_ns{},time_stamp_s{}",
+        //     std::chrono::duration_cast<nanoseconds>(std::chrono::steady_clock::now() -
+        //     time_stamp_), std::chrono::duration_cast<seconds>(std::chrono::steady_clock::now() -
+        //     time_stamp_));
+        return fire_controller_->CalculateTarget(std::chrono::duration_cast<nanoseconds>(
+            std::chrono::steady_clock::now() - time_stamp_));
     }
 
 private:

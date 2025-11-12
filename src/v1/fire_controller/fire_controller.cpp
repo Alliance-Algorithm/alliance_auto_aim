@@ -46,8 +46,9 @@ public:
         predictor_ = predictor;
     };
 
-    const world_exe::data::FireControl CalculateTarget(const std::chrono::seconds& time_duration) {
-        std::chrono::seconds fly_time{0};
+    const world_exe::data::FireControl CalculateTarget(
+        const std::chrono::nanoseconds& time_duration) {
+        std::chrono::seconds fly_time { 0 };
         const auto& pre1       = predictor_->Predictor(fly_time + time_duration + control_delay_);
         const auto& pre2       = pre1->GetArmors(predictor_->GetId());
         double min_angular_dis = 1e9;
@@ -73,7 +74,9 @@ public:
                 trajectory_solver::gravity_only(armors[index].position, velocity_begin_, gravity_);
         }
 
-        return { .time_stamp = data::TimeStamp{std::chrono::nanoseconds(fly_time + time_duration + control_delay_)}, .fire_allowance = true };
+        return { .time_stamp = data::TimeStamp { std::chrono::nanoseconds(
+                     fly_time + time_duration + control_delay_) },
+            .fire_allowance  = true };
     }
 
 private:
@@ -89,7 +92,7 @@ private:
 
 const world_exe::data::FireControl //
 world_exe::v1::fire_control::TracingFireControl::CalculateTarget(
-    const std::chrono::seconds& time_duration) const {
+    const std::chrono::nanoseconds& time_duration) const {
     return pimpl_->CalculateTarget(time_duration);
 }
 

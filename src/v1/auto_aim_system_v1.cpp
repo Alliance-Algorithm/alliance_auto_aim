@@ -35,7 +35,7 @@ using namespace std::chrono;
 
 class world_exe::v1::SystemV1::Impl{
 public:
-    Impl(const bool& debug) : debug(debug) {
+   explicit Impl(const bool& debug) : debug(debug) {
         time_point_     = std::chrono::steady_clock::now();
         predictor       = std::make_shared<predictor::PredictorManager>(); 
         sync            = std::make_shared<world_exe::v1::Syncer>(seconds(2),6e-6);

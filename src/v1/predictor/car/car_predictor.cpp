@@ -15,10 +15,11 @@ public:
 
     const enumeration::ArmorIdFlag& GetId() const { return id_; }
 
-    std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(const data::TimeStamp& time_stamp) {
+    std::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
+        const data::TimeStamp& time_stamp) {
         auto ptr = std::make_shared<PredictArmorInGimbalControl>();
-        ptr->SetWithSingleId(ekf_.get_predict_output_armor(
-                                 id_, (time_stamp - create_time_stamp_).to_seconds()),
+        ptr->SetWithSingleId(
+            ekf_.get_predict_output_armor(id_, (time_stamp - create_time_stamp_).to_seconds()),
             time_stamp);
         return ptr;
     }
@@ -27,9 +28,9 @@ public:
 
     inline void SetEkf(const CarPredictEkf& ekf) { ekf_ = ekf; }
 
-    inline void SetTimeStamp(const data::TimeStamp& time_stamp) {
-        create_time_stamp_ = time_stamp;
-    }
+    inline void SetTimeStamp(const data::TimeStamp& time_stamp) { create_time_stamp_ = time_stamp; }
+
+    data ::TimeStamp GetTimeStamp() const { return create_time_stamp_; }
 
 private:
     enumeration::CarIDFlag id_;
@@ -39,7 +40,7 @@ private:
 
 CarPredictor::CarPredictor()
     : pimpl_(std::make_unique<Impl>(
-          enumeration::CarIDFlag::None, CarPredictEkf {}, data::TimeStamp {})) { }
+          enumeration::CarIDFlag::None, CarPredictEkf { }, data::TimeStamp { })) { }
 
 CarPredictor::CarPredictor(const enumeration::CarIDFlag& id, const CarPredictEkf& ekf,
     const data::TimeStamp& create_time_stamp)
@@ -61,4 +62,7 @@ void CarPredictor::SetEkf(const CarPredictEkf& ekf) { return pimpl_->SetEkf(ekf)
 void CarPredictor::SetTimeStamp(const data::TimeStamp& time_stamp) {
     return pimpl_->SetTimeStamp(time_stamp);
 };
+
+data ::TimeStamp CarPredictor::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }
+
 }

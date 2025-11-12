@@ -34,9 +34,9 @@ public:
     explicit EKFModel(const enumeration::CarIDFlag& car_id)
         : car_id_(car_id) {
 
-        bool is_balance = (car_id == enumeration::CarIDFlag::InfantryIII
-            || car_id == enumeration::CarIDFlag::InfantryIV
-            || car_id == enumeration::CarIDFlag::InfantryV);
+        // bool is_balance = (car_id == enumeration::CarIDFlag::InfantryIII
+        //     || car_id == enumeration::CarIDFlag::InfantryIV
+        //     || car_id == enumeration::CarIDFlag::InfantryV);
 
         P0_dig_.resize(11);
         if (car_id == enumeration::CarIDFlag::Outpost) {
@@ -55,10 +55,7 @@ public:
             radius_ = 0.2;
         }
 
-        if (is_balance) {
-            armor_num_ = 2;
-        } else if (car_id == enumeration::CarIDFlag::Outpost
-            | car_id == enumeration::CarIDFlag::Base) {
+        if (car_id == enumeration::CarIDFlag::Outpost | car_id == enumeration::CarIDFlag::Base) {
             armor_num_ = 3;
         } else {
             armor_num_ = 4;

@@ -23,6 +23,10 @@ public:
     inline TimeStamp operator+ (const TimeStamp& other) const noexcept {return TimeStamp{stamp_ + other.stamp_};}
     inline TimeStamp operator* (const double&    ratio) const noexcept {return from_nanosec(stamp_.count() * ratio);}
     inline TimeStamp operator/ (const double&    ratio) const noexcept {return from_nanosec(stamp_.count() / ratio);}
+
+    inline operator std::chrono::steady_clock::time_point() const {
+    return std::chrono::steady_clock::time_point{stamp_}; 
+}
     
     template<typename T>
     static inline TimeStamp from_seconds(const T time){return TimeStamp{std::chrono::seconds(static_cast<long int>(time))};}

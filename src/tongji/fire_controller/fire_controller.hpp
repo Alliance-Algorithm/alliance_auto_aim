@@ -17,10 +17,12 @@ public:
     ~FireController();
 
     const data ::FireControl CalculateTarget(
-        const std::chrono::seconds& time_duration) const override;
+        const std::chrono::nanoseconds& time_duration) const override;
     const enumeration ::CarIDFlag GetAttackCarId() const override;
 
     void UpdateGimbalPosition(const double& gimbal_yaw);
+
+    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl>;
 
     FireController(const FireController&)                = delete;
     FireController& operator=(const FireController&)     = delete;

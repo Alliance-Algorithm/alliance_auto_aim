@@ -57,6 +57,7 @@ public:
     std ::shared_ptr<interfaces::IArmorInGimbalControl> Predictor(
         const data ::TimeStamp& time_stamp) const override {
         const auto ekf_x = this->GetPredictedX((time_stamp - time_stamp_).to_seconds());
+
         std::vector<data::ArmorGimbalControlSpacing> armors;
         for (int id = 0; id < model_.GetArmorNum(); id++) {
             auto angle = util::math::clamp_pm_pi(ekf_x[6] + id * 2 * CV_PI / model_.GetArmorNum());
@@ -75,7 +76,7 @@ public:
     auto GetModel() const -> PredictorModel { return model_; }
     auto GetEkf() const -> EKF { return ekf_.value(); }
 
-    data::TimeStamp LastSeen() const { return time_stamp_; }
+    data::TimeStamp GetTimeStamp() const override { return time_stamp_; }
 
     auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> {
         const auto [x_n, P_n] = ekf_->PredictOnce(dt);
@@ -89,7 +90,6 @@ public:
 
     void Update(data::TimeStamp const& time_stamp, const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal) {
-
         // 装甲板匹配
         int id = model_.MatchArmor(
             ekf_->x, armor_xyz_in_gimbal, armor_ypr_in_gimbal, armor_ypd_in_gimbal);

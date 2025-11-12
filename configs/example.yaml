@@ -27,18 +27,19 @@ second_tolerance: 100 # 远距离射击容差，degree
 judge_distance: 2 #距离判断阈值
 
 #####-----fire_controller parameters-----#####
-control_delay_s: 0.1
+# control_delay_s: 0.1
+control_delay_s: 0.0
 
 #####-----aiming_solver parameters-----#####
 yaw_offset: 1.5 # degree
 pitch_offset: -0.5 # degree
-bullet_speed: 26
+bullet_speed: 20
 
 #####-----aime_point_chooser parameters-----#####
 comming_angle: 60 # degree
 leaving_angle: 20 # degree
 
 #####-----solver parameters-----#####
-R_muzzle2camera:
-t_muzzle2camera:
+# R_muzzle2camera:
+# t_muzzle2camera:
 

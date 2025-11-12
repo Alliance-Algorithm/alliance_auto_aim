@@ -31,7 +31,7 @@ public:
                     std::atan(tmp_armor.position.y() / tmp_armor.position.x()),
                     -std::atan(tmp_armor.position.z() / tmp_armor.position.x()),
                     tmp_armor.position.norm();
-                predictors_[i].Update(input, {}, dt.to_seconds());
+                predictors_[i].Update(input, { }, dt.to_seconds());
             } else if (armors.size() == 2) {
                 // 当同时识别到两块装甲板时，优先更新近的那块，再更新远的
                 const auto armor0_yaw = util::math::get_yaw_from_quaternion(armors[0].orientation);
@@ -47,27 +47,27 @@ public:
                         std::atan(tmp_armor0.position.y() / tmp_armor0.position.x()),
                         -std::atan(tmp_armor0.position.z() / tmp_armor0.position.x()),
                         tmp_armor0.position.norm();
-                    predictors_[i].Update(input, {}, dt.to_seconds());
+                    predictors_[i].Update(input, { }, dt.to_seconds());
                     // 同时识别到一辆车的两块装甲板时要调这个函数
                     predictors_[i].set_second_armor();
                     input << util::math::get_yaw_from_quaternion(tmp_armor1.orientation),
                         std::atan(tmp_armor1.position.y() / tmp_armor1.position.x()),
                         -std::atan(tmp_armor1.position.z() / tmp_armor1.position.x()),
                         tmp_armor1.position.norm();
-                    predictors_[i].Update(input, {}, 0.);
+                    predictors_[i].Update(input, { }, 0.);
                 } else {
                     input << util::math::get_yaw_from_quaternion(tmp_armor1.orientation),
                         std::atan(tmp_armor1.position.y() / tmp_armor1.position.x()),
                         -std::atan(tmp_armor1.position.z() / tmp_armor1.position.x()),
                         tmp_armor1.position.norm();
-                    predictors_[i].Update(input, {}, dt.to_seconds());
+                    predictors_[i].Update(input, { }, dt.to_seconds());
                     // 同时识别到一辆车的两块装甲板时要调这个函数
                     predictors_[i].set_second_armor();
                     input << util::math::get_yaw_from_quaternion(tmp_armor0.orientation),
                         std::atan(tmp_armor0.position.y() / tmp_armor0.position.x()),
                         -std::atan(tmp_armor0.position.z() / tmp_armor0.position.x()),
                         tmp_armor0.position.norm();
-                    predictors_[i].Update(input, {}, 0.);
+                    predictors_[i].Update(input, { }, 0.);
                 }
             }
         }
@@ -99,7 +99,7 @@ public:
     }
 
 private:
-    data::TimeStamp last_update_time_stamp_ {};
+    data::TimeStamp last_update_time_stamp_ { };
     std::array<CarPredictEkf, 8> predictors_;
 
     Eigen::Affine3d transform_from_camera_to_gimbal_;
@@ -116,7 +116,7 @@ std::shared_ptr<interfaces::IArmorInGimbalControl> PredictorManager::Predict(
     return pimpl_->Predict(id, time_stamp);
 };
 
-void PredictorManager::Update(std::shared_ptr<data::PredictorUpdatePackage> data) {
+void PredictorManager::Update(std::shared_ptr<data::PredictorUpdatePackage>data) {
     return pimpl_->Update(data);
 };
 

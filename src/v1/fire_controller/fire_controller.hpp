@@ -8,7 +8,8 @@
 namespace world_exe::v1::fire_control {
 class TracingFireControl final : public interfaces::IFireControl {
 public:
-    const data::FireControl CalculateTarget(const std::chrono::seconds& time_duration) const override;
+    const data::FireControl CalculateTarget(
+        const std::chrono::nanoseconds& time_duration) const override;
     const enumeration::CarIDFlag GetAttackCarId() const override;
     void set_armor(const std::shared_ptr<interfaces::IArmorInGimbalControl>& armors);
     void SetPredictor(const std::shared_ptr<interfaces::IPredictor>& predictor);
