@@ -42,7 +42,6 @@ public:
             // 选择在可射击范围内的装甲板
             std::vector<int> id_list;
             for (const auto& [id, delta_angle] : delta_angle_list) {
-                // std::println("id:{},delta_angle: {}", id, delta_angle / std::numbers::pi * 180);
                 if (std::abs(delta_angle) > (60 / 57.3)) continue;
                 id_list.emplace_back(id);
             }

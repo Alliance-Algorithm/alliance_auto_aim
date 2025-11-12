@@ -14,8 +14,6 @@
 
 #include "../predictor/car_predictor/car_predictor.hpp"
 #include "aim_point_chooser.hpp"
-#include "interfaces/armor_in_gimbal_control.hpp"
-#include "tongji/predictor/in_gimbal_control_armor.hpp"
 #include "tongji/predictor/kalman_filter/extended_kalman_filter.hpp"
 #include "tongji/predictor/kalman_filter/predict_model.hpp"
 #include "trajectory.hpp"
@@ -26,7 +24,7 @@ struct AimSolution {
     bool valid;
     double yaw;
     double pitch;
-    Eigen::Vector3d aim_point;   // 最终瞄准点（世界坐标 + 装甲板yaw）
+    Eigen::Vector3d aim_point;
     double horizon_distance = 0; // 无人机专有
 };
 
@@ -65,13 +63,12 @@ public:
             const auto& armors =
                 snapshot->Predictor(snapshot->GetTimeStamp() + data::TimeStamp::from_seconds(dt));
 
-            const auto& armors_to_view = armors->GetArmors(snapshot->GetId());
+            // const auto& armors_to_view = armors->GetArmors(snapshot->GetId());
+            // armors_to_view_ = std::make_shared<predictor::InGimbalControlArmor>(
+            //     armors_to_view, snapshot->GetTimeStamp() + data::TimeStamp::from_seconds(dt));
 
-            armors_to_view_ = std::make_shared<predictor::InGimbalControlArmor>(
-                armors_to_view, snapshot->GetTimeStamp() + data::TimeStamp::from_seconds(dt));
-
-            const auto& aim_point = SelectPredictedAim(
-                snapshot_derived->GetPredictedX(dt), armors_to_view, snapshot->GetId());
+            const auto& aim_point = SelectPredictedAim(snapshot_derived->GetPredictedX(dt),
+                armors->GetArmors(snapshot->GetId()), snapshot->GetId());
 
             if (!aim_point.has_value()) {
                 continue;
@@ -101,30 +98,24 @@ public:
             std::println("trajectory converged");
         }
 
-        const auto xyz   = final_aim_point;
-        const double yaw = std::atan2(xyz.y(), xyz.x()) + yaw_offset_;
-        // const double pitch = -(final_trajectory.pitch + pitch_offset_);
+        const auto xyz     = final_aim_point;
+        const double yaw   = std::atan2(xyz.y(), xyz.x()) + yaw_offset_;
         const double pitch = (final_trajectory.pitch + pitch_offset_);
 
         return { true, yaw, pitch, final_aim_point };
     }
 
-    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-        return armors_to_view_;
-    }
+    // auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
+    //     return armors_to_view_;
+    // }
 
 private:
     std::optional<Eigen::Vector3d> SelectPredictedAim(const EKF::XVec& ekf_x,
         const std::vector<data::ArmorGimbalControlSpacing>& armors, const CarIDFlag& id) const {
-
-        // TODO:maybe there is a bug!
         const auto& [selectable, aim_point_in_gimbal] =
             aim_point_chooser_->ChooseAimArmor(ekf_x, armors, id);
-        // std::println("ekf_x:({},{},{})", ekf_x(0), ekf_x(2), ekf_x(4));
 
         if (!selectable) return std::nullopt;
-        // std::println("aim_point_in_gimbal:({},{},{})", aim_point_in_gimbal.position.x(),
-        //     aim_point_in_gimbal.position.y(), aim_point_in_gimbal.position.z());
         return aim_point_in_gimbal.position;
     }
 
@@ -143,7 +134,7 @@ private:
     double yaw_offset_, pitch_offset_;
     double bullet_speed_;
     const double g_;
-    std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
+    // std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
 
     std::unique_ptr<AimPointChooser> aim_point_chooser_;
 };

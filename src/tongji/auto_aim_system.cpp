@@ -108,11 +108,9 @@ public:
 
         const auto target_id = state_machine_->GetAllowdToFires();
 
+        // TODO:读编码器还是旋转矩阵？
         const auto gimbal_yaw = R_camera2gimbal.eulerAngles(2, 1, 0)[0];
-        // std::cout << R_camera2gimbal.eulerAngles(2, 1, 0) << std::endl;
 
-        // std::cout << "gimbal_yaw: " << gimbal_yaw << std::endl;
-        // const auto gimbal_yaw = 0.;
         time_stamp_ = pack.camera_capture_begin_time_stamp;
         fire_controller_->UpdateGimbalPosition(gimbal_yaw);
 
@@ -165,10 +163,6 @@ public:
 
     data::FireControl GetControlCommand() {
         fire_controller_->GetAttackCarId();
-        // std::println("time_stamp_ns{},time_stamp_s{}",
-        //     std::chrono::duration_cast<nanoseconds>(std::chrono::steady_clock::now() -
-        //     time_stamp_), std::chrono::duration_cast<seconds>(std::chrono::steady_clock::now() -
-        //     time_stamp_));
         return fire_controller_->CalculateTarget(std::chrono::duration_cast<nanoseconds>(
             std::chrono::steady_clock::now() - time_stamp_));
     }
