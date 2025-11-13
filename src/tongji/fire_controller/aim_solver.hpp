@@ -47,7 +47,7 @@ public:
     AimSolution SolveAimSolution(std::shared_ptr<interfaces::IPredictor> const& snapshot,
         data::TimeStamp const& time_stamp, std::chrono::milliseconds control_delay) {
 
-        // time_stamp.to_seconds(),control_delay); 迭代求解飞行时间
+        // 迭代求解飞行时间
         // (最多10次，收敛条件：相邻两次fly_time差 <0.001)
         double prev_fly_time_s = 0;
         Eigen::Vector3d final_aim_point;
@@ -65,12 +65,12 @@ public:
             const auto& armors =
                 snapshot->Predictor(time_stamp + data::TimeStamp::from_seconds(dt));
 
-            const auto& armors_to_view = armors->GetArmors(snapshot->GetId());
-            armors_to_view_            = std::make_shared<predictor::InGimbalControlArmor>(
-                armors_to_view, time_stamp + data::TimeStamp::from_seconds(dt));
+            // const auto& armors_to_view = armors->GetArmors(snapshot->GetId());
+            // armors_to_view_            = std::make_shared<predictor::InGimbalControlArmor>(
+            //     armors_to_view, time_stamp + data::TimeStamp::from_seconds(dt));
 
             const auto& aim_point = SelectPredictedAim(
-                snapshot_derived->GetPredictedX(dt), armors_to_view, snapshot->GetId());
+                snapshot_derived->GetPredictedX(time_stamp), armors->GetArmors(snapshot->GetId()), snapshot->GetId());
 
             if (!aim_point.has_value()) {
                 std::println("no valid aim point");
@@ -108,9 +108,9 @@ public:
         return { true, yaw, pitch, final_aim_point };
     }
 
-    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-        return armors_to_view_;
-    }
+    // auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
+    //     return armors_to_view_;
+    // }
 
 private:
     std::optional<Eigen::Vector3d> SelectPredictedAim(const EKF::XVec& ekf_x,
@@ -137,7 +137,7 @@ private:
     double yaw_offset_, pitch_offset_;
     double bullet_speed_;
     const double g_;
-    std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
+    // std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
 
     std::unique_ptr<AimPointChooser> aim_point_chooser_;
 };

@@ -116,9 +116,9 @@ public:
         core::EventBus::Publish<data::FireControl>(
             parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
 
-        core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
-            world_exe::parameters::ParamsForSystemV1::get_lastest_predictor_event,
-            fire_controller_->GetArmorsToView());
+        // core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
+        //     world_exe::parameters::ParamsForSystemV1::get_lastest_predictor_event,
+        //     fire_controller_->GetArmorsToView());
 
         if (!debug) [[likely]]
             return;
