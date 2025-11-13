@@ -8,8 +8,6 @@
 namespace world_exe::v1::predictor {
 class CarPredictor final : public interfaces::IPredictor {
 public:
-    data ::TimeStamp GetTimeStamp() const override;
-
     CarPredictor();
     ~CarPredictor();
     CarPredictor(const enumeration::CarIDFlag& id, const CarPredictEkf& ekf,

@@ -26,10 +26,6 @@ first_tolerance: 100 # 近距离射击容差，degree
 second_tolerance: 100 # 远距离射击容差，degree
 judge_distance: 2 #距离判断阈值
 
-#####-----fire_controller parameters-----#####
-# control_delay_s: 0.1
-control_delay_s: 0.0
-
 #####-----aiming_solver parameters-----#####
 yaw_offset: 1.5 # degree
 pitch_offset: -0.5 # degree

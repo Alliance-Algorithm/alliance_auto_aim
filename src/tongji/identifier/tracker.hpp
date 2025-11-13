@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <ctime>
 
 #include <memory>
@@ -7,6 +8,7 @@
 #include <vector>
 
 #include "armor_filter.hpp"
+#include "data/time_stamped.hpp"
 #include "decider.hpp"
 #include "enum/armor_id.hpp"
 #include "identified_armor.hpp"
@@ -27,16 +29,18 @@ class Tracker final {
 public:
     Tracker()
         : armor_filter_(std::make_unique<identifier::ArmorFilter>())
-        , decider_(std::make_unique<Decider>()) { }
+        , decider_(std::make_unique<Decider>())
+        , time_stamp_(data::TimeStamp()) { }
 
     ~Tracker() = default;
 
     auto SelectTrackingTargetID(const std::shared_ptr<interfaces::IArmorInImage>& armors_in_image,
-        const enumeration::CarIDFlag& invincible_armors,
-        const std::chrono::milliseconds& duration_from_last_update) noexcept
-        -> enumeration::ArmorIdFlag  {
+        const enumeration::CarIDFlag& invincible_armors, data::TimeStamp const& time_stamp) noexcept
+        -> enumeration::ArmorIdFlag {
 
-        CheckCameraOffline(duration_from_last_update);
+        CheckCameraOffline(time_stamp);
+        time_stamp_ = time_stamp;
+
         armor_filter_->Update(invincible_armors);
 
         auto filtered_ids = enumeration::ArmorIdFlag::None;
@@ -131,9 +135,11 @@ private:
         }
     }
 
-    void CheckCameraOffline(const std::chrono::milliseconds duration_from_last_update) {
+    void CheckCameraOffline(data::TimeStamp const& time_stamp) {
         // if (state_ != TrackState::Lost && (duration_from_last_update > timeout_sec_);
-        if ((duration_from_last_update > timeout_)) {
+        auto duration_from_last_update = time_stamp - time_stamp_;
+        if ((duration_from_last_update.to_nanosec()
+                > (double)std::chrono::duration_cast<std::chrono::nanoseconds>(timeout_).count())) {
             SetState(TrackState::Lost);
             // std::cout << "I am lost QAQ" << std::endl;
         }
@@ -149,6 +155,8 @@ private:
     world_exe::enumeration::CarIDFlag tracking_car_id_ { enumeration::CarIDFlag::None };
     TrackState state_     = TrackState::Lost;
     TrackState pre_state_ = TrackState::Lost;
+
+    data::TimeStamp time_stamp_;
 
     std::unique_ptr<identifier::ArmorFilter> armor_filter_;
     std::unique_ptr<Decider> decider_;

@@ -53,7 +53,7 @@ public:
         if (it == targets_map_.end()) return nullptr;
         const auto& [id, predictor] = *it;
         return std::make_shared<CarPredictor>(
-            predictor->GetEkf(), predictor->GetModel(), predictor->GetTimeStamp());
+            predictor->GetEkf(), predictor->GetModel(), data::TimeStamp { last_update_timestamp_ });
     }
 
     void Update(std::shared_ptr<data::PredictorUpdatePackage> const& data) {

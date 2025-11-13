@@ -14,6 +14,7 @@
 
 #include "../predictor/car_predictor/car_predictor.hpp"
 #include "aim_point_chooser.hpp"
+#include "data/time_stamped.hpp"
 #include "tongji/predictor/kalman_filter/extended_kalman_filter.hpp"
 #include "tongji/predictor/kalman_filter/predict_model.hpp"
 #include "trajectory.hpp"
@@ -44,10 +45,11 @@ public:
     }
 
     AimSolution SolveAimSolution(std::shared_ptr<interfaces::IPredictor> const& snapshot,
-        std::chrono::milliseconds control_delay) {
+        data::TimeStamp const& time_stamp, std::chrono::milliseconds control_delay) {
 
-        // 迭代求解飞行时间 (最多10次，收敛条件：相邻两次fly_time差 <0.001)
-        double prev_fly_time_s;
+        // time_stamp.to_seconds(),control_delay); 迭代求解飞行时间
+        // (最多10次，收敛条件：相邻两次fly_time差 <0.001)
+        double prev_fly_time_s = 0;
         Eigen::Vector3d final_aim_point;
         TrajectoryResult final_trajectory;
         bool converged = false;
@@ -61,25 +63,25 @@ public:
         for (int i = 0; i < 10; ++i) {
             const auto& dt = prev_fly_time_s + (double)(control_delay).count() / 1000.;
             const auto& armors =
-                snapshot->Predictor(snapshot->GetTimeStamp() + data::TimeStamp::from_seconds(dt));
+                snapshot->Predictor(time_stamp + data::TimeStamp::from_seconds(dt));
 
-            // const auto& armors_to_view = armors->GetArmors(snapshot->GetId());
-            // armors_to_view_ = std::make_shared<predictor::InGimbalControlArmor>(
-            //     armors_to_view, snapshot->GetTimeStamp() + data::TimeStamp::from_seconds(dt));
+            const auto& armors_to_view = armors->GetArmors(snapshot->GetId());
+            armors_to_view_            = std::make_shared<predictor::InGimbalControlArmor>(
+                armors_to_view, time_stamp + data::TimeStamp::from_seconds(dt));
 
-            const auto& aim_point = SelectPredictedAim(snapshot_derived->GetPredictedX(dt),
-                armors->GetArmors(snapshot->GetId()), snapshot->GetId());
+            const auto& aim_point = SelectPredictedAim(
+                snapshot_derived->GetPredictedX(dt), armors_to_view, snapshot->GetId());
 
             if (!aim_point.has_value()) {
-                continue;
                 std::println("no valid aim point");
+                continue;
 
             } // failed: no valid aim point
 
             const auto traj = SolveTrajectory(aim_point.value(), bullet_speed_);
             if (!traj.has_value()) {
-                continue;
                 std::println("trajectory unsolvable");
+                continue;
             }
 
             if (i > 0 && std::abs(traj->fly_time - prev_fly_time_s) < 0.001) {
@@ -90,12 +92,13 @@ public:
             }
             prev_fly_time_s = traj->fly_time;
         }
+
         if (!converged) {
+            std::println("trajectory diverse");
+
             return { false, std::numeric_limits<double>::quiet_NaN(),
                 std::numeric_limits<double>::quiet_NaN(), { },
                 0 }; // failed: trajectory did not converge
-        } else {
-            std::println("trajectory converged");
         }
 
         const auto xyz     = final_aim_point;
@@ -105,9 +108,9 @@ public:
         return { true, yaw, pitch, final_aim_point };
     }
 
-    // auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-    //     return armors_to_view_;
-    // }
+    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
+        return armors_to_view_;
+    }
 
 private:
     std::optional<Eigen::Vector3d> SelectPredictedAim(const EKF::XVec& ekf_x,
@@ -134,7 +137,7 @@ private:
     double yaw_offset_, pitch_offset_;
     double bullet_speed_;
     const double g_;
-    // std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
+    std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
 
     std::unique_ptr<AimPointChooser> aim_point_chooser_;
 };

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <memory>
 
 #include "interfaces/car_state.hpp"
@@ -16,9 +15,8 @@ public:
         std::shared_ptr<interfaces::ITargetPredictor> const& live_target_manager);
     ~FireController();
 
-    const data ::FireControl CalculateTarget(
-        const std::chrono::nanoseconds& time_duration) const override;
-    const enumeration ::CarIDFlag GetAttackCarId() const override;
+    data ::FireControl CalculateTarget(data::TimeStamp const& time_stamp) const override;
+    enumeration ::CarIDFlag GetAttackCarId() const override;
 
     void UpdateGimbalPosition(const double& gimbal_yaw);
 

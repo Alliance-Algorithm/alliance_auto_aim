@@ -5,7 +5,6 @@
 #include <cstdio>
 #include <exception>
 #include <filesystem>
-#include <iostream>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
@@ -27,7 +26,7 @@
 #include "tongji/solver/solver.hpp"
 #include "tongji/state_machine/state_machine.hpp"
 #include "utils/fps_counter.hpp"
-#include "utils/visualization.hpp"
+// #include "utils/visualization.hpp"
 #include "v1/identifier/identifier.hpp"
 
 namespace world_exe::tongji {
@@ -53,8 +52,7 @@ public:
         state_machine_       = std::make_shared<state_machine::StateMachine>();
         fire_controller_     = std::make_unique<fire_control::FireController>(
             config_path_, state_machine_, live_target_manager_);
-        time_stamp_ = std::chrono::steady_clock::now();
-        syncer_     = std::make_unique<world_exe::v1::Syncer>(seconds(2), 6e-6);
+        syncer_ = std::make_unique<world_exe::v1::Syncer>(seconds(2), 6e-6);
 
         core::EventBus::Subscript<world_exe::data::MatStamped>(
             parameters::ParamsForSystemV1::raw_image_event,
@@ -83,9 +81,7 @@ public:
         }
 
         // TODO:update invincible_armors
-        state_machine_->Update(armors_in_image, enumeration::CarIDFlag::None,
-            std::chrono::duration_cast<milliseconds>(
-                std::chrono::steady_clock::now() - time_stamp_));
+        state_machine_->Update(armors_in_image, enumeration::CarIDFlag::None, time_stamp_);
 
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         auto [pack, check] = syncer_->get_data(raw.stamp);
@@ -161,17 +157,18 @@ public:
 
     void SetTransfroms(const data::CameraGimbalMuzzleSyncData& data) { syncer_->set_data(data); }
 
+    // TODO:时间戳有待fix
     data::FireControl GetControlCommand() {
         fire_controller_->GetAttackCarId();
-        return fire_controller_->CalculateTarget(std::chrono::duration_cast<nanoseconds>(
-            std::chrono::steady_clock::now() - time_stamp_));
+        return fire_controller_->CalculateTarget(
+            data::TimeStamp(steady_clock::now().time_since_epoch()));
     }
 
 private:
     bool debug;
     const std::string config_path_;
     world_exe::util::FpsCounter fps_;
-    std::chrono::steady_clock::time_point time_stamp_;
+    data::TimeStamp time_stamp_;
     std::unique_ptr<world_exe::v1::identifier::Identifier> identifier_;
     std::unique_ptr<solver::Solver> pnp_solver_;
     std::shared_ptr<state_machine::StateMachine> state_machine_;

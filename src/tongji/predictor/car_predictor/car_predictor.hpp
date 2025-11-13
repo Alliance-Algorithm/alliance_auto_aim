@@ -69,14 +69,12 @@ public:
             armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
             armors.emplace_back(std::move(armor));
         }
-        return std::make_shared<InGimbalControlArmor>(armors, time_stamp_);
+        return std::make_shared<InGimbalControlArmor>(armors, time_stamp);
     }
 
     EKF::XVec GetEkfX() const { return ekf_->x; }
     auto GetModel() const -> PredictorModel { return model_; }
     auto GetEkf() const -> EKF { return ekf_.value(); }
-
-    data::TimeStamp GetTimeStamp() const override { return time_stamp_; }
 
     auto GetPredictedXYZAList(const double& dt) -> std::vector<Eigen::Vector4d> {
         const auto [x_n, P_n] = ekf_->PredictOnce(dt);

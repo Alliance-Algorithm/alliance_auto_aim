@@ -63,6 +63,4 @@ void CarPredictor::SetTimeStamp(const data::TimeStamp& time_stamp) {
     return pimpl_->SetTimeStamp(time_stamp);
 };
 
-data ::TimeStamp CarPredictor::GetTimeStamp() const { return pimpl_->GetTimeStamp(); }
-
 }

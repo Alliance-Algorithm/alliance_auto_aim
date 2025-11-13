@@ -32,37 +32,29 @@ public:
         , aiming_solver_(std::make_unique<AimingSolver>(config_path))
         , fire_decision_(std::make_unique<FireDecision>(config_path))
         , state_machine_(std::move(state_machine))
-        , live_target_manager_(std::move(live_target_manager)) {
+        , live_target_manager_(std::move(live_target_manager))
+        , control_delay_(100) { }
 
-        auto yaml      = YAML::LoadFile(config_path);
-        control_delay_ = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::duration<double>(yaml["control_delay_s"].as<double>()));
-    }
-
-    data ::FireControl CalculateTarget(
-        const std::chrono::nanoseconds& time_from_tracker_timepoint) const {
+    data ::FireControl CalculateTarget(data::TimeStamp const& time_stamp) const {
         if (!fire_decision_ || !state_machine_ || !live_target_manager_)
             return { .fire_allowance = false };
 
-        const auto& lockable_target  = state_machine_->GetAllowdToFires();
+        const auto& lockable_target = state_machine_->GetAllowdToFires();
+
         const auto& snapshot_manager = live_target_manager_->GetPredictor(lockable_target);
 
         if (!snapshot_manager)
-            // TODO:这里的时间戳不太对吧
-            return data::FireControl { .time_stamp =
-                                           data::TimeStamp { time_from_tracker_timepoint },
+            return data::FireControl { .time_stamp = data::TimeStamp { time_stamp },
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false };
         // TODO:这里不应该指针转换
         const auto& aim_solution =
-            aiming_solver_->SolveAimSolution(snapshot_manager, control_delay_);
-        // armors_to_view_ = aiming_solver_->GetArmorsToView();
+            aiming_solver_->SolveAimSolution(snapshot_manager, time_stamp, control_delay_);
+        armors_to_view_ = aiming_solver_->GetArmorsToView();
 
         if (!aim_solution.valid) {
             std::println("aim solution invalid ,solver failed");
-            return data::FireControl { .time_stamp =
-                                           data::TimeStamp { snapshot_manager->GetTimeStamp()
-                                               + time_from_tracker_timepoint },
+            return data::FireControl { .time_stamp = time_stamp,
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false };
         }
@@ -75,13 +67,13 @@ public:
         firable_          = fire_command;
 
         data::FireControl result;
-        result.fire_allowance = fire_command;
-        // result.fire_allowance = true;
+        // result.fire_allowance = fire_command;
+        result.fire_allowance = true;
 
         // result.gimbal_dir << gimbal_command.yaw, gimbal_command.pitch, 0;
         result.gimbal_dir << cos(gimbal_command.yaw) * cos(gimbal_command.pitch),
             sin(gimbal_command.yaw) * cos(gimbal_command.pitch), sin(gimbal_command.pitch);
-        result.time_stamp = data::TimeStamp { time_from_tracker_timepoint };
+        result.time_stamp = time_stamp;
         return result;
     }
 
@@ -92,9 +84,9 @@ public:
 
     void UpdateGimbalPosition(const double& gimbal_yaw) { gimbal_yaw_ = gimbal_yaw; };
 
-    // auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-    //     return armors_to_view_;
-    // }
+    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
+        return armors_to_view_;
+    }
 
 private:
     std::chrono::milliseconds control_delay_;
@@ -109,7 +101,7 @@ private:
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
 
-    // mutable std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
+    mutable std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
 };
 
 FireController::FireController(const std::string& config_path,
@@ -118,18 +110,17 @@ FireController::FireController(const std::string& config_path,
     : pimpl_(std::make_unique<Impl>(config_path, state_machine, live_target_manager)) { }
 FireController::~FireController() = default;
 
-const data ::FireControl FireController::CalculateTarget(
-    const std::chrono::nanoseconds& time_duration) const {
-    return pimpl_->CalculateTarget(time_duration);
+data ::FireControl FireController::CalculateTarget(data::TimeStamp const& time_stamp) const {
+    return pimpl_->CalculateTarget(time_stamp);
 }
-const CarIDFlag FireController::GetAttackCarId() const { return pimpl_->GetAttackCarId(); }
+CarIDFlag FireController::GetAttackCarId() const { return pimpl_->GetAttackCarId(); }
 
 void FireController::UpdateGimbalPosition(const double& gimbal_yaw) {
     return pimpl_->UpdateGimbalPosition(gimbal_yaw);
 };
 
-// auto FireController::GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-//     return pimpl_->GetArmorsToView();
-// }
+auto FireController::GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
+    return pimpl_->GetArmorsToView();
+}
 
 }

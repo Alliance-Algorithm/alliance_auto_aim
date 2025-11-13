@@ -15,7 +15,7 @@ public:
         : control_delay_((static_cast<time_t>(control_delay_in_second * 1e9)))
         , velocity_begin_(velocity_begin)
         , gravity_(gravity) { }
-    const enumeration::CarIDFlag GetAttackCarId() const {
+    enumeration::CarIDFlag GetAttackCarId() const {
         double max_dot = -2;
 
         enumeration::CarIDFlag ret = enumeration::ArmorIdFlag::None;
@@ -46,10 +46,9 @@ public:
         predictor_ = predictor;
     };
 
-    const world_exe::data::FireControl CalculateTarget(
-        const std::chrono::nanoseconds& time_duration) {
+    world_exe::data::FireControl CalculateTarget(data::TimeStamp const& time_stamp) {
         std::chrono::seconds fly_time { 0 };
-        const auto& pre1       = predictor_->Predictor(fly_time + time_duration + control_delay_);
+        const auto& pre1       = predictor_->Predictor(time_stamp + fly_time + control_delay_);
         const auto& pre2       = pre1->GetArmors(predictor_->GetId());
         double min_angular_dis = 1e9;
         int index = -1, index_ = 0;
@@ -67,15 +66,13 @@ public:
         if (index == -1) return no_allow_;
 
         for (int i = 5; i-- > 0;) {
-            const auto& armors_in_gimbal_control =
-                predictor_->Predictor(fly_time + time_duration + control_delay_);
+            const auto& armors_in_gimbal_control = predictor_->Predictor(fly_time + control_delay_);
             const auto& armors = armors_in_gimbal_control->GetArmors(predictor_->GetId());
             const auto& [fly_time, dir] =
                 trajectory_solver::gravity_only(armors[index].position, velocity_begin_, gravity_);
         }
 
-        return { .time_stamp = data::TimeStamp { std::chrono::nanoseconds(
-                     fly_time + time_duration + control_delay_) },
+        return { .time_stamp = data::TimeStamp { time_stamp + fly_time + control_delay_ },
             .fire_allowance  = true };
     }
 
@@ -90,13 +87,13 @@ private:
     std::shared_ptr<interfaces::IPredictor> predictor_;
 };
 
-const world_exe::data::FireControl //
+world_exe::data::FireControl //
 world_exe::v1::fire_control::TracingFireControl::CalculateTarget(
-    const std::chrono::nanoseconds& time_duration) const {
-    return pimpl_->CalculateTarget(time_duration);
+    data::TimeStamp const& time_stamp) const {
+    return pimpl_->CalculateTarget(time_stamp);
 }
 
-const world_exe::enumeration::CarIDFlag
+world_exe::enumeration::CarIDFlag
 world_exe::v1::fire_control::TracingFireControl::GetAttackCarId() const {
     return pimpl_->GetAttackCarId();
 }
