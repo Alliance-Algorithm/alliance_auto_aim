@@ -53,7 +53,7 @@ public:
         armors_to_view_ = aiming_solver_->GetArmorsToView();
 
         if (!aim_solution.valid) {
-            std::println("aim solution invalid ");
+            // std::println("aim solution invalid ");
             return data::FireControl { .time_stamp = time_stamp,
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false };

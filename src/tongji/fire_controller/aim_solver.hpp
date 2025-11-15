@@ -7,7 +7,6 @@
 #include <memory>
 #include <optional>
 
-#include <print>
 #include <stdexcept>
 #include <vector>
 #include <yaml-cpp/yaml.h>
@@ -80,7 +79,7 @@ public:
 
             const auto traj = SolveTrajectory(aim_point.value(), bullet_speed_);
             if (!traj.has_value()) {
-                std::println("trajectory unsolvable");
+                // std::println("trajectory unsolvable");
                 continue;
             }
 
@@ -127,7 +126,7 @@ private:
         auto result = TrajectorySolver::SolveTrajectory(bullet_speed, d, xyz.z(), g_);
 
         if (!result.solvable) {
-            std::println("solve trajectory failed: d={}, z={},speed={}", d, xyz.z(), bullet_speed);
+            // std::println("solve trajectory failed: d={}, z={},speed={}", d, xyz.z(), bullet_speed);
         }
 
         return result.solvable ? std::optional { result } : std::nullopt;

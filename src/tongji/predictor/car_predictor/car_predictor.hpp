@@ -138,7 +138,6 @@ private:
                 ekf_->x[7] = ekf_->x[7] > 0 ? max_outpost_w : -max_outpost_w;
             }
         }
-        std::println("r:{}", ekf_->x[8]);
     }
 
     data::TimeStamp time_stamp_;

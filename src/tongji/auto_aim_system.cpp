@@ -8,7 +8,7 @@
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
-#include <print>
+// #include <print>
 #include <tuple>
 
 #include "../v1/sync/syncer.hpp"
@@ -76,7 +76,7 @@ public:
 
         if (flag == enumeration::ArmorIdFlag::None) {
             state_machine_->SetLostState();
-            std::println("no armors identified");
+            // std::println("no armors identified");
             return;
         }
 
@@ -89,7 +89,7 @@ public:
             // TODO：等待传入真实数据
             //  pack.camera_capture_begin_time_stamp =
             //      data::TimeStamp(steady_clock::now().time_since_epoch());
-            std::println(" no sync data");
+            // std::println(" no sync data");
             return;
         }
 
