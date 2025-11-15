@@ -50,10 +50,10 @@ public:
         // TODO:这里不应该指针转换
         const auto& aim_solution =
             aiming_solver_->SolveAimSolution(snapshot_manager, time_stamp, control_delay_);
-        // armors_to_view_ = aiming_solver_->GetArmorsToView();
+        armors_to_view_ = aiming_solver_->GetArmorsToView();
 
         if (!aim_solution.valid) {
-            std::println("aim solution invalid ,solver failed");
+            std::println("aim solution invalid ");
             return data::FireControl { .time_stamp = time_stamp,
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false };
@@ -84,9 +84,9 @@ public:
 
     void UpdateGimbalPosition(const double& gimbal_yaw) { gimbal_yaw_ = gimbal_yaw; };
 
-    // auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-    //     return armors_to_view_;
-    // }
+    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
+        return armors_to_view_;
+    }
 
 private:
     std::chrono::milliseconds control_delay_;
@@ -101,7 +101,7 @@ private:
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
 
-    // mutable std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
+    mutable std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
 };
 
 FireController::FireController(const std::string& config_path,
@@ -119,8 +119,8 @@ void FireController::UpdateGimbalPosition(const double& gimbal_yaw) {
     return pimpl_->UpdateGimbalPosition(gimbal_yaw);
 };
 
-// auto FireController::GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-//     return pimpl_->GetArmorsToView();
-// }
+auto FireController::GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
+    return pimpl_->GetArmorsToView();
+}
 
 }

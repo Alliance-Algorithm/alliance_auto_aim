@@ -131,7 +131,7 @@ public:
         int best_id      = 0;
         double min_error = 1e10;
 
-        for (int i = 0; i < std::min(3, armor_num_); ++i) {
+        for (int i = 0; i < std::max(3, armor_num_); ++i) {
             const auto& xyza = xyza_i_list[i].first;
             auto ypd         = util::math::xyz2ypd(xyza.head(3));
             double error     = std::abs(util::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - xyza(3)))

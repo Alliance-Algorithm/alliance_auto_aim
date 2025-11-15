@@ -6,6 +6,7 @@
 #include <optional>
 
 #include <Eigen/Dense>
+#include <print>
 #include <utility>
 
 #include "../in_gimbal_control_armor.hpp"
@@ -101,7 +102,6 @@ public:
         auto rot  = abs(ekf_->x[7]) > 0.3f;
 
         if (r_ok && l_ok && rot) return false;
-        // util::logger::logger()->debug("[Target] r={:.3f}, l={:.3f}", ekf_->x[8], ekf_->x[9]);
         return true;
     }
     auto IsAppeared() -> bool {
@@ -138,6 +138,7 @@ private:
                 ekf_->x[7] = ekf_->x[7] > 0 ? max_outpost_w : -max_outpost_w;
             }
         }
+        std::println("r:{}", ekf_->x[8]);
     }
 
     data::TimeStamp time_stamp_;

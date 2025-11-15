@@ -85,9 +85,13 @@ public:
 
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         auto [pack, check] = syncer_->get_data(raw.stamp);
-        if (!check)
-            pack.camera_capture_begin_time_stamp =
-                data::TimeStamp(steady_clock::now().time_since_epoch());
+        if (!check) {
+            // TODO：等待传入真实数据
+            //  pack.camera_capture_begin_time_stamp =
+            //      data::TimeStamp(steady_clock::now().time_since_epoch());
+            std::println(" no sync data");
+            return;
+        }
 
         const auto R_camera2gimbal = pack.camera_to_gimbal.rotation();
         const auto t_camera2gimbal = pack.camera_to_gimbal.translation();
@@ -116,9 +120,9 @@ public:
         core::EventBus::Publish<data::FireControl>(
             parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
 
-        // core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
-        //     world_exe::parameters::ParamsForSystemV1::get_lastest_predictor_event,
-        //     fire_controller_->GetArmorsToView());
+        core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
+            world_exe::parameters::ParamsForSystemV1::get_lastest_predictor_event,
+            fire_controller_->GetArmorsToView());
 
         if (!debug) [[likely]]
             return;
@@ -159,7 +163,8 @@ public:
 
     // TODO:时间戳有待fix
     data::FireControl GetControlCommand() {
-        fire_controller_->GetAttackCarId();
+        auto attacked_id = fire_controller_->GetAttackCarId();
+
         return fire_controller_->CalculateTarget(
             data::TimeStamp(steady_clock::now().time_since_epoch()));
     }
@@ -175,7 +180,6 @@ private:
     std::shared_ptr<predictor::CarPredictorManager> live_target_manager_;
     std::unique_ptr<world_exe::v1::Syncer> syncer_;
     std::unique_ptr<fire_control::FireController> fire_controller_;
-    // std::unique_ptr<tests::mock::Camera2GimbalTransformer> mock_camera_tranform_;
 };
 
 AutoAimSystem::AutoAimSystem(const bool& debug)

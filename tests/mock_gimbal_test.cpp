@@ -2,10 +2,11 @@
 #include "mocks/MockArmorInCamera.hpp"
 #include "mocks/MockArmorInWorld.hpp"
 #include "mocks/mock_camera_tranform.hpp"
-#include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/Geometry/AngleAxis.h>
 
 #include <Eigen/src/Geometry/Quaternion.h>
+#include <cmath>
+#include <cstdio>
 #include <memory>
 #include <opencv2/highgui.hpp>
 
@@ -17,12 +18,15 @@
 int main() {
     using namespace world_exe::util::visualization;
 
-    Eigen::Vector3d V_input(1., 0., 0.);
-    double Omega_Yaw   = 0.1;
-    double Omega_Pitch = 0.05;
-    double Max_Pitch   = M_PI / 48.0;
-    auto transformer   = world_exe::tests::mock::Camera2GimbalTransformer(
-        V_input, Omega_Yaw, Omega_Pitch, Max_Pitch);
+    Eigen::Vector3d V_input(0., 1., 0.);
+    double Omega_Yaw   = 0.0;
+    double Omega_Pitch = 0.0;
+    double Omega_Roll  = 0.0;
+    double Max_Pitch   = M_PI / 6.0;
+    double Max_Roll    = M_PI / 12;
+
+    auto transformer = world_exe::tests::mock::Camera2GimbalTransformer(
+        V_input, Omega_Yaw, Omega_Pitch, Omega_Roll, Max_Pitch, Max_Roll);
 
     double dt = 0.01;
 

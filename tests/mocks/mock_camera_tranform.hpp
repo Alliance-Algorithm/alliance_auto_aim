@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <iostream>
+#include <utility>
 
 using namespace Eigen;
 using AffineTransform = Affine3d; // 仿射变换矩阵 (4x4)
@@ -19,18 +21,19 @@ private:
     // 当前时间
     double current_time;
 
-    // --- 输入参数 ---
-    // 1. 水平平移速度 (在世界坐标系下)
     const Vector3D V_horizontal;
-    // 2. 绕竖直轴 (Z轴) 的角速度 (在世界坐标系下)
+
     const double Omega_Yaw;
-    // 3. 绕 Pitch 轴的角速度 (在世界坐标系下)
+
     double Omega_Pitch;
-    // 4. 最大 Pitch 角度 (用于约束)
     const double Max_Pitch_Angle;
 
     // 用于追踪当前 Pitch 角度，以实现角度约束 (假设Pitch轴是Y轴)
     double current_pitch_angle;
+
+    double Omega_Roll;
+    const double Max_Roll_Angle;
+    double current_roll_angle;
 
 public:
     /**
@@ -40,16 +43,18 @@ public:
      * @param omega_pitch 绕 Pitch 轴角速度 (rad/s)
      * @param max_pitch_angle 绕 Pitch 轴的最大角度限制 (rad)
      */
-    Camera2GimbalTransformer(
-        const Vector3D& v_horiz, double omega_yaw, double omega_pitch, double max_pitch_angle)
-        : V_horizontal(v_horiz)
+    Camera2GimbalTransformer(Vector3D v_horiz, double omega_yaw, double omega_pitch,
+        double omega_roll, double max_pitch_angle, double max_roll_angle)
+        : V_horizontal(std::move(v_horiz))
         , Omega_Yaw(omega_yaw)
         , Omega_Pitch(omega_pitch)
+        , Omega_Roll(omega_roll)
         , Max_Pitch_Angle(std::abs(max_pitch_angle))
-        , // 确保最大角度是正值
-        T_current(AffineTransform::Identity())
+        , Max_Roll_Angle(std::abs(max_roll_angle))
+        , T_current(AffineTransform::Identity())
         , current_time(0.0)
-        , current_pitch_angle(0.0) { }
+        , current_pitch_angle(0.0)
+        , current_roll_angle(0.0) { }
 
     /**
      * @brief 按照给定的时间步长进行一次状态积分，并返回更新后的 Affine 变换
@@ -65,30 +70,29 @@ public:
         double delta_pitch      = Omega_Pitch * dt;
         double next_pitch_angle = current_pitch_angle + delta_pitch;
         if (next_pitch_angle > Max_Pitch_Angle || next_pitch_angle < -Max_Pitch_Angle) {
-
             Omega_Pitch = -Omega_Pitch;
             delta_pitch = Omega_Pitch * dt;
         }
-
         current_pitch_angle = current_pitch_angle + delta_pitch;
-
         AngleAxisd R_pitch(delta_pitch, Vector3D::UnitY());
 
-        // 2c. 组合旋转增量：R_total = R_yaw * R_pitch
-        // 假设 Pitch 和 Yaw 是在世界坐标系下连续作用的 (即增量也是在世界坐标系下)
-        // 结果是一个 AngleAxisd 或 Quaternion，需要转换为 Affine
-        AffineTransform T_rot_increment = AffineTransform(R_yaw * R_pitch);
+        double delta_roll = Omega_Roll * dt;
+        current_roll_angle += delta_roll;
+        if (current_roll_angle > Max_Roll_Angle || current_roll_angle < -Max_Roll_Angle) {
+            Omega_Roll = -Omega_Roll;
+            delta_roll = Omega_Roll * dt;
+        }
+        AngleAxisd R_roll(delta_roll, Vector3D::UnitX());
 
-        // --- 3. 组合总增量 T_delta ---
+        AffineTransform T_rot_increment = AffineTransform(R_yaw * R_pitch * R_roll);
 
         // T_delta = T_平移 * T_旋转
         AffineTransform T_delta = Translation3d(delta_t) * T_rot_increment;
 
-        // --- 4. 状态更新 ---
-
-        // T_new = T_delta * T_old (因为 T_delta 是相对于世界坐标系W的增量)
         T_current = T_delta * T_current;
         current_time += dt;
+
+        // std::cout << T_current.matrix() << std::endl;
 
         return T_current;
     }

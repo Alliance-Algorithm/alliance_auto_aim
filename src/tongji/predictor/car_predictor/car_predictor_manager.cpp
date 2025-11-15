@@ -57,34 +57,41 @@ public:
     }
 
     void Update(std::shared_ptr<data::PredictorUpdatePackage> const& data) {
-        last_update_timestamp_ = data->GetTimeStamp();
-
-        const Eigen::Affine3d transform = data->GetCameraToWorld();
-        const auto armors_interface     = data->GetArmors();
+        Eigen::Affine3d transform_camera2world = data->GetCameraToWorld();
+        const auto armors_interface_incamera   = data->GetArmors();
 
         for (int i = 0; i < 8; i++) {
             auto id = static_cast<enumeration::CarIDFlag>(
                 static_cast<uint32_t>(enumeration::CarIDFlag::Hero) << i);
 
-            const auto& armors = armors_interface->GetArmors(id);
-            if (armors.empty()) continue;
+            const auto& armors_in_camera = armors_interface_incamera->GetArmors(id);
+            if (armors_in_camera.empty()) continue;
 
-            for (const auto& armor : armors) {
+            for (const auto& armor : armors_in_camera) {
                 if (!targets_map_.contains(armor.id)) {
                     targets_map_.try_emplace(armor.id,
-                        std::make_unique<CarPredictor>(armor.position,
-                            util::math::quaternion_to_euler(armor.orientation, 2, 1, 0), armor.id,
-                            data->GetTimeStamp()));
+                        std::make_unique<CarPredictor>(transform_camera2world * armor.position,
+                            util::math::quaternion_to_euler(
+                                Eigen::Quaterniond(transform_camera2world.rotation())
+                                    * armor.orientation,
+                                2, 1, 0),
+                            armor.id, data->GetTimeStamp()));
                 } else {
-                    targets_map_.at(armor.id)->Update(data->GetTimeStamp(), armor.position,
-                        util::math::quaternion_to_euler(armor.orientation, 2, 1, 0),
-                        util::math::xyz2ypd(armor.position));
+                    targets_map_.at(armor.id)->Update(data->GetTimeStamp(),
+                        transform_camera2world * armor.position,
+                        util::math::quaternion_to_euler(
+                            Eigen::Quaterniond(transform_camera2world.rotation())
+                                * armor.orientation,
+                            2, 1, 0),
+                        util::math::xyz2ypd(transform_camera2world * armor.position));
                 }
             }
 
             // std::erase_if(targets_map_, [](const auto& pair) { return pair.second->IsAppeared();
             // });
         }
+
+        last_update_timestamp_ = data->GetTimeStamp();
     }
 
 private:
