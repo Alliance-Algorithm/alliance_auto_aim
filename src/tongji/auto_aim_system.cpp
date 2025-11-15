@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <exception>
 #include <filesystem>
+#include <iostream>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
@@ -76,7 +77,7 @@ public:
 
         if (flag == enumeration::ArmorIdFlag::None) {
             state_machine_->SetLostState();
-            // std::println("no armors identified");
+            std::cout << "no armor identified!" << std::endl;
             return;
         }
 
@@ -106,23 +107,14 @@ public:
             parameters::ParamsForSystemV1::tracker_current_armors_event,
             live_target_manager_->Predict(flag, pack.camera_capture_begin_time_stamp));
 
-        const auto target_id = state_machine_->GetAllowdToFires();
-
-        // TODO:读编码器还是旋转矩阵？
-        const auto gimbal_yaw = R_camera2gimbal.eulerAngles(2, 1, 0)[0];
-
         time_stamp_ = pack.camera_capture_begin_time_stamp;
-        fire_controller_->UpdateGimbalPosition(gimbal_yaw);
 
         /// 这里应该有一个线程进行稳定的输出之类的
         /// 轨迹规划器没有实现，先不管
 
+        fire_controller_->SetGimbal2Muzzle(pack.gimbal_to_muzzle);
         core::EventBus::Publish<data::FireControl>(
             parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
-
-        core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInGimbalControl>>(
-            world_exe::parameters::ParamsForSystemV1::get_lastest_predictor_event,
-            fire_controller_->GetArmorsToView());
 
         if (!debug) [[likely]]
             return;

@@ -1,5 +1,6 @@
 #include "fire_controller.hpp"
 
+#include <Eigen/src/Geometry/Transform.h>
 #include <chrono>
 #include <memory>
 
@@ -26,17 +27,12 @@ class FireController::Impl {
 public:
     Impl(const std::string& config_path, std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
-        : locked_target(CarIDFlag::None)
-        , firable_(false)
-        , aiming_solver_(std::make_unique<AimingSolver>(config_path))
-        , fire_decision_(std::make_unique<FireDecision>(config_path))
+        : aiming_solver_(std::make_unique<AimingSolver>(config_path))
         , state_machine_(std::move(state_machine))
-        , live_target_manager_(std::move(live_target_manager))
-        , control_delay_(100) { }
+        , live_target_manager_(std::move(live_target_manager)) { }
 
     data ::FireControl CalculateTarget(data::TimeStamp const& time_stamp) const {
-        if (!fire_decision_ || !state_machine_ || !live_target_manager_)
-            return { .fire_allowance = false };
+        if (!state_machine_ || !live_target_manager_) return { .fire_allowance = false };
 
         const auto& lockable_target = state_machine_->GetAllowdToFires();
 
@@ -47,9 +43,8 @@ public:
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false };
         // TODO:这里不应该指针转换
-        const auto& aim_solution =
-            aiming_solver_->SolveAimSolution(snapshot_manager, time_stamp, control_delay_);
-        armors_to_view_ = aiming_solver_->GetArmorsToView();
+        const auto& aim_solution = aiming_solver_->SolveAimSolution(
+            snapshot_manager, transform_gimbal2muzzle_, time_stamp, control_delay_);
 
         if (!aim_solution.valid) {
             // std::println("aim solution invalid ");
@@ -60,16 +55,8 @@ public:
         const auto gimbal_command = GimbalCommand { aim_solution.yaw, aim_solution.pitch };
         const auto target_pos     = Eigen::Vector3d { aim_solution.aim_point };
 
-        auto fire_command = aim_solution.valid
-            ? fire_decision_->ShouldFire(gimbal_yaw_, gimbal_command, target_pos)
-            : false;
-        firable_          = fire_command;
-
         data::FireControl result;
-        // result.fire_allowance = fire_command;
-        result.fire_allowance = true;
-
-        // result.gimbal_dir << gimbal_command.yaw, gimbal_command.pitch, 0;
+        result.fire_allowance = aim_solution.valid;
         result.gimbal_dir << cos(gimbal_command.yaw) * cos(gimbal_command.pitch),
             sin(gimbal_command.yaw) * cos(gimbal_command.pitch), sin(gimbal_command.pitch);
         result.time_stamp = time_stamp;
@@ -77,30 +64,23 @@ public:
     }
 
     CarIDFlag GetAttackCarId() const {
-        if (firable_) return locked_target;
+        if (firable_) return locked_target_;
         return CarIDFlag::None;
     }
 
-    void UpdateGimbalPosition(const double& gimbal_yaw) { gimbal_yaw_ = gimbal_yaw; };
-
-    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-        return armors_to_view_;
+    void SetGimbal2Muzzle(Eigen::Affine3d const& transform_gimbal2muzzle) {
+        transform_gimbal2muzzle_ = transform_gimbal2muzzle;
     }
 
 private:
-    std::chrono::milliseconds control_delay_;
+    std::chrono::milliseconds control_delay_ { 100 };
 
-    double gimbal_yaw_;
-
-    CarIDFlag locked_target;
-    mutable bool firable_;
-
+    CarIDFlag locked_target_ { CarIDFlag::None };
+    mutable bool firable_ { false };
+    Eigen::Affine3d transform_gimbal2muzzle_ { Eigen ::Affine3d::Identity() };
     std::unique_ptr<AimingSolver> aiming_solver_;
-    std::unique_ptr<FireDecision> fire_decision_;
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
-
-    mutable std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
 };
 
 FireController::FireController(const std::string& config_path,
@@ -114,12 +94,7 @@ data ::FireControl FireController::CalculateTarget(data::TimeStamp const& time_s
 }
 CarIDFlag FireController::GetAttackCarId() const { return pimpl_->GetAttackCarId(); }
 
-void FireController::UpdateGimbalPosition(const double& gimbal_yaw) {
-    return pimpl_->UpdateGimbalPosition(gimbal_yaw);
-};
-
-auto FireController::GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-    return pimpl_->GetArmorsToView();
+void FireController::SetGimbal2Muzzle(Eigen::Affine3d const& transform_gimbal2muzzle) {
+    return pimpl_->SetGimbal2Muzzle(transform_gimbal2muzzle);
 }
-
 }

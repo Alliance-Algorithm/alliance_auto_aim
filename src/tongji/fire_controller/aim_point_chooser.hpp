@@ -17,9 +17,9 @@ public:
         leaving_angle_ = yaml["leaving_angle"].as<double>() / 57.3; // degree to rad
     }
 
+    template <std::ranges::range T>
     std::pair<bool, data::ArmorGimbalControlSpacing> ChooseAimArmor(
-        const Eigen::Vector<double, 11>& ekf_x,
-        std::vector<data::ArmorGimbalControlSpacing> const& armors, const CarIDFlag& single_id) {
+        const Eigen::Vector<double, 11>& ekf_x, T const& armors, const CarIDFlag& single_id) {
         const auto armor_num = armors.size();
         int chosen_id        = -1;
 

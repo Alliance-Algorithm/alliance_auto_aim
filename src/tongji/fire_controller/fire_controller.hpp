@@ -18,9 +18,7 @@ public:
     data ::FireControl CalculateTarget(data::TimeStamp const& time_stamp) const override;
     enumeration ::CarIDFlag GetAttackCarId() const override;
 
-    void UpdateGimbalPosition(const double& gimbal_yaw);
-
-    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl>;
+    void SetGimbal2Muzzle(Eigen::Affine3d const& transform_gimbal2muzzle);
 
     FireController(const FireController&)                = delete;
     FireController& operator=(const FireController&)     = delete;

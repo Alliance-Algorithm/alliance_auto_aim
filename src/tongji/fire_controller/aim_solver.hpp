@@ -4,15 +4,16 @@
 #include <cmath>
 #include <cstdio>
 #include <ctime>
+#include <iostream>
 #include <memory>
 #include <optional>
-
+#include <ranges>
 #include <stdexcept>
-#include <vector>
 #include <yaml-cpp/yaml.h>
 
 #include "../predictor/car_predictor/car_predictor.hpp"
 #include "aim_point_chooser.hpp"
+#include "data/armor_gimbal_control_spacing.hpp"
 #include "data/time_stamped.hpp"
 #include "tongji/predictor/kalman_filter/extended_kalman_filter.hpp"
 #include "tongji/predictor/kalman_filter/predict_model.hpp"
@@ -44,7 +45,8 @@ public:
     }
 
     AimSolution SolveAimSolution(std::shared_ptr<interfaces::IPredictor> const& snapshot,
-        data::TimeStamp const& time_stamp, std::chrono::milliseconds control_delay) {
+        Eigen::Affine3d const& transform_gimbal2muzzle, data::TimeStamp const& time_stamp,
+        std::chrono::milliseconds const& control_delay) {
 
         // 迭代求解飞行时间
         // (最多10次，收敛条件：相邻两次fly_time差 <0.001)
@@ -64,13 +66,24 @@ public:
             const auto& armors =
                 snapshot->Predictor(time_stamp + data::TimeStamp::from_seconds(dt));
 
-            const auto& armors_to_view = armors->GetArmors(snapshot->GetId());
+            const auto& armors_in_gimbal = armors->GetArmors(snapshot->GetId());
 
-            armors_to_view_ = std::make_shared<predictor::InGimbalControlArmor>(
-                armors_to_view, time_stamp + data::TimeStamp::from_seconds(dt));
+            auto armors_in_muzzle = armors_in_gimbal
+                | std::ranges::views::transform([&transform_gimbal2muzzle](
+                                                    auto const& armor_in_gimbal) {
+                      data::ArmorGimbalControlSpacing armor_in_muzzle;
 
-            const auto& aim_point = SelectPredictedAim(snapshot_derived->GetPredictedX(time_stamp),
-                armors->GetArmors(snapshot->GetId()), snapshot->GetId());
+                      armor_in_muzzle.id       = armor_in_gimbal.id;
+                      armor_in_muzzle.position = transform_gimbal2muzzle * armor_in_gimbal.position;
+                      armor_in_muzzle.orientation =
+                          Eigen::Quaterniond(transform_gimbal2muzzle.rotation())
+                          * armor_in_gimbal.orientation;
+
+                      return armor_in_muzzle;
+                  });
+
+            const auto& aim_point = SelectPredictedAim(
+                snapshot_derived->GetPredictedX(time_stamp), armors_in_muzzle, snapshot->GetId());
 
             if (!aim_point.has_value()) {
                 continue;
@@ -98,7 +111,6 @@ public:
                 0 }; // failed: trajectory did not converge
         }
 
-        // std::println("fly_time:{}", final_trajectory.fly_time);
         const auto xyz     = final_aim_point;
         const double yaw   = std::atan2(xyz.y(), xyz.x()) + yaw_offset_;
         const double pitch = (final_trajectory.pitch + pitch_offset_);
@@ -106,13 +118,10 @@ public:
         return { true, yaw, pitch, final_aim_point };
     }
 
-    auto GetArmorsToView() -> std::shared_ptr<interfaces::IArmorInGimbalControl> {
-        return armors_to_view_;
-    }
-
 private:
-    std::optional<Eigen::Vector3d> SelectPredictedAim(const EKF::XVec& ekf_x,
-        const std::vector<data::ArmorGimbalControlSpacing>& armors, const CarIDFlag& id) const {
+    template <std::ranges::range T>
+    std::optional<Eigen::Vector3d> SelectPredictedAim(
+        const EKF::XVec& ekf_x, const T& armors, const CarIDFlag& id) const {
         const auto& [selectable, aim_point_in_gimbal] =
             aim_point_chooser_->ChooseAimArmor(ekf_x, armors, id);
 
@@ -126,7 +135,8 @@ private:
         auto result = TrajectorySolver::SolveTrajectory(bullet_speed, d, xyz.z(), g_);
 
         if (!result.solvable) {
-            // std::println("solve trajectory failed: d={}, z={},speed={}", d, xyz.z(), bullet_speed);
+            std::cout << "solve trajectory failed: d=" << d << " z=" << xyz.z()
+                      << "speed=" << bullet_speed << std::endl;
         }
 
         return result.solvable ? std::optional { result } : std::nullopt;
@@ -135,7 +145,6 @@ private:
     double yaw_offset_, pitch_offset_;
     double bullet_speed_;
     const double g_;
-    std::shared_ptr<interfaces::IArmorInGimbalControl> armors_to_view_;
 
     std::unique_ptr<AimPointChooser> aim_point_chooser_;
 };
