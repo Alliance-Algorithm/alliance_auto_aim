@@ -6,7 +6,6 @@
 #include <optional>
 
 #include <Eigen/Dense>
-#include <print>
 #include <utility>
 
 #include "../in_gimbal_control_armor.hpp"

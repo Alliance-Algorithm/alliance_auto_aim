@@ -3,7 +3,6 @@
 #include <chrono>
 #include <memory>
 
-#include <print>
 #include <utility>
 #include <yaml-cpp/yaml.h>
 
