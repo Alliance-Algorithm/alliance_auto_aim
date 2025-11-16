@@ -29,6 +29,7 @@ find_package(OpenVINO REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 # 链接依赖（使用目标名，自动传递）
 target_link_libraries(alliance_auto_aim PUBLIC
@@ -40,6 +41,7 @@ target_link_libraries(alliance_auto_aim PUBLIC
   openvino::runtime
   Ceres::ceres
   yaml-cpp
+  ament_index_cpp::ament_index_cpp
 )
 
 # 安装规则
@@ -53,7 +55,9 @@ install(TARGETS alliance_auto_aim
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
+install(DIRECTORY configs/
+  DESTINATION share/alliance_ros_auto_aim
+)
 # 导出配置
 include(CMakePackageConfigHelpers)
 configure_package_config_file(

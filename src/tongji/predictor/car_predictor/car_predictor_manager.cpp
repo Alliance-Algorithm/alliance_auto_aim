@@ -71,18 +71,20 @@ public:
                 if (!targets_map_.contains(armor.id)) {
                     targets_map_.try_emplace(armor.id,
                         std::make_unique<CarPredictor>(transform_camera2world * armor.position,
-                            util::math::quaternion_to_euler(
-                                Eigen::Quaterniond(transform_camera2world.rotation())
-                                    * armor.orientation,
-                                2, 1, 0),
+                            (util::math::quaternion_to_euler(
+                                 Eigen::Quaterniond(transform_camera2world.rotation())
+                                     * armor.orientation,
+                                 2, 1, 0))
+                                .normalized(),
                             armor.id, data->GetTimeStamp()));
                 } else {
                     targets_map_.at(armor.id)->Update(data->GetTimeStamp(),
                         transform_camera2world * armor.position,
-                        util::math::quaternion_to_euler(
-                            Eigen::Quaterniond(transform_camera2world.rotation())
-                                * armor.orientation,
-                            2, 1, 0),
+                        (util::math::quaternion_to_euler(
+                             Eigen::Quaterniond(transform_camera2world.rotation())
+                                 * armor.orientation,
+                             2, 1, 0))
+                            .normalized(),
                         util::math::xyz2ypd(transform_camera2world * armor.position));
                 }
             }

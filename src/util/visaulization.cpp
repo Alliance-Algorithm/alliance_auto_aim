@@ -95,7 +95,8 @@ void world_exe::util::visualization::draw_armor_in_gimbal(
             world_exe::data::ArmorCameraSpacing armor { armor_gimbal.id,
                 gimal_to_camera * armor_gimbal.position,
                 Eigen::Quaterniond {
-                    gimal_to_camera.rotation() * armor_gimbal.orientation.toRotationMatrix() } };
+                    gimal_to_camera.rotation() * armor_gimbal.orientation.toRotationMatrix() }
+                    .normalized() };
             world_exe::util::cast::armor_3d_camera_to_armor_2d_image(armor, intrinsic_parameters,
                 distortion_parameters, points_in_armor_spacing, img_armor);
             draw_armor_2d(img_armor, in_out_mat);

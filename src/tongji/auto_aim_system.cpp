@@ -29,6 +29,7 @@
 #include "utils/fps_counter.hpp"
 // #include "utils/visualization.hpp"
 #include "v1/identifier/identifier.hpp"
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 namespace world_exe::tongji {
 using namespace std::chrono;
@@ -37,11 +38,23 @@ class AutoAimSystem::Impl {
 public:
     explicit Impl(const bool& debug)
         : debug(debug)
-        , config_path_(std::filesystem::path { __FILE__ }.parent_path().parent_path().parent_path()
-              / "configs"
-              / "example."
-                "yaml")
+
         , fps_() {
+
+        std::string package_share_directory = ament_index_cpp::get_package_share_directory("allianc"
+                                                                                           "e_"
+                                                                                           "ros_"
+                                                                                           "auto_"
+                                                                                           "aim");
+
+        std::filesystem::path config_fs_path =
+            std::filesystem::path(package_share_directory) / "example.yaml";
+        std::string model_path = config_fs_path.string();
+
+        std::filesystem::path model_fs_path =
+            std::filesystem::path(package_share_directory) / "szu_identify_model.onnx";
+        config_path_ = config_fs_path.string();
+
         identifier_ = std::make_unique<v1::identifier::Identifier>(
             parameters::ParamsForSystemV1::szu_model_path(),
             parameters::ParamsForSystemV1::device(), parameters::HikCameraProfile::get_width(),
@@ -73,12 +86,14 @@ public:
         //     cv::imshow("identified", visualized);
         //     cv::waitKey(1);
         // }
-        // if (fps_.count()) std::cout << fps_.fps() << std::endl;
+        if (fps_.count()) std::cout << fps_.fps() << std::endl;
 
         if (flag == enumeration::ArmorIdFlag::None) {
             state_machine_->SetLostState();
-            std::cout << "no armor identified!" << std::endl;
+            // std::cout << "no armor identified!" << std::endl;
             return;
+        } else {
+            // std::cout << "found!" << std::endl;
         }
 
         // TODO:update invincible_armors
@@ -88,14 +103,14 @@ public:
         auto [pack, check] = syncer_->get_data(raw.stamp);
         if (!check) {
             // TODO：等待传入真实数据
-            //  pack.camera_capture_begin_time_stamp =
-            //      data::TimeStamp(steady_clock::now().time_since_epoch());
+            pack.camera_capture_begin_time_stamp =
+                data::TimeStamp(steady_clock::now().time_since_epoch());
             // std::println(" no sync data");
             return;
         }
 
-        const auto R_camera2gimbal = pack.camera_to_gimbal.rotation();
-        const auto t_camera2gimbal = pack.camera_to_gimbal.translation();
+        const auto& R_camera2gimbal = pack.camera_to_gimbal.rotation();
+        const auto& t_camera2gimbal = pack.camera_to_gimbal.translation();
 
         pnp_solver_->SetCamera2Gimbal(R_camera2gimbal, t_camera2gimbal);
         const auto& armors_in_camera = pnp_solver_->SolvePnp(armors_in_image);
@@ -163,7 +178,7 @@ public:
 
 private:
     bool debug;
-    const std::string config_path_;
+    std::string config_path_;
     world_exe::util::FpsCounter fps_;
     data::TimeStamp time_stamp_;
     std::unique_ptr<world_exe::v1::identifier::Identifier> identifier_;

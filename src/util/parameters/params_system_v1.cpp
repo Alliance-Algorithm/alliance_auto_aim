@@ -4,12 +4,22 @@
 #include <memory>
 #include <string>
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
+
 namespace world_exe::parameters {
 struct ParamsForSystemV1::Impl {
 public:
-    std::string model_path =
-        std::filesystem::path { __FILE__ }.parent_path().parent_path().parent_path().parent_path()
-        / "models" / "szu_identify_model.onnx";
+    // std::string model_path =
+    //     std::filesystem::path { __FILE__
+    //     }.parent_path().parent_path().parent_path().parent_path() / "models" /
+    //     "szu_identify_model.onnx";
+
+    std::string package_share_directory = ament_index_cpp::get_package_share_directory("alliance_"
+                                                                                       "ros_auto_"
+                                                                                       "aim");
+    std::filesystem::path model_fs_path =
+        std::filesystem::path(package_share_directory) / "szu_identify_model.onnx";
+    std::string model_path = model_fs_path.string();
 
     std::string device             = "AUTO";
     double control_delay_in_second = 0.05;

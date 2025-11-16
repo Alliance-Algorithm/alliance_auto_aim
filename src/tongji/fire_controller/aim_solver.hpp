@@ -76,8 +76,9 @@ public:
                       armor_in_muzzle.id       = armor_in_gimbal.id;
                       armor_in_muzzle.position = transform_gimbal2muzzle * armor_in_gimbal.position;
                       armor_in_muzzle.orientation =
-                          Eigen::Quaterniond(transform_gimbal2muzzle.rotation())
-                          * armor_in_gimbal.orientation;
+                          (Eigen::Quaterniond(transform_gimbal2muzzle.rotation())
+                              * armor_in_gimbal.orientation)
+                              .normalized();
 
                       return armor_in_muzzle;
                   });
