@@ -13,8 +13,8 @@
 
 #include "../predictor/car_predictor/car_predictor.hpp"
 #include "aim_point_chooser.hpp"
-#include "data/armor_gimbal_control_spacing.hpp"
 #include "data/time_stamped.hpp"
+#include "interfaces/armor_in_gimbal_control.hpp"
 #include "tongji/predictor/kalman_filter/extended_kalman_filter.hpp"
 #include "tongji/predictor/kalman_filter/predict_model.hpp"
 #include "trajectory.hpp"
@@ -68,32 +68,23 @@ public:
 
             const auto& armors_in_gimbal = armors->GetArmors(snapshot->GetId());
 
-            auto armors_in_muzzle = armors_in_gimbal
-                | std::ranges::views::transform([&transform_gimbal2muzzle](
-                                                    auto const& armor_in_gimbal) {
-                      data::ArmorGimbalControlSpacing armor_in_muzzle;
-
-                      armor_in_muzzle.id       = armor_in_gimbal.id;
-                      armor_in_muzzle.position = transform_gimbal2muzzle * armor_in_gimbal.position;
-                      armor_in_muzzle.orientation =
-                          (Eigen::Quaterniond(transform_gimbal2muzzle.rotation())
-                              * armor_in_gimbal.orientation)
-                              .normalized();
-
-                      return armor_in_muzzle;
-                  });
+            armors_view_ = std::make_shared<predictor::InGimbalControlArmor>(
+                armors_in_gimbal, time_stamp + data::TimeStamp::from_seconds(dt));
 
             const auto& aim_point = SelectPredictedAim(
-                snapshot_derived->GetPredictedX(time_stamp), armors_in_muzzle, snapshot->GetId());
+                snapshot_derived->GetPredictedX(time_stamp), armors_in_gimbal, snapshot->GetId());
 
             if (!aim_point.has_value()) {
                 continue;
-
             } // failed: no valid aim point
 
-            const auto traj = SolveTrajectory(aim_point.value(), bullet_speed_);
+            auto fire_origin = -transform_gimbal2muzzle.linear().transpose()
+                * transform_gimbal2muzzle.translation();
+
+            auto aim_vector = *aim_point - fire_origin;
+
+            const auto traj = SolveTrajectory(aim_vector, bullet_speed_);
             if (!traj.has_value()) {
-                // std::println("trajectory unsolvable");
                 continue;
             }
 
@@ -119,7 +110,13 @@ public:
         return { true, yaw, pitch, final_aim_point };
     }
 
+    std ::shared_ptr<interfaces ::IArmorInGimbalControl> GetArmorsSnapshot() {
+        return armors_view_;
+    }
+
 private:
+    std::shared_ptr<predictor::InGimbalControlArmor> armors_view_;
+
     template <std::ranges::range T>
     std::optional<Eigen::Vector3d> SelectPredictedAim(
         const EKF::XVec& ekf_x, const T& armors, const CarIDFlag& id) const {
@@ -131,12 +128,12 @@ private:
     }
 
     std::optional<TrajectoryResult> SolveTrajectory(
-        const Eigen::Vector3d& xyz, const double& bullet_speed) const {
-        double d    = std::hypot(xyz.x(), xyz.y());
-        auto result = TrajectorySolver::SolveTrajectory(bullet_speed, d, xyz.z(), g_);
+        const Eigen::Vector3d& vec, const double& bullet_speed) const {
+        double d    = std::hypot(vec.x(), vec.y());
+        auto result = TrajectorySolver::SolveTrajectory(bullet_speed, d, vec.z(), g_);
 
         if (!result.solvable) {
-            std::cout << "solve trajectory failed: d=" << d << " z=" << xyz.z()
+            std::cout << "solve trajectory failed: d=" << d << " z=" << vec.z()
                       << "speed=" << bullet_speed << std::endl;
         }
 

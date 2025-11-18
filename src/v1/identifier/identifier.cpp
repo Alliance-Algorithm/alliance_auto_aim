@@ -8,6 +8,7 @@
  */
 
 #include "identifier.hpp"
+#include "enum/armor_id.hpp"
 #include "identifier_armor.hpp"
 #include "util/scanline.hpp"
 
@@ -325,18 +326,23 @@ private:
 
                 // 如果找到了两个灯条，构建装甲板
                 if (light_bar_size_ == 2) {
-                    const auto& first  = lightbars_[0];
-                    const auto& second = lightbars_[1];
+                    const auto& first   = lightbars_[0];
+                    const auto& second  = lightbars_[1];
+                    bool is_large_armor = (armor.id_ == enumeration::ArmorIdFlag::Base
+                        || armor.id_ == enumeration::ArmorIdFlag::Hero);
 
                     // 根据 x 坐标排序灯条，确保左灯条在前
                     if ((first.top_.x + first.bottom_.x) / 2.
                         < (second.bottom_.x + second.top_.x) / 2.) {
                         // 构建装甲板的四个角点：左上、右上、右下、左下
+
                         armor_plates.emplace_back(data::ArmorImageSpacing { armor.id_,
-                            { first.top_, second.top_, second.bottom_, first.bottom_ } });
+                            { first.top_, second.top_, second.bottom_, first.bottom_ },
+                            is_large_armor });
                     } else {
                         armor_plates.emplace_back(data::ArmorImageSpacing { armor.id_,
-                            { second.top_, first.top_, first.bottom_, second.bottom_ } });
+                            { second.top_, first.top_, first.bottom_, second.bottom_ },
+                            is_large_armor });
                     }
                     // 将装甲板类型添加到检测到的车辆类型标志位中
                     all_car_id |= static_cast<uint32_t>(armor.id_);

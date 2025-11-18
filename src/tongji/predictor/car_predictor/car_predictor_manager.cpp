@@ -1,5 +1,6 @@
 #include "car_predictor_manager.hpp"
 
+#include <Eigen/src/Geometry/Quaternion.h>
 #include <cstdint>
 #include <ctime>
 #include <memory>
@@ -7,7 +8,6 @@
 #include <unordered_map>
 
 #include "../in_gimbal_control_armor.hpp"
-
 #include "car_predictor.hpp"
 #include "data/predictor_update_package.hpp"
 #include "data/time_stamped.hpp"
@@ -52,13 +52,14 @@ public:
         const auto& it = targets_map_.find(flag);
         if (it == targets_map_.end()) return nullptr;
         const auto& [id, predictor] = *it;
+
         return std::make_shared<CarPredictor>(
             predictor->GetEkf(), predictor->GetModel(), data::TimeStamp { last_update_timestamp_ });
     }
 
     void Update(std::shared_ptr<data::PredictorUpdatePackage> const& data) {
-        Eigen::Affine3d transform_camera2world = data->GetCameraToWorld();
-        const auto armors_interface_incamera   = data->GetArmors();
+        Eigen::Affine3d transform_camera2gimbal = data->GetCameraToWorld();
+        const auto armors_interface_incamera    = data->GetArmors();
 
         for (int i = 0; i < 8; i++) {
             auto id = static_cast<enumeration::CarIDFlag>(
@@ -68,24 +69,27 @@ public:
             if (armors_in_camera.empty()) continue;
 
             for (const auto& armor : armors_in_camera) {
+                auto xyz_in_gimbal = transform_camera2gimbal * armor.position;
+
                 if (!targets_map_.contains(armor.id)) {
                     targets_map_.try_emplace(armor.id,
-                        std::make_unique<CarPredictor>(transform_camera2world * armor.position,
-                            (util::math::quaternion_to_euler(
-                                 Eigen::Quaterniond(transform_camera2world.rotation())
-                                     * armor.orientation,
-                                 2, 1, 0))
-                                .normalized(),
+                        std::make_unique<CarPredictor>(xyz_in_gimbal,
+                            util::math::quaternion_to_euler(
+                                Eigen::Quaterniond(
+                                    (Eigen::Quaterniond(transform_camera2gimbal.rotation())
+                                        * armor.orientation))
+                                    .normalized(),
+                                2, 1, 0),
                             armor.id, data->GetTimeStamp()));
                 } else {
-                    targets_map_.at(armor.id)->Update(data->GetTimeStamp(),
-                        transform_camera2world * armor.position,
-                        (util::math::quaternion_to_euler(
-                             Eigen::Quaterniond(transform_camera2world.rotation())
-                                 * armor.orientation,
-                             2, 1, 0))
-                            .normalized(),
-                        util::math::xyz2ypd(transform_camera2world * armor.position));
+                    targets_map_.at(armor.id)->Update(data->GetTimeStamp(), xyz_in_gimbal,
+                        util::math::quaternion_to_euler(
+                            Eigen::Quaterniond(
+                                (Eigen::Quaterniond(transform_camera2gimbal.rotation())
+                                    * armor.orientation))
+                                .normalized(),
+                            2, 1, 0),
+                        util::math::xyz2ypd(transform_camera2gimbal * armor.position));
                 }
             }
 

@@ -64,9 +64,10 @@ public:
             auto xyz   = model_.h_armor_xyz(ekf_x, id);
 
             data::ArmorGimbalControlSpacing armor;
-            armor.id          = model_.GetID();
-            armor.position    = xyz;
-            armor.orientation = util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0);
+            armor.id       = model_.GetID();
+            armor.position = xyz;
+            armor.orientation =
+                util::math::euler_to_quaternion(angle, 15. / 180. * CV_PI, 0).normalized();
             armors.emplace_back(std::move(armor));
         }
         return std::make_shared<InGimbalControlArmor>(armors, time_stamp);

@@ -30,8 +30,7 @@ public:
 
     std::tuple<data::CameraGimbalMuzzleSyncData, bool> get_data(const data::TimeStamp&  timestamp) {
 
-        if (data_queue_.empty())
-            return {data::CameraGimbalMuzzleSyncData{}, false};
+        if (data_queue_.empty()) return { data::CameraGimbalMuzzleSyncData { }, false };
 
         for(auto rit = data_queue_.rbegin(); rit != data_queue_.rend(); ++rit) 
             if (rit->camera_capture_begin_time_stamp <= timestamp) 
@@ -43,7 +42,6 @@ public:
     ~Impl() = default;
 
 private:
-
     std::list<data::CameraGimbalMuzzleSyncData> data_queue_;
 
     const std::chrono::seconds  time_to_hold_;
@@ -55,12 +53,12 @@ Syncer::Syncer(std::chrono::seconds time_to_hold, long tolerable_ns)
 
 Syncer::~Syncer() = default;
 
-void Syncer::set_data(const data::CameraGimbalMuzzleSyncData& armor_pnp) {
-    pimpl_->set_data(armor_pnp);
+void Syncer::set_data(const data::CameraGimbalMuzzleSyncData& data) {
+    pimpl_->set_data(data);
 }
-std::tuple<data::CameraGimbalMuzzleSyncData, bool> Syncer::get_data(const data::TimeStamp& timestamp) {
+std::tuple<data::CameraGimbalMuzzleSyncData, bool> Syncer::get_data(
+    const data::TimeStamp& timestamp) {
     return pimpl_->get_data(timestamp);
 }
-
 
 }

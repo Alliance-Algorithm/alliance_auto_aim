@@ -158,7 +158,7 @@ static Eigen::Vector3d quaternion_to_euler(
 }
 
 static Eigen::Vector3d matrix_to_euler(
-    Eigen::Matrix3d R, int axis0, int axis1, int axis2, bool extrinsic = false) {
+    Eigen::Matrix3d const &R, int axis0, int axis1, int axis2, bool extrinsic = false) {
     Eigen::Quaterniond q(R);
     return quaternion_to_euler(q, axis0, axis1, axis2, extrinsic);
 }

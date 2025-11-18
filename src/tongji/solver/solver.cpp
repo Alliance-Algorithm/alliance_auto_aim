@@ -1,5 +1,6 @@
 #include "solver.hpp"
 
+#include <Eigen/src/Geometry/Transform.h>
 #include <chrono>
 #include <memory>
 #include <tuple>
@@ -26,9 +27,7 @@ namespace world_exe::tongji::solver {
 class Solver::Impl {
 public:
     explicit Impl()
-        : R_camera2gimbal_(Eigen::Matrix3d::Zero())
-        , t_camera2gimbal_(Eigen::Vector3d::Zero())
-        , reprojection_util_(std::make_unique<ReprojectionUtil>()) { }
+        : reprojection_util_(std::make_unique<ReprojectionUtil>()) { }
 
     static std::shared_ptr<world_exe::interfaces::IArmorInCamera> EstimateAllArmorPoses(
         std::shared_ptr<interfaces::IArmorInImage> const& armors_in_image) {
@@ -46,10 +45,8 @@ public:
         return std::make_shared<SolvedArmor>(armor_plates, armors_in_image->GetTimeStamp());
     }
 
-    auto SetCamera2Gimbal(
-        const Eigen::Matrix3d& R_camera2gimbal, const Eigen::Vector3d& t_camera2gimbal) -> void {
-        R_camera2gimbal_ = R_camera2gimbal;
-        t_camera2gimbal_ = t_camera2gimbal;
+    auto SetCamera2Gimbal(Eigen::Affine3d const& transform_camera2gimbal) -> void {
+        transform_camera2gimbal_ = transform_camera2gimbal;
     }
 
     auto CalculateOptimizeYaw(const data::ArmorImageSpacing& armor_in_image,
@@ -68,9 +65,10 @@ public:
         for (int i = 0; i < SEARCH_RANGE; i++) {
             double yaw = util::math::clamp_pm_pi(yaw0 + i * CV_PI / 180.0);
 
-            auto error = reprojection_util_->CalculateReprojectionError(R_camera2gimbal_,
-                t_camera2gimbal_, armor_in_image, armor_xyz_in_gimbal, yaw, pitch,
-                (i - SEARCH_RANGE / 2) * CV_PI / 180.0);
+            auto error =
+                reprojection_util_->CalculateReprojectionError(transform_camera2gimbal_.rotation(),
+                    transform_camera2gimbal_.translation(), armor_in_image, armor_xyz_in_gimbal,
+                    yaw, pitch, (i - SEARCH_RANGE / 2) * CV_PI / 180.0);
 
             if (error < min_error) {
                 min_error = error;
@@ -88,6 +86,13 @@ private:
     static data::ArmorCameraSpacing EstimatePose(
         const world_exe::data::ArmorImageSpacing& armor_in_image) {
         const auto& [xyz_in_camera, R_armor2camera] = EstimatePnp(armor_in_image);
+        // const auto& armor_xyz_in_gimbal             = transform_camera2gimbal_ * xyz_in_camera;
+
+        // auto& gimbal_yaw       = transform_gimbal2muzzle_.rotation().eulerAngles(2, 1, 0)[0];
+        // auto armor_initial_yaw = util::math::matrix_to_euler(
+        //     transform_camera2gimbal_.rotation() * R_armor2camera, 2, 1, 0)[0];
+        // auto armor_yaw_optimized = CalculateOptimizeYaw(
+        //     armor_in_image, armor_xyz_in_gimbal, gimbal_yaw, armor_initial_yaw);
 
         data::ArmorCameraSpacing pose;
         pose.id          = armor_in_image.id;
@@ -124,8 +129,8 @@ private:
     }
 
 private:
-    Eigen::Matrix3d R_camera2gimbal_;
-    Eigen::Vector3d t_camera2gimbal_;
+    Eigen::Affine3d transform_camera2gimbal_ { Eigen::Affine3d::Identity() };
+    // Eigen::Affine3d transform_gimbal2muzzle_ { Eigen::Affine3d::Identity() };
 
     std::unique_ptr<ReprojectionUtil> reprojection_util_;
 };
@@ -138,9 +143,8 @@ std::shared_ptr<world_exe::interfaces::IArmorInCamera> Solver::SolvePnp(
     std::shared_ptr<interfaces::IArmorInImage> armors_in_image) {
     return pimpl_->EstimateAllArmorPoses(armors_in_image);
 }
-void Solver::SetCamera2Gimbal(
-    const Eigen::Matrix3d& R_camera2gimbal, const Eigen::Vector3d& t_camera2gimbal) {
-    pimpl_->SetCamera2Gimbal(R_camera2gimbal, t_camera2gimbal);
+void Solver::SetCamera2Gimbal(Eigen::Affine3d const& transform_camera2gimbal) {
+    pimpl_->SetCamera2Gimbal(transform_camera2gimbal);
 }
 
 auto Solver::CalculateOptimizeYaw(const data::ArmorImageSpacing& armor_in_image,

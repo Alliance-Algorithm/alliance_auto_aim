@@ -25,6 +25,8 @@ public:
     FireController(FireController&&) noexcept            = default;
     FireController& operator=(FireController&&) noexcept = default;
 
+    std ::shared_ptr<interfaces ::IArmorInGimbalControl> GetArmorsSnapshot();
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

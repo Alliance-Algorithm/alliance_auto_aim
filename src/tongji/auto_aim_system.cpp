@@ -10,6 +10,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/highgui.hpp>
 // #include <print>
+#include <ostream>
 #include <tuple>
 
 #include "../v1/sync/syncer.hpp"
@@ -86,7 +87,7 @@ public:
         //     cv::imshow("identified", visualized);
         //     cv::waitKey(1);
         // }
-        if (fps_.count()) std::cout << fps_.fps() << std::endl;
+        // if (fps_.count()) std::cout << fps_.fps() << std::endl;
 
         if (flag == enumeration::ArmorIdFlag::None) {
             state_machine_->SetLostState();
@@ -99,23 +100,22 @@ public:
         // TODO:update invincible_armors
         state_machine_->Update(armors_in_image, enumeration::CarIDFlag::None, time_stamp_);
 
+        std::cout << "img stamp:" << raw.stamp.to_nanosec() << std::endl;
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         auto [pack, check] = syncer_->get_data(raw.stamp);
         if (!check) {
             // TODO：等待传入真实数据
-            pack.camera_capture_begin_time_stamp =
-                data::TimeStamp(steady_clock::now().time_since_epoch());
-            // std::println(" no sync data");
+            // pack.camera_capture_begin_time_stamp =
+            //     data::TimeStamp(steady_clock::now().time_since_epoch());
+            std::cout << " no sync data" << std::endl;
             return;
         }
 
-        const auto& R_camera2gimbal = pack.camera_to_gimbal.rotation();
-        const auto& t_camera2gimbal = pack.camera_to_gimbal.translation();
-
-        pnp_solver_->SetCamera2Gimbal(R_camera2gimbal, t_camera2gimbal);
+        pnp_solver_->SetCamera2Gimbal(pack.camera_to_gimbal);
         const auto& armors_in_camera = pnp_solver_->SolvePnp(armors_in_image);
 
         auto combined = std::make_shared<data::PredictorUpdatePackage>(pack, armors_in_camera);
+
         live_target_manager_->Update(combined);
 
         core::EventBus::Publish<std ::shared_ptr<interfaces ::IArmorInGimbalControl>>(
@@ -134,6 +134,9 @@ public:
         if (!debug) [[likely]]
             return;
 
+        auto target = state_machine_->GetAllowdToFires();
+        // std::cout << "target:" << util::stringifier::ToString(target) << std::endl;
+
         core::EventBus::Publish<enumeration::CarIDFlag>(
             parameters::ParamsForSystemV1::car_id_identify_event, flag);
         core::EventBus::Publish<std::shared_ptr<interfaces::IArmorInImage>>(
@@ -144,7 +147,9 @@ public:
             parameters::ParamsForSystemV1::tracker_update_event, combined);
         core::EventBus::Publish<enumeration::CarIDFlag>(
             parameters::ParamsForSystemV1::car_tracing_event, state_machine_->GetAllowdToFires());
-
+        core::EventBus::Publish<std ::shared_ptr<interfaces ::IArmorInGimbalControl>>(
+            parameters::ParamsForSystemV1::get_lastest_predictor_event,
+            fire_controller_->GetArmorsSnapshot());
         // if (armors_in_image) {
         //     auto visualized = raw.mat.clone();
         //     util::visualization::draw_armor_in_image(*armors_in_image, visualized);
@@ -171,7 +176,6 @@ public:
     // TODO:时间戳有待fix
     data::FireControl GetControlCommand() {
         auto attacked_id = fire_controller_->GetAttackCarId();
-
         return fire_controller_->CalculateTarget(
             data::TimeStamp(steady_clock::now().time_since_epoch()));
     }

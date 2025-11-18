@@ -4,6 +4,7 @@
 #include <chrono>
 #include <memory>
 
+#include <print>
 #include <utility>
 #include <yaml-cpp/yaml.h>
 
@@ -43,6 +44,7 @@ public:
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false };
         // TODO:这里不应该指针转换
+        std::println("calculate time:{}", time_stamp.to_seconds());
         const auto& aim_solution = aiming_solver_->SolveAimSolution(
             snapshot_manager, transform_gimbal2muzzle_, time_stamp, control_delay_);
 
@@ -72,6 +74,10 @@ public:
         transform_gimbal2muzzle_ = transform_gimbal2muzzle;
     }
 
+    std ::shared_ptr<interfaces ::IArmorInGimbalControl> GetArmorsSnapshot() {
+        return aiming_solver_->GetArmorsSnapshot();
+    }
+
 private:
     std::chrono::milliseconds control_delay_ { 100 };
 
@@ -97,4 +103,9 @@ CarIDFlag FireController::GetAttackCarId() const { return pimpl_->GetAttackCarId
 void FireController::SetGimbal2Muzzle(Eigen::Affine3d const& transform_gimbal2muzzle) {
     return pimpl_->SetGimbal2Muzzle(transform_gimbal2muzzle);
 }
+
+std ::shared_ptr<interfaces ::IArmorInGimbalControl> FireController::GetArmorsSnapshot() {
+    return pimpl_->GetArmorsSnapshot();
+}
+
 }

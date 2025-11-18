@@ -114,7 +114,6 @@ public:
     auto MatchArmor(const XVec& x, const Eigen::Vector3d& armor_xyz_in_gimbal,
         const Eigen::Vector3d& armor_ypr_in_gimbal, const Eigen::Vector3d& armor_ypd_in_gimbal) const
         -> int {
-
         const auto& xyza_list = GetArmorXYZAList(x);
         std::vector<std::pair<Eigen::Vector4d, int>> xyza_i_list;
 
@@ -131,7 +130,7 @@ public:
         int best_id      = 0;
         double min_error = 1e10;
 
-        for (int i = 0; i < std::max(3, armor_num_); ++i) {
+        for (int i = 0; i < 3; ++i) {
             const auto& xyza = xyza_i_list[i].first;
             auto ypd         = util::math::xyz2ypd(xyza.head(3));
             double error     = std::abs(util::math::clamp_pm_pi(armor_ypr_in_gimbal(0) - xyza(3)))
