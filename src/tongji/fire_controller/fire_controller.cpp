@@ -30,7 +30,8 @@ public:
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
         : aiming_solver_(std::make_unique<AimingSolver>(config_path))
         , state_machine_(std::move(state_machine))
-        , live_target_manager_(std::move(live_target_manager)) { }
+        , live_target_manager_(std::move(live_target_manager))
+        , fire_decision_(std::make_unique<FireDecision>(config_path)) { }
 
     data ::FireControl CalculateTarget(data::TimeStamp const& time_stamp) const {
         if (!state_machine_ || !live_target_manager_) return { .fire_allowance = false };
@@ -44,7 +45,7 @@ public:
                 .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
                 .fire_allowance = false };
         // TODO:这里不应该指针转换
-        std::println("calculate time:{}", time_stamp.to_seconds());
+        // std::println("calculate time:{}", time_stamp.to_seconds());
         const auto& aim_solution = aiming_solver_->SolveAimSolution(
             snapshot_manager, transform_gimbal2muzzle_, time_stamp, control_delay_);
 
@@ -57,8 +58,12 @@ public:
         const auto gimbal_command = GimbalCommand { aim_solution.yaw, aim_solution.pitch };
         const auto target_pos     = Eigen::Vector3d { aim_solution.aim_point };
 
+        auto gimbal_yaw = transform_gimbal2muzzle_.inverse().rotation().eulerAngles(2, 1, 0)(0);
+
+        auto fire_valid = fire_decision_->ShouldFire(gimbal_yaw, gimbal_command, target_pos);
+
         data::FireControl result;
-        result.fire_allowance = aim_solution.valid;
+        result.fire_allowance = fire_valid;
         result.gimbal_dir << cos(gimbal_command.yaw) * cos(gimbal_command.pitch),
             sin(gimbal_command.yaw) * cos(gimbal_command.pitch), sin(gimbal_command.pitch);
         result.time_stamp = time_stamp;
@@ -87,6 +92,7 @@ private:
     std::unique_ptr<AimingSolver> aiming_solver_;
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;
+    std::unique_ptr<FireDecision> fire_decision_;
 };
 
 FireController::FireController(const std::string& config_path,

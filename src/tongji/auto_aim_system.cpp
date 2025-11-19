@@ -100,7 +100,7 @@ public:
         // TODO:update invincible_armors
         state_machine_->Update(armors_in_image, enumeration::CarIDFlag::None, time_stamp_);
 
-        std::cout << "img stamp:" << raw.stamp.to_nanosec() << std::endl;
+        // std::cout << "img stamp:" << raw.stamp.to_nanosec() << std::endl;
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         auto [pack, check] = syncer_->get_data(raw.stamp);
         if (!check) {
@@ -135,7 +135,6 @@ public:
             return;
 
         auto target = state_machine_->GetAllowdToFires();
-        // std::cout << "target:" << util::stringifier::ToString(target) << std::endl;
 
         core::EventBus::Publish<enumeration::CarIDFlag>(
             parameters::ParamsForSystemV1::car_id_identify_event, flag);
