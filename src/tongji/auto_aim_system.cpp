@@ -60,8 +60,6 @@ public:
             parameters::ParamsForSystemV1::szu_model_path(),
             parameters::ParamsForSystemV1::device(), parameters::HikCameraProfile::get_width(),
             parameters::HikCameraProfile::get_height());
-        // identifier_          = std::make_unique<tongji::identifier::Identifier>(config_path_,
-        // ".");
         pnp_solver_          = std::make_unique<solver::Solver>();
         live_target_manager_ = std::make_shared<predictor::CarPredictorManager>(config_path_);
         state_machine_       = std::make_shared<state_machine::StateMachine>();
@@ -100,13 +98,10 @@ public:
         // TODO:update invincible_armors
         state_machine_->Update(armors_in_image, enumeration::CarIDFlag::None, time_stamp_);
 
-        // std::cout << "img stamp:" << raw.stamp.to_nanosec() << std::endl;
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         auto [pack, check] = syncer_->get_data(raw.stamp);
         if (!check) {
             // TODO：等待传入真实数据
-            // pack.camera_capture_begin_time_stamp =
-            //     data::TimeStamp(steady_clock::now().time_since_epoch());
             std::cout << " no sync data" << std::endl;
             return;
         }

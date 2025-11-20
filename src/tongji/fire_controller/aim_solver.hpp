@@ -53,9 +53,8 @@ public:
         double prev_fly_time_s = 0;
         Eigen::Vector3d final_aim_point;
         TrajectoryResult final_trajectory;
-        bool converged = false;
-        auto fire_origin =
-            -transform_gimbal2muzzle.linear().transpose() * transform_gimbal2muzzle.translation();
+        bool converged   = false;
+        auto fire_origin = transform_gimbal2muzzle.inverse().translation();
 
         // HACK:不同击打点影响飞行时间的迭代，需要根据整车的状态（转速和坐标）来选择击打点，不得已将指针转换为派生类
         auto snapshot_derived = std::dynamic_pointer_cast<predictor::CarPredictor>(snapshot);
@@ -82,6 +81,10 @@ public:
             } // failed: no valid aim point
 
             auto aim_vector = *aim_point - fire_origin;
+            // std::cout << "aim_vector:(" << aim_vector.x() << "," << aim_vector.y() << ","
+            //           << aim_vector.z() << ")"  << "   fire_origin:(" << fire_origin.x() << ","
+            //           << fire_origin.y() << ","
+            //       << fire_origin.z() << ")" << std::endl;
 
             const auto traj = SolveTrajectory(aim_vector, bullet_speed_);
             if (!traj.has_value()) {
@@ -98,15 +101,13 @@ public:
         }
 
         if (!converged) {
-            return { false, std::numeric_limits<double>::quiet_NaN(),
-                std::numeric_limits<double>::quiet_NaN(), { },
-                0 }; // failed: trajectory did not converge
+            std::cout << "trajectory did not converge" << std::endl;
+            return { false, { }, 0 }; // failed: trajectory did not converge
         }
 
         const auto vec     = final_aim_point - fire_origin;
-        const double yaw   = std::atan2(vec.y(), vec.x()) + yaw_offset_;//TODO
+        const double yaw   = (std::atan2(vec.y(), vec.x()) + yaw_offset_);
         const double pitch = (final_trajectory.pitch + pitch_offset_);
-
         return { true, yaw, pitch, final_aim_point };
     }
 

@@ -40,6 +40,7 @@ public:
             last_gimbal_command_ = gimbal_command;
             return true;
         }
+
         last_gimbal_command_ = gimbal_command;
         return false;
     }

@@ -29,7 +29,7 @@ judge_distance: 2 #距离判断阈值
 #####-----aiming_solver parameters-----#####
 yaw_offset: 1.5 # degree
 pitch_offset: -0.5 # degree
-bullet_speed: 20
+bullet_speed: 28
 
 #####-----aime_point_chooser parameters-----#####
 comming_angle: 60 # degree

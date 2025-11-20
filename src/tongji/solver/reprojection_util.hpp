@@ -76,8 +76,8 @@ private:
 
         std::vector<cv::Point2d> image_points;
         const auto& object_points = (is_large)
-            ? parameters::Robomaster::LargeArmorObjectPointsOpencv
-            : parameters::Robomaster::NormalArmorObjectPointsOpencv;
+            ? parameters::Robomaster::LargeArmorObjectPointsRos
+            : parameters::Robomaster::NormalArmorObjectPointsRos;
         cv::projectPoints(object_points, rvec, tvec,
             parameters::HikCameraProfile::get_intrinsic_parameters(),
             parameters::HikCameraProfile::get_distortion_parameters(), image_points);

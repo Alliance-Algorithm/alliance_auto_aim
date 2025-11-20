@@ -17,11 +17,9 @@ void world_exe::util::cast ::armor_3d_camera_to_armor_2d_image(
     data::ArmorImageSpacing& out_armor_2d) {
 
     out_armor_2d.id           = armor3d.id;
-    out_armor_2d.isLargeArmor = (static_cast<int>(armor3d.id)
-                                    & (static_cast<int>(enumeration::ArmorIdFlag::Hero)
-                                        | static_cast<int>(enumeration::ArmorIdFlag::Base)))
-        != 0;
-    std::vector<cv::Point3d> point3ds {};
+    out_armor_2d.isLargeArmor = (armor3d.id == enumeration::ArmorIdFlag::Base
+        || armor3d.id == enumeration::ArmorIdFlag::Hero);
+    std::vector<cv::Point3d> point3ds { };
     for (const auto& point : points_in_armor_spacing) {
         Eigen::Vector3d point_eigen { point.x, point.y, point.z };
 

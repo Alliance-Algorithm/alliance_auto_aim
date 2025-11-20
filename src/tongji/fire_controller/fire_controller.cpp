@@ -4,7 +4,6 @@
 #include <chrono>
 #include <memory>
 
-#include <print>
 #include <utility>
 #include <yaml-cpp/yaml.h>
 
@@ -58,14 +57,22 @@ public:
         const auto gimbal_command = GimbalCommand { aim_solution.yaw, aim_solution.pitch };
         const auto target_pos     = Eigen::Vector3d { aim_solution.aim_point };
 
-        auto gimbal_yaw = transform_gimbal2muzzle_.inverse().rotation().eulerAngles(2, 1, 0)(0);
+        auto ypr        = transform_gimbal2muzzle_.inverse().rotation().eulerAngles(2, 1, 0);
+        auto gimbal_yaw = ypr(0);
+        // auto gimbal_pitch = ypr(1);
+        // auto gimbal_roll  = ypr(2);
 
         auto fire_valid = fire_decision_->ShouldFire(gimbal_yaw, gimbal_command, target_pos);
+        
+        if (!fire_valid) {
+            std::cout << "forbid fire" << std::endl;
+        }
 
         data::FireControl result;
         result.fire_allowance = fire_valid;
-        result.gimbal_dir << cos(gimbal_command.yaw) * cos(gimbal_command.pitch),
-            sin(gimbal_command.yaw) * cos(gimbal_command.pitch), sin(gimbal_command.pitch);
+        // result.gimbal_dir << cos(gimbal_command.yaw) * cos(gimbal_command.pitch),
+        //     sin(gimbal_command.yaw) * cos(gimbal_command.pitch), sin(gimbal_command.pitch);
+        result.gimbal_dir << target_pos.normalized(); // TODO:not gimbal dir
         result.time_stamp = time_stamp;
         return result;
     }
