@@ -19,6 +19,7 @@
 #include "data/predictor_update_package.hpp"
 #include "data/sync_data.hpp"
 #include "data/time_stamped.hpp"
+#include "enum/armor_id.hpp"
 #include "enum/car_id.hpp"
 #include "interfaces/armor_in_gimbal_control.hpp"
 #include "parameters/params_system_v1.hpp"
@@ -78,14 +79,15 @@ public:
     auto Solve(const data::MatStamped& raw) -> void {
         if (identifier_ == nullptr) std::terminate();
         const auto& [armors_in_image, flag] = identifier_->identify(raw.mat);
+        // auto& [armors_in_image, flag] = identifier_->identify(raw.mat);
 
         // if (armors_in_image) {
         //     auto visualized = raw.mat.clone();
-        //     util::visualization::draw_armor_in_image(*armors_in_image, visualized);
+        //     // util::visualization::draw_armor_in_image(*armors_in_image, visualized);
         //     cv::imshow("identified", visualized);
         //     cv::waitKey(1);
         // }
-        // if (fps_.count()) std::cout << fps_.fps() << std::endl;
+        if (fps_.count()) std::cout << fps_.fps() << std::endl;
 
         if (flag == enumeration::ArmorIdFlag::None) {
             state_machine_->SetLostState();
@@ -100,6 +102,12 @@ public:
 
         // 这里使用 any_clock::now 也可以，但是时间系统的转换和同步我希望是单独的部分
         auto [pack, check] = syncer_->get_data(raw.stamp);
+        // auto ypr           = pack.gimbal_to_muzzle.inverse().rotation().eulerAngles(2, 1, 0);
+        // auto gimbal_yaw    = ypr(0);
+        // auto gimbal_pitch  = ypr(1);
+        // auto gimbal_roll   = ypr(2);
+        // std::cout << "transform_yaw:" << gimbal_yaw << std::endl;
+        // return;
         if (!check) {
             // TODO：等待传入真实数据
             std::cout << " no sync data" << std::endl;
@@ -115,7 +123,9 @@ public:
 
         core::EventBus::Publish<std ::shared_ptr<interfaces ::IArmorInGimbalControl>>(
             parameters::ParamsForSystemV1::tracker_current_armors_event,
-            live_target_manager_->Predict(flag, pack.camera_capture_begin_time_stamp));
+            live_target_manager_->Predict(
+                enumeration::ArmorIdFlag::None, pack.camera_capture_begin_time_stamp));
+        // live_target_manager_->Predict(flag, pack.camera_capture_begin_time_stamp));
 
         time_stamp_ = pack.camera_capture_begin_time_stamp;
 
@@ -123,6 +133,7 @@ public:
         /// 轨迹规划器没有实现，先不管
 
         fire_controller_->SetGimbal2Muzzle(pack.gimbal_to_muzzle);
+
         core::EventBus::Publish<data::FireControl>(
             parameters::ParamsForSystemV1::fire_control_event, GetControlCommand());
 

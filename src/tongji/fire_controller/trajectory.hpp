@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <cmath>
 namespace world_exe::tongji::fire_control {
 
@@ -16,8 +17,12 @@ struct TrajectorySolver {
     // h 目标竖直高度，单位：m
     // g 重力加速度，单位：m/s^2
     //(g·x²)/(2v₀²)·u² - x·u + (g·x²)/(2v₀²) + y = 0(其中u = tan(θ))
-    static auto SolveTrajectory(const double& v0, const double& d, const double& h, const double& g)
+    static auto SolveTrajectory(const double v0, const Eigen::Vector3d& dir_vector, const double g)
         -> TrajectoryResult {
+        
+        double d = std::hypot(dir_vector.x(), dir_vector.y());
+        double h = dir_vector.z();
+
         auto a     = g * d * d / (2 * v0 * v0);
         auto b     = -d;
         auto c     = a + h;

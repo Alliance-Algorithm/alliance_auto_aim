@@ -108,6 +108,10 @@ public:
         const auto vec     = final_aim_point - fire_origin;
         const double yaw   = (std::atan2(vec.y(), vec.x()) + yaw_offset_);
         const double pitch = (final_trajectory.pitch + pitch_offset_);
+        // std::cout << "aim point:(" << final_aim_point.x() << "," << final_aim_point.y() << ","
+        //           << final_aim_point.z() << ")   fire_origin:(" << fire_origin.x() << ","
+        //           << fire_origin.y() << "," << fire_origin.z() << ")" << std::endl;
+        // TODO:not really ypr
         return { true, yaw, pitch, final_aim_point };
     }
 
@@ -130,14 +134,9 @@ private:
 
     std::optional<TrajectoryResult> SolveTrajectory(
         const Eigen::Vector3d& vec, const double& bullet_speed) const {
-        double d    = std::hypot(vec.x(), vec.y());
-        auto result = TrajectorySolver::SolveTrajectory(bullet_speed, d, vec.z(), g_);
-
-        if (!result.solvable) {
-            std::cout << "solve trajectory failed: d=" << d << " z=" << vec.z()
-                      << "speed=" << bullet_speed << std::endl;
-        }
-
+        
+        auto result = TrajectorySolver::SolveTrajectory(bullet_speed, vec, g_);
+     
         return result.solvable ? std::optional { result } : std::nullopt;
     }
 

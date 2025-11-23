@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <iostream>
 #include <yaml-cpp/yaml.h>
 
 namespace world_exe::tongji::fire_control {
@@ -40,6 +41,8 @@ public:
             last_gimbal_command_ = gimbal_command;
             return true;
         }
+        // std::cout << "gimbal_command:yaw" << gimbal_command.yaw
+        //           << "  pitch:" << gimbal_command.pitch << std::endl;
 
         last_gimbal_command_ = gimbal_command;
         return false;
