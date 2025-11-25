@@ -2,6 +2,7 @@
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <iostream>
 namespace world_exe::tongji::fire_control {
 
 struct TrajectoryResult {
@@ -19,7 +20,6 @@ struct TrajectorySolver {
     //(g·x²)/(2v₀²)·u² - x·u + (g·x²)/(2v₀²) + y = 0(其中u = tan(θ))
     static auto SolveTrajectory(const double v0, const Eigen::Vector3d& dir_vector, const double g)
         -> TrajectoryResult {
-        
         double d = std::hypot(dir_vector.x(), dir_vector.y());
         double h = dir_vector.z();
 

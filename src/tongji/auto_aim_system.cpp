@@ -91,7 +91,6 @@ public:
 
         if (flag == enumeration::ArmorIdFlag::None) {
             state_machine_->SetLostState();
-            // std::cout << "no armor identified!" << std::endl;
             return;
         } else {
             // std::cout << "found!" << std::endl;
@@ -123,9 +122,8 @@ public:
 
         core::EventBus::Publish<std ::shared_ptr<interfaces ::IArmorInGimbalControl>>(
             parameters::ParamsForSystemV1::tracker_current_armors_event,
-            live_target_manager_->Predict(
-                enumeration::ArmorIdFlag::None, pack.camera_capture_begin_time_stamp));
-        // live_target_manager_->Predict(flag, pack.camera_capture_begin_time_stamp));
+         
+        live_target_manager_->Predict(flag, pack.camera_capture_begin_time_stamp));
 
         time_stamp_ = pack.camera_capture_begin_time_stamp;
 

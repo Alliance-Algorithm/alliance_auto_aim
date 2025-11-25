@@ -134,9 +134,9 @@ private:
 
     std::optional<TrajectoryResult> SolveTrajectory(
         const Eigen::Vector3d& vec, const double& bullet_speed) const {
-        
+
         auto result = TrajectorySolver::SolveTrajectory(bullet_speed, vec, g_);
-     
+
         return result.solvable ? std::optional { result } : std::nullopt;
     }
 
