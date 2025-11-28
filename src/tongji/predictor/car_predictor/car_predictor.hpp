@@ -20,6 +20,8 @@ namespace world_exe::tongji::predictor {
 
 class CarPredictor final : public interfaces::IPredictor {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     using PredictorModel = EKFModel<11, 4>;
     using EKF            = ExtendedKalmanFilter<PredictorModel>;
 

@@ -66,6 +66,12 @@ private : auto
         Eigen::Matrix<double, 1, 1> R(R_yaw.data());
         tiny_setup(&yaw_solver_, A, B, f, Q.asDiagonal(), R.asDiagonal(), 1.0, 2, 1, HORIZON, 0);
 
+        Eigen::MatrixXd x_min = Eigen::MatrixXd::Constant(2, HORIZON, -1e17);
+        Eigen::MatrixXd x_max = Eigen::MatrixXd::Constant(2, HORIZON, 1e17);
+        Eigen::MatrixXd u_min = Eigen::MatrixXd::Constant(1, HORIZON - 1, -max_yaw_acc);
+        Eigen::MatrixXd u_max = Eigen::MatrixXd::Constant(1, HORIZON - 1, max_yaw_acc);
+        tiny_set_bound_constraints(yaw_solver_, x_min, x_max, u_min, u_max);
+
         yaw_solver_->settings->max_iter = 10;
     }
 
@@ -80,7 +86,10 @@ private : auto
         Eigen::Vector2d f { 0, 0 };
         Eigen::Matrix<double, 2, 1> Q(Q_pitch.data());
         Eigen::Matrix<double, 1, 1> R(R_pitch.data());
-        tiny_setup(&pitch_solver_, A, B, f, Q.asDiagonal(), R.asDiagonal(), 1.0, 2, 1, HORIZON, 0);
+        if (tiny_setup(
+                &pitch_solver_, A, B, f, Q.asDiagonal(), R.asDiagonal(), 1.0, 2, 1, HORIZON, 0)) {
+            throw std::runtime_error("tiny_setup pitch_solver failed");
+        }
 
         auto x_min = Eigen::MatrixXd::Constant(2, HORIZON, -1e17);
         auto x_max = Eigen::MatrixXd::Constant(2, HORIZON, 1e17);
@@ -94,17 +103,16 @@ private : auto
     int shoot_offset_ = 2;
 
     double fire_thresh_;
-    TinySolver* yaw_solver_;
-    TinySolver* pitch_solver_;
+    TinySolver* yaw_solver_   = nullptr;
+    TinySolver* pitch_solver_ = nullptr;
 };
 
 Planner::Planner(const std::string& config_path)
     : pimpl_(std::make_unique<Impl>(config_path)) { }
 Planner::~Planner() = default;
 
-
-auto Planner::Plan(Trajectory const & traj,double yaw0) -> struct Plan {
-    return pimpl_->Plan(traj,yaw0);
+auto Planner::Plan(Trajectory const& traj, double yaw0) -> struct Plan {
+    return pimpl_->Plan(traj, yaw0);
 }
 
 }

@@ -301,9 +301,10 @@ private:
     std::unique_ptr<world_exe::v1::Syncer> syncer_;
     std::unique_ptr<fire_control::FireController> fire_controller_;
 
-    std::jthread plan_thread_;
-    util::thread::ThreadSafeQueue<planner::PlanInfo, true> planner_input_queue_;
     std::unique_ptr<planner::Planner> planner_;
+    util::thread::ThreadSafeQueue<planner::PlanInfo, true> planner_input_queue_;
+    // Ensure the planning thread is destroyed before its dependencies.
+    std::jthread plan_thread_;
 };
 
 AutoAimSystem::AutoAimSystem(const bool& debug)

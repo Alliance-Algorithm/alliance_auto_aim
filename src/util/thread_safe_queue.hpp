@@ -2,11 +2,14 @@
 #define TOOLS__THREAD_SAFE_QUEUE_HPP
 
 #include <condition_variable>
+#include <deque>
 #include <functional>
 #include <mutex>
 #include <optional>
 #include <queue>
 #include <utility>
+
+#include <Eigen/StdVector>
 
 namespace world_exe::util::thread {
 template <typename T, bool PopWhenFull = false> class ThreadSafeQueue {
@@ -20,7 +23,8 @@ public:
     void push(T&& value) {
         std::unique_lock<std::mutex> lock(mutex_);
 
-        if (queue_.size() >= max_size_) {
+        // max_size_ == 0 means unbounded.
+        if (max_size_ != 0 && queue_.size() >= max_size_) {
             if (PopWhenFull) {
                 queue_.pop();
             } else {
@@ -100,8 +104,9 @@ public:
     }
 
 private:
-    std::queue<T> queue_;
-    size_t max_size_;
+    // Use aligned storage so Eigen objects inside T stay 16-byte aligned.
+    std::queue<T, std::deque<T, Eigen::aligned_allocator<T>>> queue_;
+    size_t max_size_ = 0;
     mutable std::mutex mutex_;
     std::condition_variable not_empty_condition_;
     bool stopped_ = false;

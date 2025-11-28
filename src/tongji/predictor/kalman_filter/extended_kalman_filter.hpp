@@ -23,6 +23,8 @@ concept EKFModelTypes = requires {
 
 template <typename EKFModel> class ExtendedKalmanFilter {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     static constexpr int xn = EKFModel::xn;
     static constexpr int zn = EKFModel::zn;
 

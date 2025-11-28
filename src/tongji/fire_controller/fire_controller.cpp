@@ -29,6 +29,8 @@ using TimeStamp           = data::TimeStamp;
 
 class FireController::Impl {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     Impl(const std::string& config_path, std::shared_ptr<interfaces::ICarState> state_machine,
         std::shared_ptr<interfaces::ITargetPredictor> live_target_manager)
         : aiming_solver_(std::make_unique<AimingSolver>(config_path))
