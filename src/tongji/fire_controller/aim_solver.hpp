@@ -44,6 +44,22 @@ public:
         bullet_speed_ = yaml["bullet_speed"].as<double>();
     }
 
+    // AimSolution SolveAimSolution(std::shared_ptr<interfaces::IPredictor> const& snapshot,
+    //     Eigen::Affine3d const& transform_gimbal2muzzle, data::TimeStamp const& time_stamp,
+    //     std::chrono::milliseconds const& control_delay) {
+    //     // 迭代求解飞行时间
+    //     // (最多10次，收敛条件：相邻两次fly_time差 <0.001)
+    //     double prev_fly_time_s = 0;
+    //     bool converged         = false;
+    //     auto fire_origin       = transform_gimbal2muzzle.inverse().translation();
+
+    //     auto snapshot_derived = std::dynamic_pointer_cast<predictor::CarPredictor>(snapshot);
+    //     if (!snapshot_derived)
+    //         throw std::runtime_error("Failed to cast snapshot to CarPredictor. Unexpected object
+    //         "
+    //                                  "type.");
+    // }
+
     AimSolution SolveAimSolution(std::shared_ptr<interfaces::IPredictor> const& snapshot,
         Eigen::Affine3d const& transform_gimbal2muzzle, data::TimeStamp const& time_stamp,
         std::chrono::milliseconds const& control_delay) {
@@ -64,27 +80,24 @@ public:
 
         // 预测目标在未来 dt时间后的位置
         for (int i = 0; i < 10; ++i) {
-            const auto& dt = prev_fly_time_s + (double)(control_delay).count() / 1000.;
-            const auto& armors =
-                snapshot->Predictor(time_stamp + data::TimeStamp::from_seconds(dt));
+            const auto& dt            = prev_fly_time_s + (double)(control_delay).count() / 1000.;
+            auto predicted_time_stamp = time_stamp + data::TimeStamp::from_seconds(dt);
+            const auto& armors        = snapshot->Predictor(predicted_time_stamp);
 
             const auto& armors_in_gimbal = armors->GetArmors(snapshot->GetId());
 
             armors_view_ = std::make_shared<predictor::InGimbalControlArmor>(
-                armors_in_gimbal, time_stamp + data::TimeStamp::from_seconds(dt));
+                armors_in_gimbal, predicted_time_stamp); // for debug
 
-            const auto& aim_point = SelectPredictedAim(
-                snapshot_derived->GetPredictedX(time_stamp), armors_in_gimbal, snapshot->GetId());
+            const auto& aim_point =
+                SelectPredictedAim(snapshot_derived->GetPredictedX(predicted_time_stamp),
+                    armors_in_gimbal, snapshot->GetId());
 
             if (!aim_point.has_value()) {
                 continue;
             } // failed: no valid aim point
 
             auto aim_vector = *aim_point - fire_origin;
-            // std::cout << "aim_vector:(" << aim_vector.x() << "," << aim_vector.y() << ","
-            //           << aim_vector.z() << ")"  << "   fire_origin:(" << fire_origin.x() << ","
-            //           << fire_origin.y() << ","
-            //       << fire_origin.z() << ")" << std::endl;
 
             const auto traj = SolveTrajectory(aim_vector, bullet_speed_);
             if (!traj.has_value()) {
@@ -111,15 +124,32 @@ public:
         // std::cout << "aim point:(" << final_aim_point.x() << "," << final_aim_point.y() << ","
         //           << final_aim_point.z() << ")   fire_origin:(" << fire_origin.x() << ","
         //           << fire_origin.y() << "," << fire_origin.z() << ")" << std::endl;
-        // TODO:not really ypr
         return { true, yaw, pitch, final_aim_point };
     }
+
+    // auto SolveAimSolutionOnce(data::TimeStamp const& time_stamp, Eigen::Vector3d const& fire_origin)
+    //     -> std::optional<TrajectoryResult> {
+    //     AimSolution result;
+    //     const auto& armors           = snapshot_->Predictor(time_stamp);
+    //     const auto& armors_in_gimbal = armors->GetArmors(snapshot_->GetId());
+
+    //     const auto& aim_point = SelectPredictedAim(
+    //         snapshot_->GetPredictedX(time_stamp), armors_in_gimbal, snapshot_->GetId());
+
+    //     if (!aim_point.has_value()) return std::nullopt;
+    //     // failed: no valid aim point
+
+    //     auto aim_vector = *aim_point - fire_origin;
+    //     return SolveTrajectory(aim_vector, bullet_speed_);
+    // }
 
     std ::shared_ptr<interfaces ::IArmorInGimbalControl> GetArmorsSnapshot() {
         return armors_view_;
     }
 
 private:
+    std::unique_ptr<predictor::CarPredictor> snapshot_;
+
     std::shared_ptr<predictor::InGimbalControlArmor> armors_view_;
 
     template <std::ranges::range T>

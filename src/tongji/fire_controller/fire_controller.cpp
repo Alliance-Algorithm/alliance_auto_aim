@@ -12,12 +12,15 @@
 #include "../state_machine/state_machine.hpp"
 #include "aim_solver.hpp"
 #include "data/fire_control.hpp"
+#include "data/time_stamped.hpp"
 #include "fire_decision.hpp"
 #include "interfaces/target_predictor.hpp"
+#include "tongji/fire_controller/planner/planner.hpp"
 #include "tongji/predictor/car_predictor/car_predictor_manager.hpp"
 
 namespace world_exe::tongji::fire_control {
 
+using Planner             = planner::Planner;
 using StateMachine        = state_machine::StateMachine;
 using IdentifiedArmor     = identifier::IdentifiedArmor;
 using CarIDFlag           = enumeration::CarIDFlag;
@@ -51,13 +54,16 @@ public:
 
         if (!aim_solution.valid) {
             // std::println("aim solution invalid ");
-            return data::FireControl { .time_stamp = time_stamp,
-                .gimbal_dir = Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
-                .fire_allowance = false };
+            throw std::runtime_error("No valid aim point!");
+            // return data::FireControl { .time_stamp = time_stamp,
+            //     .gimbal_dir =
+            //     Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN()),
+            //     .fire_allowance = false };
         }
-        
+
         const auto gimbal_command = GimbalCommand { aim_solution.yaw, aim_solution.pitch };
-        const auto target_pos     = Eigen::Vector3d { aim_solution.aim_point };
+
+        const auto target_pos = Eigen::Vector3d { aim_solution.aim_point };
 
         auto ypr          = transform_gimbal2muzzle_.inverse().rotation().eulerAngles(2, 1, 0);
         auto gimbal_yaw   = ypr(0);
@@ -69,23 +75,22 @@ public:
         std::cout << "command yaw:" << gimbal_command.yaw * 57.3
                   << "  pitch:" << gimbal_command.pitch * 57.3 << "du" << std::endl;
 
-        auto fire_valid = fire_decision_->ShouldFire(gimbal_yaw, gimbal_command, target_pos);
+        // auto fire_valid = fire_decision_->ShouldFire(gimbal_yaw, gimbal_command, target_pos);
         // auto fire_valid = true;
 
+        // if (!fire_valid) {
+        //     result.fire_allowance = false;
+        //     firable_              = false;
+        //     result.gimbal_dir     = Eigen::Vector3d::Zero();
+        //     std::cout << "forbidden fire" << std::endl;
+        //     return result;
+        // }
+
+        firable_ = true;
+
         data::FireControl result;
-        result.time_stamp = time_stamp;
-
-        if (!fire_valid) {
-            result.fire_allowance = false;
-            firable_              = false;
-            result.gimbal_dir     = Eigen::Vector3d::Zero();
-            std::cout << "forbidden fire" << std::endl;
-            return result;
-        }
-
-        firable_              = true;
+        result.time_stamp     = time_stamp;
         result.fire_allowance = true;
-
         result.gimbal_dir << cos(gimbal_command.yaw) * cos(gimbal_command.pitch),
             sin(gimbal_command.yaw) * cos(gimbal_command.pitch), sin(gimbal_command.pitch);
         return result;
@@ -105,11 +110,26 @@ public:
     }
 
 private:
+    // auto CalculateTrajectories(data::TimeStamp const& time_stamp) -> planner::Trajectory {
+    //     const auto& lockable_target  = state_machine_->GetAllowdToFires();
+    //     const auto& snapshot_manager = live_target_manager_->GetPredictor(lockable_target);
+
+    //     if (snapshot_manager) return planner::Trajectory::Zero();
+
+    //     const auto& aim_solution = aiming_solver_->SolveAimSolution(
+    //         snapshot_manager, transform_gimbal2muzzle_, time_stamp, control_delay_);
+    //     if (!aim_solution.valid) return planner::Trajectory::Zero();
+
+    //     planner::Trajectory trajectories;
+    // }
+
     std::chrono::milliseconds control_delay_ { 100 };
 
     CarIDFlag locked_target_ { CarIDFlag::None };
     mutable bool firable_ { false };
+
     Eigen::Affine3d transform_gimbal2muzzle_ { Eigen ::Affine3d::Identity() };
+
     std::unique_ptr<AimingSolver> aiming_solver_;
     std::shared_ptr<interfaces::ICarState> state_machine_;
     std::shared_ptr<interfaces::ITargetPredictor> live_target_manager_;

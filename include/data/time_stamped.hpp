@@ -29,7 +29,7 @@ public:
 }
     
     template<typename T>
-    static inline TimeStamp from_seconds(const T time){return TimeStamp{std::chrono::seconds(static_cast<long int>(time))};}
+    static inline TimeStamp from_seconds(const T time){return TimeStamp{from_nanosec(time*1e9)};}
     template<typename T>
     static inline TimeStamp from_nanosec(const T time){return TimeStamp{std::chrono::nanoseconds(static_cast<long int>(time))};}
 

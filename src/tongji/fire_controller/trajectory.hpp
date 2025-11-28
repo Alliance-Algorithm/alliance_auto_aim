@@ -2,7 +2,7 @@
 
 #include <Eigen/Dense>
 #include <cmath>
-#include <iostream>
+
 namespace world_exe::tongji::fire_control {
 
 struct TrajectoryResult {
